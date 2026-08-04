@@ -7,6 +7,8 @@
   const cfg = window.mobileCompareConfig || {};
   const REST = cfg.restUrl || '';
   const MAX = 3;
+  const SEARCH_DEBOUNCE_MS = 280;
+  const SKELETON_SPEC_ROWS = 12;
 
   const state = {
     view: 'select',
@@ -21,7 +23,16 @@
     popular: [],
     suggested: [],
     loading: false,
+    booting: true,
+    comparing: false,
+    searching: false,
+    error: null,
+    activeSlot: null,
+    toast: null,
   };
+
+  let searchTimer = null;
+  const dataCache = new Map();
 
   const app = document.getElementById('mobile-compare-app');
   if (!app) return;
@@ -54,11 +65,45 @@
     return state.selected.map((p) => p.id).join(',');
   }
 
+  function cacheKey(ids) {
+    return ids.slice().sort((a, b) => a - b).join(',');
+  }
+
+  function applyCompareData(data) {
+    state.products = data.products || [];
+    state.specs = data.specs || [];
+    state.selected = state.products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      image: p.image,
+      price: p.price,
+      url: p.url,
+    }));
+  }
+
+  function prefetchCompare(ids) {
+    const key = cacheKey(ids);
+    if (!ids.length || dataCache.has(key)) return;
+    api('products', { ids: ids.join(',') })
+      .then((data) => dataCache.set(key, data))
+      .catch(() => {});
+  }
+
   function navigateCompare(ids) {
-    const url = ids.length
-      ? buildSlugUrl(ids)
-      : (cfg.compareUrl || '/compare/');
-    if (window.location.pathname + window.location.search !== url.replace(location.origin, '')) {
+    if (ids.length < 2) {
+      state.view = 'select';
+      state.products = [];
+      state.specs = [];
+      history.pushState(null, '', cfg.compareUrl || '/compare/');
+      render();
+      loadSelectData();
+      return;
+    }
+
+    const url = buildSlugUrl(ids);
+    const relative = url.replace(window.location.origin, '');
+    if (window.location.pathname + window.location.search !== relative) {
       history.pushState(null, '', url);
     }
     loadCompareByIds(ids);
@@ -73,50 +118,100 @@
     return base + '/' + slugs.join('/vs/') + '/';
   }
 
+  function previewProductsFromSelected() {
+    return state.selected.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      image: p.image,
+      price: p.price || '—',
+      url: p.url || '#',
+      buy_url: p.url || '#',
+    }));
+  }
+
   function loadCompareByIds(ids) {
     if (!ids.length) {
       state.view = 'select';
       state.products = [];
       state.specs = [];
+      state.loading = false;
+      state.comparing = false;
+      state.error = null;
       render();
       loadSelectData();
       return;
     }
+
+    const key = cacheKey(ids);
+    const cached = dataCache.get(key);
+
     state.loading = true;
+    state.comparing = true;
+    state.error = null;
     state.view = 'compare';
+    state.products = previewProductsFromSelected();
+    state.specs = [];
     render();
+
+    if (cached) {
+      applyCompareData(cached);
+      state.loading = false;
+      state.comparing = false;
+      render();
+      return;
+    }
+
     api('products', { ids: ids.join(',') })
       .then((data) => {
-        state.products = data.products || [];
-        state.specs = data.specs || [];
-        state.selected = state.products.map((p) => ({ id: p.id, name: p.name, slug: p.slug, image: p.image, price: p.price, url: p.url }));
+        dataCache.set(key, data);
+        applyCompareData(data);
         state.loading = false;
+        state.comparing = false;
         render();
       })
       .catch(() => {
         state.loading = false;
+        state.comparing = false;
+        state.error = t('loadError');
         state.view = 'select';
+        state.products = [];
+        state.specs = [];
         render();
+        loadSelectData();
+        showToast(t('loadError'));
       });
   }
 
   function loadCompareBySlugs(slugPath) {
     state.loading = true;
+    state.comparing = true;
+    state.error = null;
     state.view = 'compare';
+    state.products = [];
+    state.specs = [];
     render();
+
     api('products-by-slugs', { path: slugPath })
       .then((data) => {
-        state.products = data.products || [];
-        state.specs = data.specs || [];
-        state.selected = state.products.map((p) => ({ id: p.id, name: p.name, slug: p.slug, image: p.image, price: p.price, url: p.url }));
+        applyCompareData(data);
+        if (state.products.length) {
+          dataCache.set(cacheKey(state.products.map((p) => p.id)), data);
+        }
         state.loading = false;
+        state.comparing = false;
         render();
       })
       .catch(() => {
         state.loading = false;
+        state.comparing = false;
+        state.error = t('loadError');
         state.view = 'select';
+        state.products = [];
+        state.specs = [];
         render();
         loadSelectData();
+        showToast(t('loadError'));
       });
   }
 
@@ -131,6 +226,9 @@
     state.selected.push(product);
     loadSelectData();
     render();
+    if (state.selected.length >= 2) {
+      prefetchCompare(state.selected.map((p) => p.id));
+    }
   }
 
   function removeProduct(id) {
@@ -141,15 +239,31 @@
 
   function searchProducts(q) {
     state.searchQuery = q;
+    clearTimeout(searchTimer);
+
     if (!q || q.length < 2) {
       state.searchResults = [];
+      state.searching = false;
       render();
       return;
     }
-    api('search', { q, limit: 10 }).then((d) => {
-      state.searchResults = d.items || [];
-      render();
-    });
+
+    state.searching = true;
+    render();
+
+    searchTimer = setTimeout(() => {
+      api('search', { q, limit: 10 })
+        .then((d) => {
+          state.searchResults = d.items || [];
+          state.searching = false;
+          render();
+        })
+        .catch(() => {
+          state.searchResults = [];
+          state.searching = false;
+          render();
+        });
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   function parseNumber(val) {
@@ -196,16 +310,54 @@
     return d.innerHTML;
   }
 
+  function showToast(message) {
+    state.toast = message;
+    render();
+    setTimeout(() => {
+      if (state.toast === message) {
+        state.toast = null;
+        const toastEl = app.querySelector('.mc-toast');
+        if (toastEl) toastEl.remove();
+      }
+    }, 3200);
+  }
+
   function shareCompare() {
     const url = window.location.href;
     if (navigator.share) {
       navigator.share({ title: t('title'), url });
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
     } else {
-      navigator.clipboard.writeText(url).then(() => alert('Link copied!'));
+      showToast(url);
     }
   }
 
+  function slugPathFromUrl(url) {
+    const base = (cfg.compareUrl || '/compare/').replace(/\/+$/, '');
+    const path = url.replace(window.location.origin, '').replace(/\/+$/, '');
+    if (path.startsWith(base + '/')) {
+      return path.slice(base.length + 1);
+    }
+    const match = path.match(/\/compare\/(.+)$/);
+    return match ? match[1] : '';
+  }
+
   /* ─── Render helpers ─── */
+
+  function renderSpinner() {
+    return '<span class="mc-spinner" aria-hidden="true"></span>';
+  }
+
+  function renderBootView() {
+    return `
+      <div class="mc-page mc-boot">
+        <div class="mc-boot-inner">
+          ${renderSpinner()}
+          <p class="mc-boot-text">${escapeHtml(t('loadingCompare'))}</p>
+        </div>
+      </div>`;
+  }
 
   function renderSelectSlot(index) {
     const item = state.selected[index];
@@ -217,10 +369,12 @@
           <button type="button" class="mc-slot-remove" data-id="${item.id}" aria-label="Remove">×</button>
         </div>`;
     }
+    const isActive = state.activeSlot === index;
     return `
       <div class="mc-slot mc-slot-empty" data-index="${index}">
-        <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('selectProduct'))}" data-slot="${index}" value="${state.activeSlot === index ? escapeHtml(state.searchQuery) : ''}" />
-        ${state.activeSlot === index && state.searchResults.length ? `
+        <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('selectProduct'))}" data-slot="${index}" value="${isActive ? escapeHtml(state.searchQuery) : ''}" autocomplete="off" />
+        ${isActive && state.searching ? `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>` : ''}
+        ${isActive && !state.searching && state.searchResults.length ? `
           <ul class="mc-search-dropdown">
             ${state.searchResults.map((p) => `
               <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}">
@@ -234,6 +388,7 @@
     const canCompare = state.selected.length >= 2;
     return `
       <div class="mc-page mc-select">
+        ${state.error ? `<div class="mc-alert mc-alert-error" role="alert">${escapeHtml(state.error)}</div>` : ''}
         <header class="mc-header">
           <h1 class="mc-title">${escapeHtml(t('title'))}</h1>
         </header>
@@ -247,10 +402,19 @@
             <span class="mc-vs-badge">vs</span>
             ${renderSelectSlot(2)}
           </div>
-          <button type="button" class="mc-btn mc-btn-primary mc-btn-compare ${canCompare ? '' : 'mc-disabled'}" ${canCompare ? '' : 'disabled'}>
+          <button type="button" class="mc-btn mc-btn-primary mc-btn-compare ${canCompare ? '' : 'mc-disabled'} ${state.comparing ? 'mc-btn-loading' : ''}" ${canCompare && !state.comparing ? '' : 'disabled'}>
+            ${state.comparing ? renderSpinner() : ''}
             ${escapeHtml(t('compareNow'))}
           </button>
         </section>
+
+        ${!state.suggested.length && state.booting === false ? `
+        <section class="mc-section">
+          <h2>${escapeHtml(t('suggestedTitle'))}</h2>
+          <div class="mc-card-grid mc-skeleton-grid">
+            ${Array(4).fill('<article class="mc-product-card mc-skeleton-card"><div class="mc-skeleton mc-skeleton-img"></div><div class="mc-skeleton mc-skeleton-text"></div></article>').join('')}
+          </div>
+        </section>` : ''}
 
         ${state.suggested.length ? `
         <section class="mc-section">
@@ -270,6 +434,14 @@
           </div>
         </section>` : ''}
 
+        ${!state.popular.length && state.booting === false ? `
+        <section class="mc-section">
+          <h2>${escapeHtml(t('popularTitle'))}</h2>
+          <div class="mc-popular-grid mc-skeleton-grid">
+            ${Array(3).fill('<div class="mc-popular-pair mc-skeleton-pair"><div class="mc-skeleton mc-skeleton-block"></div></div>').join('')}
+          </div>
+        </section>` : ''}
+
         ${state.popular.length ? `
         <section class="mc-section">
           <h2>${escapeHtml(t('popularTitle'))}</h2>
@@ -277,8 +449,9 @@
             ${state.popular.map((pair) => {
               const a = pair.products[0];
               const b = pair.products[1];
+              const slugPath = slugPathFromUrl(pair.url);
               return `
-              <a href="${escapeHtml(pair.url)}" class="mc-popular-pair">
+              <a href="${escapeHtml(pair.url)}" class="mc-popular-pair" data-slug-path="${escapeHtml(slugPath)}">
                 <div class="mc-popular-side">
                   <img src="${escapeHtml(a.image)}" alt="" />
                   <span>${escapeHtml(a.name)}</span>
@@ -292,35 +465,37 @@
             }).join('')}
           </div>
         </section>` : ''}
-      </div>`;
+      </div>
+      ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
   }
 
-  function renderCompareView() {
-    const cols = MAX;
-    const products = state.products;
-    const specs = filteredSpecs();
-    const emptySlots = cols - products.length;
+  function renderSkeletonSpecRows(cols) {
+    return Array(SKELETON_SPEC_ROWS).fill(0).map(() => `
+      <tr class="mc-spec-row mc-spec-skeleton">
+        <th class="mc-spec-label"><span class="mc-skeleton mc-skeleton-label"></span></th>
+        ${Array(cols).fill('<td class="mc-spec-val"><span class="mc-skeleton mc-skeleton-val"></span></td>').join('')}
+      </tr>`).join('');
+  }
 
-    const productCards = products.map((p, i) => `
-      <article class="mc-compare-card">
-        <span class="mc-card-badge">${i + 1}</span>
-        <button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
-        <img src="${escapeHtml(p.image)}" alt="" class="mc-compare-img" />
-        <h3>${escapeHtml(p.name)}</h3>
-        <p class="mc-price">${escapeHtml(t('startingAt'))} ${p.price}</p>
-        <a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-outline">${escapeHtml(t('viewDetails'))}</a>
-        <a href="${escapeHtml(p.buy_url || p.url)}" class="mc-btn mc-btn-buy">${escapeHtml(t('buyNow'))}</a>
-      </article>`).join('');
+  function renderSpecRows(specs, emptySlots, skeleton) {
+    if (skeleton) {
+      return renderSkeletonSpecRows(MAX);
+    }
 
-    const addCard = emptySlots > 0 ? `
-      <article class="mc-compare-card mc-compare-add">
-        <div class="mc-add-icon">+</div>
-        <button type="button" class="mc-btn mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
-      </article>` : '';
+    let lastGroup = '';
+    let html = '';
 
-    const specRows = specs.map((row) => {
+    specs.forEach((row) => {
+      if (row.group && row.group !== lastGroup) {
+        lastGroup = row.group;
+        html += `
+          <tr class="mc-spec-group-row">
+            <th class="mc-spec-group" colspan="${MAX + 1}">${escapeHtml(row.group)}</th>
+          </tr>`;
+      }
+
       const winners = state.highlightBetter ? getWinners(row) : row.values.map(() => false);
-      return `
+      html += `
         <tr class="mc-spec-row">
           <th class="mc-spec-label">
             <span class="mc-spec-icon mc-icon-${escapeHtml(row.icon || 'default')}"></span>
@@ -330,7 +505,59 @@
             <td class="mc-spec-val ${winners[idx] ? 'mc-better' : ''}">${escapeHtml(String(val))}</td>`).join('')}
           ${Array(emptySlots).fill('<td class="mc-spec-val">-</td>').join('')}
         </tr>`;
+    });
+
+    return html;
+  }
+
+  function renderCompareView() {
+    const skeleton = state.loading;
+    const cols = MAX;
+    const products = skeleton && !state.products.length
+      ? Array(Math.min(state.selected.length || 2, MAX)).fill(null).map((_, i) => ({
+          id: i,
+          name: '…',
+          image: '',
+          price: '—',
+          url: '#',
+        }))
+      : state.products;
+    const specs = skeleton ? [] : filteredSpecs();
+    const emptySlots = cols - products.length;
+
+    const productCards = products.map((p, i) => {
+      if (skeleton && !p.image) {
+        return `
+          <article class="mc-compare-card mc-compare-card-skeleton">
+            <div class="mc-skeleton mc-skeleton-img-lg"></div>
+            <div class="mc-skeleton mc-skeleton-text mc-skeleton-text-lg"></div>
+            <div class="mc-skeleton mc-skeleton-text mc-skeleton-text-sm"></div>
+          </article>`;
+      }
+      return `
+        <article class="mc-compare-card ${skeleton ? 'mc-compare-card-loading' : ''}">
+          <span class="mc-card-badge">${i + 1}</span>
+          ${!skeleton ? `<button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>` : ''}
+          <img src="${escapeHtml(p.image)}" alt="" class="mc-compare-img" />
+          <h3>${escapeHtml(p.name)}</h3>
+          <p class="mc-price">${escapeHtml(t('startingAt'))} ${p.price}</p>
+          ${skeleton ? `
+            <div class="mc-skeleton mc-skeleton-btn"></div>
+            <div class="mc-skeleton mc-skeleton-btn"></div>
+          ` : `
+            <a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-outline">${escapeHtml(t('viewDetails'))}</a>
+            <a href="${escapeHtml(p.buy_url || p.url)}" class="mc-btn mc-btn-buy">${escapeHtml(t('buyNow'))}</a>
+          `}
+        </article>`;
     }).join('');
+
+    const addCard = !skeleton && emptySlots > 0 ? `
+      <article class="mc-compare-card mc-compare-add">
+        <div class="mc-add-icon">+</div>
+        <button type="button" class="mc-btn mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
+      </article>` : '';
+
+    const specRows = renderSpecRows(specs, emptySlots, skeleton);
 
     return `
       <div class="mc-page mc-compare">
@@ -342,25 +569,28 @@
               <p class="mc-subtitle">${escapeHtml(t('subtitle'))}</p>
             </div>
             <div class="mc-header-actions">
-              <button type="button" class="mc-btn mc-btn-ghost mc-share-btn">${escapeHtml(t('share'))}</button>
-              <button type="button" class="mc-btn mc-btn-ghost mc-clear-btn">${escapeHtml(t('clearAll'))}</button>
+              <button type="button" class="mc-btn mc-btn-ghost mc-share-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('share'))}</button>
+              <button type="button" class="mc-btn mc-btn-ghost mc-clear-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
             </div>
           </div>
         </header>
 
-        <aside class="mc-sidebar">
-          <label class="mc-toggle">
-            <input type="checkbox" class="mc-toggle-diff" ${state.showDiffOnly ? 'checked' : ''} />
-            <span>${escapeHtml(t('showDifferences'))}</span>
-          </label>
-          <label class="mc-toggle">
-            <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} />
-            <span>${escapeHtml(t('highlightBetter'))}</span>
-          </label>
-        </aside>
+        <div class="mc-sticky-chrome">
+          <aside class="mc-sidebar">
+            <label class="mc-toggle">
+              <input type="checkbox" class="mc-toggle-diff" ${state.showDiffOnly ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
+              <span>${escapeHtml(t('showDifferences'))}</span>
+            </label>
+            <label class="mc-toggle">
+              <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
+              <span>${escapeHtml(t('highlightBetter'))}</span>
+            </label>
+            ${skeleton ? `<div class="mc-loading-banner">${renderSpinner()} ${escapeHtml(t('loadingCompare'))}</div>` : ''}
+          </aside>
 
-        <div class="mc-compare-cards">
-          ${productCards}${addCard}
+          <div class="mc-compare-cards mc-sticky-cards">
+            ${productCards}${addCard}
+          </div>
         </div>
 
         <div class="mc-table-wrap">
@@ -369,20 +599,22 @@
           </table>
         </div>
 
+        ${!skeleton ? `
         <footer class="mc-footer-actions">
           <button type="button" class="mc-btn mc-btn-ghost mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
           ${emptySlots > 0 ? `<button type="button" class="mc-btn mc-btn-primary mc-back-select">+ ${escapeHtml(t('addAnotherPhone'))}</button>` : ''}
-        </footer>
-      </div>`;
+        </footer>` : ''}
+      </div>
+      ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
   }
 
   function render() {
-    if (state.loading) {
-      app.innerHTML = '<div class="mc-loading">Loading compare data…</div>';
+    if (state.booting) {
+      app.innerHTML = renderBootView();
       return;
     }
 
-    if (state.view === 'compare' && state.products.length) {
+    if (state.view === 'compare' && (state.products.length || state.loading)) {
       app.innerHTML = renderCompareView();
     } else {
       app.innerHTML = renderSelectView();
@@ -391,11 +623,20 @@
   }
 
   function bindEvents() {
-    app.querySelector('.mc-btn-compare')?.addEventListener('click', () => {
-      if (state.selected.length >= 2) {
-        navigateCompare(state.selected.map((p) => p.id));
-      }
-    });
+    const compareBtn = app.querySelector('.mc-btn-compare');
+    if (compareBtn) {
+      compareBtn.addEventListener('mouseenter', () => {
+        if (state.selected.length >= 2) {
+          prefetchCompare(state.selected.map((p) => p.id));
+        }
+      });
+      compareBtn.addEventListener('click', () => {
+        if (state.selected.length >= 2 && !state.comparing) {
+          state.error = null;
+          navigateCompare(state.selected.map((p) => p.id));
+        }
+      });
+    }
 
     app.querySelectorAll('.mc-slot-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeProduct(parseInt(btn.dataset.id, 10)));
@@ -423,6 +664,7 @@
         });
         state.searchQuery = '';
         state.searchResults = [];
+        state.searching = false;
         state.activeSlot = null;
         render();
       });
@@ -436,9 +678,23 @@
       });
     });
 
+    app.querySelectorAll('.mc-popular-pair[data-slug-path]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const slugPath = link.dataset.slugPath;
+        if (!slugPath) return;
+        state.error = null;
+        const url = (cfg.compareUrl || '/compare/').replace(/\/+$/, '') + '/' + slugPath + '/';
+        history.pushState(null, '', url);
+        loadCompareBySlugs(slugPath);
+      });
+    });
+
     app.querySelectorAll('.mc-back-select').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.view = 'select';
+        state.loading = false;
+        state.comparing = false;
         history.pushState(null, '', cfg.compareUrl || '/compare/');
         render();
         loadSelectData();
@@ -450,6 +706,8 @@
       state.products = [];
       state.specs = [];
       state.view = 'select';
+      state.loading = false;
+      state.comparing = false;
       history.pushState(null, '', cfg.compareUrl || '/compare/');
       render();
       loadSelectData();
@@ -470,17 +728,9 @@
     app.querySelectorAll('[data-remove-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.removeId, 10);
-        const remaining = state.selected.filter((p) => p.id !== id).map((p) => p.id);
         state.selected = state.selected.filter((p) => p.id !== id);
-        if (remaining.length >= 1) {
-          navigateCompare(remaining);
-        } else {
-          state.view = 'select';
-          state.products = [];
-          history.pushState(null, '', cfg.compareUrl || '/compare/');
-          render();
-          loadSelectData();
-        }
+        const remaining = state.selected.map((p) => p.id);
+        navigateCompare(remaining);
       });
     });
   }
@@ -489,6 +739,7 @@
 
   api('config').then((config) => {
     state.config = config;
+    state.booting = false;
     const route = parseRoute();
     if (route.view === 'compare' && route.slugPath) {
       loadCompareBySlugs(route.slugPath);
@@ -498,6 +749,7 @@
       loadSelectData();
     }
   }).catch(() => {
+    state.booting = false;
     state.view = 'select';
     render();
     loadSelectData();
@@ -505,10 +757,13 @@
 
   window.addEventListener('popstate', () => {
     const route = parseRoute();
+    state.error = null;
     if (route.view === 'compare' && route.slugPath) {
       loadCompareBySlugs(route.slugPath);
     } else {
       state.view = 'select';
+      state.loading = false;
+      state.comparing = false;
       render();
       loadSelectData();
     }

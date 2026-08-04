@@ -217,6 +217,10 @@ class Mobile_Compare_REST_API {
 					'buyNow'             => __( 'Buy Now', 'mobile-compare' ),
 					'addPhone'           => __( 'Add Phone', 'mobile-compare' ),
 					'startingAt'         => __( 'Starting at', 'mobile-compare' ),
+					'loadingCompare'     => __( 'Loading comparison…', 'mobile-compare' ),
+					'loadingSearch'      => __( 'Searching…', 'mobile-compare' ),
+					'loadError'          => __( 'Could not load comparison. Please try again.', 'mobile-compare' ),
+					'linkCopied'         => __( 'Link copied!', 'mobile-compare' ),
 				),
 			),
 			200
