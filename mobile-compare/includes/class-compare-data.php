@@ -306,14 +306,18 @@ class Mobile_Compare_Data {
 	private static function format_price_plain( WC_Product $product ): string {
 		$html  = $product->get_price_html();
 		$plain = trim( wp_strip_all_tags( $html ) );
+		$plain = html_entity_decode( $plain, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
 		if ( '' !== $plain ) {
 			return $plain;
 		}
+
 		$raw = $product->get_price();
 		if ( '' === $raw || null === $raw ) {
 			return '';
 		}
-		return trim( wp_strip_all_tags( wc_price( $raw ) ) );
+
+		return html_entity_decode( trim( wp_strip_all_tags( wc_price( $raw ) ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 
 	/**

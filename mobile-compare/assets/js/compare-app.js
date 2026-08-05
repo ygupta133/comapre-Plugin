@@ -84,6 +84,7 @@
       slug: p.slug,
       image: p.image,
       price: p.price,
+      price_plain: p.price_plain || '',
       url: p.url,
     }));
     state.slotProducts = [null, null, null];
@@ -135,7 +136,8 @@
       name: p.name,
       slug: p.slug,
       image: p.image,
-      price: p.price || '—',
+      price: p.price || '',
+      price_plain: p.price_plain || '',
       url: p.url || '#',
       buy_url: p.url || '#',
     }));
@@ -277,16 +279,29 @@
       html += `<div class="mc-search-empty">${escapeHtml(t('noResults'))}</div>`;
     }
 
+    if (state.searching) {
+      html += `<div class="mc-search-status mc-search-status-inline">${renderSpinner('fast')}</div>`;
+    }
+
     return html;
+  }
+
+  function decodeEntities(str) {
+    if (!str) return '';
+    const d = document.createElement('textarea');
+    d.innerHTML = String(str);
+    return d.value.replace(/\s+/g, ' ').trim();
   }
 
   function formatDisplayPrice(product) {
     const plain = (product.price_plain || '').trim();
-    if (plain && plain !== '0') return plain;
+    if (plain && plain !== '0') {
+      return decodeEntities(plain);
+    }
     if (product.price) {
-      const d = document.createElement('div');
-      d.innerHTML = String(product.price);
-      const text = d.textContent.replace(/\s+/g, ' ').trim();
+      const el = document.createElement('div');
+      el.innerHTML = String(product.price);
+      const text = el.textContent.replace(/\s+/g, ' ').trim();
       if (text && text !== '0') return text;
     }
     return '';
@@ -295,7 +310,7 @@
   function renderDropdownItem(p) {
     const price = formatDisplayPrice(p);
     return `
-      <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price || '')}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
+      <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price || '')}" data-price-plain="${escapeHtml(p.price_plain || '')}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
         <img src="${escapeHtml(p.image)}" alt="" />
         <div class="mc-dd-body">
           <span class="mc-dd-name">${escapeHtml(p.name)}</span>
@@ -323,6 +338,7 @@
           slug: li.dataset.slug,
           image: li.dataset.image,
           price: li.dataset.price,
+          price_plain: li.dataset.pricePlain || '',
           url: li.dataset.url,
         }, slot);
         state.searchQuery = '';
@@ -367,6 +383,8 @@
 
     searchTimer = setTimeout(() => {
       const query = q.trim();
+      state.searching = true;
+      updateSlotDropdown();
       api('search', { q: query, limit: 10 })
         .then((d) => {
           if (state.searchQuery.trim() !== query) return;
@@ -441,17 +459,6 @@
     }, 3200);
   }
 
-  function shareCompare() {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: t('title'), url });
-    } else if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
-    } else {
-      showToast(url);
-    }
-  }
-
   function slugPathFromUrl(url) {
     const base = (cfg.compareUrl || '/compare/').replace(/\/+$/, '');
     const path = url.replace(window.location.origin, '').replace(/\/+$/, '');
@@ -464,8 +471,8 @@
 
   /* ─── Render helpers ─── */
 
-  function renderSpinner() {
-    return '<span class="mc-spinner" aria-hidden="true"></span>';
+  function renderSpinner(fast) {
+    return `<span class="mc-spinner${fast ? ' mc-spinner-fast' : ''}" aria-hidden="true"></span>`;
   }
 
   function renderBootView() {
@@ -662,6 +669,7 @@
             <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
             <span>${escapeHtml(t('highlightBetter'))}</span>
           </label>
+          ${skeleton ? `<span class="mc-loading-inline">${renderSpinner('fast')}<span class="mc-loading-text">${escapeHtml(t('loadingCompare'))}</span></span>` : ''}
         </div>
       </div>`;
   }
@@ -726,9 +734,6 @@
             <h1 class="mc-compare-title">${escapeHtml(title)}</h1>
           </div>
           <div class="mc-compare-top-actions">
-            <button type="button" class="mc-link-btn mc-share-btn" ${skeleton ? 'disabled' : ''}>
-              ${escapeHtml(t('share'))} <span aria-hidden="true">⎘</span>
-            </button>
             <button type="button" class="mc-link-btn mc-clear-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
             <button type="button" class="mc-link-btn mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
           </div>
@@ -762,12 +767,19 @@
     const sticky = app.querySelector('[data-mc-sticky]');
     if (!sticky) return;
 
-    if (state._onCompareScroll) {
-      window.removeEventListener('scroll', state._onCompareScroll);
+    if (state._onStickyResize) {
+      window.removeEventListener('resize', state._onStickyResize);
     }
 
-    /* Desktop: keep full-size hero when sticky — no compact shrink */
-    state._onCompareScroll = null;
+    const applyStickyOffset = () => {
+      const adminBar = document.getElementById('wpadminbar');
+      const top = adminBar ? adminBar.offsetHeight : 0;
+      document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+    };
+
+    state._onStickyResize = applyStickyOffset;
+    applyStickyOffset();
+    window.addEventListener('resize', applyStickyOffset, { passive: true });
   }
 
   function render() {
@@ -887,8 +899,6 @@
       render();
       loadSelectData();
     });
-
-    app.querySelector('.mc-share-btn')?.addEventListener('click', shareCompare);
 
     app.querySelector('.mc-toggle-diff')?.addEventListener('change', (e) => {
       state.showDiffOnly = e.target.checked;
