@@ -414,23 +414,26 @@
     const item = state.slotProducts[index];
     if (item) {
       return `
-        <div class="mc-slot-card mc-slot-filled" data-index="${index}">
-          <button type="button" class="mc-slot-remove" data-id="${item.id}" aria-label="Remove">×</button>
-          <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-img" />
-          <span class="mc-slot-name">${escapeHtml(item.name)}</span>
+        <div class="mc-slot-91 mc-slot-filled" data-index="${index}">
+          <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-91-img" />
+          <span class="mc-slot-91-name">${escapeHtml(item.name)}</span>
+          <button type="button" class="mc-slot-91-remove" data-id="${item.id}" aria-label="Remove">×</button>
         </div>`;
     }
     const isActive = state.activeSlot === index;
     return `
-      <div class="mc-slot-card mc-slot-empty ${isActive ? 'mc-slot-active' : ''}" data-index="${index}">
-        <button type="button" class="mc-slot-open" data-slot="${index}">
-          <span class="mc-slot-placeholder">+</span>
-          <span class="mc-slot-open-label">${escapeHtml(t('selectProduct'))}</span>
-        </button>
-        <div class="mc-slot-picker ${isActive ? 'mc-slot-picker-open' : ''}">
-          <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('searchOrPick'))}" data-slot="${index}" value="${isActive ? escapeHtml(state.searchQuery) : ''}" autocomplete="off" />
-          ${isActive ? renderSlotDropdown() : ''}
-        </div>
+      <button type="button" class="mc-slot-91 mc-slot-empty ${isActive ? 'is-active' : ''}" data-slot="${index}">
+        ${escapeHtml(t('selectProduct'))}
+      </button>`;
+  }
+
+  function renderPickerPanel() {
+    if (state.activeSlot === null) return '';
+    return `
+      <div class="mc-picker-panel">
+        <input type="text" class="mc-picker-search" placeholder="${escapeHtml(t('searchOrPick'))}" value="${escapeHtml(state.searchQuery)}" autocomplete="off" />
+        ${state.searching ? `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>` : ''}
+        ${!state.searching ? renderSlotDropdown() : ''}
       </div>`;
   }
 
@@ -440,16 +443,21 @@
       <div class="mc-page mc-select">
         ${state.error ? `<div class="mc-alert mc-alert-error" role="alert">${escapeHtml(state.error)}</div>` : ''}
 
-        <section class="mc-select-section">
+        <header class="mc-header mc-header-91">
+          <h1 class="mc-title">${escapeHtml(t('title'))}</h1>
+        </header>
+
+        <section class="mc-select-section mc-select-91">
           <p class="mc-section-label">${escapeHtml(t('selectLabel'))}</p>
-          <div class="mc-slots-scroll">
+          <div class="mc-slots-91">
             ${renderSelectSlot(0)}
-            <span class="mc-vs-badge">vs</span>
+            <span class="mc-vs-pill">vs</span>
             ${renderSelectSlot(1)}
-            <span class="mc-vs-badge">vs</span>
+            <span class="mc-vs-pill">vs</span>
             ${renderSelectSlot(2)}
           </div>
-          <button type="button" class="mc-btn mc-btn-primary mc-btn-compare ${canCompare ? '' : 'mc-disabled'} ${state.comparing ? 'mc-btn-loading' : ''}" ${canCompare && !state.comparing ? '' : 'disabled'}>
+          ${renderPickerPanel()}
+          <button type="button" class="mc-btn-compare-91 ${canCompare ? 'is-ready' : ''} ${state.comparing ? 'mc-btn-loading' : ''}" ${canCompare && !state.comparing ? '' : 'disabled'}>
             ${state.comparing ? renderSpinner() : ''}
             ${escapeHtml(t('compareNow'))}
           </button>
@@ -464,18 +472,20 @@
         </section>` : ''}
 
         ${state.suggested.length ? `
-        <section class="mc-section">
-          <h2>${escapeHtml(t('suggestedTitle'))}</h2>
-          <div class="mc-card-grid">
+        <section class="mc-section mc-section-91">
+          <h2 class="mc-section-title">${escapeHtml(t('suggestedTitle'))}</h2>
+          <div class="mc-suggest-91">
             ${state.suggested.map((p) => {
               const added = state.selected.some((s) => s.id === p.id);
               return `
-              <article class="mc-product-card">
+              <article class="mc-suggest-item">
                 <img src="${escapeHtml(p.image)}" alt="" />
-                <h3>${escapeHtml(p.name)}</h3>
-                <button type="button" class="mc-btn mc-btn-outline mc-add-btn ${added ? 'mc-added' : ''}" data-suggest-id="${p.id}" ${added ? 'disabled' : ''}>
-                  ${added ? '+ ' + escapeHtml(t('addedToCompare')) : '+ ' + escapeHtml(t('addToCompare'))}
-                </button>
+                <div class="mc-suggest-body">
+                  <h3>${escapeHtml(p.name)}</h3>
+                  <button type="button" class="mc-suggest-add ${added ? 'is-added' : ''}" data-suggest-id="${p.id}" ${added ? 'disabled' : ''}>
+                    ${added ? escapeHtml(t('addedToCompare')) : '+ ' + escapeHtml(t('addToCompare'))}
+                  </button>
+                </div>
               </article>`;
             }).join('')}
           </div>
@@ -490,9 +500,9 @@
         </section>` : ''}
 
         ${state.popular.length ? `
-        <section class="mc-section">
+        <section class="mc-section mc-section-91">
           <h2 class="mc-section-title">${escapeHtml(t('popularTitle'))}</h2>
-          <div class="mc-popular-scroll">
+          <div class="mc-popular-91">
             ${state.popular.map((pair) => {
               const a = pair.products[0];
               const b = pair.products[1];
@@ -566,25 +576,6 @@
           <span class="mc-btn-add-icon">+</span>
           ${escapeHtml(t('addToCompare'))}
         </button>
-      </div>`;
-  }
-
-  function renderStickyMini(products, emptySlots, skeleton) {
-    const cells = products.map((p) => {
-      if (skeleton && !p.image) {
-        return `<div class="mc-mini-cell"><div class="mc-skeleton mc-skeleton-mini-img"></div></div>`;
-      }
-      return `
-        <div class="mc-mini-cell">
-          <img src="${escapeHtml(p.image)}" alt="" class="mc-mini-img" />
-          <span class="mc-mini-name">${escapeHtml(p.name)}</span>
-        </div>`;
-    }).join('');
-    const empty = Array(emptySlots).fill('<div class="mc-mini-cell mc-mini-empty"></div>').join('');
-    return `
-      <div class="mc-sticky-mini" aria-hidden="true">
-        <div class="mc-mini-label"></div>
-        ${cells}${empty}
       </div>`;
   }
 
@@ -673,16 +664,16 @@
           </div>
         </header>
 
-        <div class="mc-compare-hero" data-mc-hero>
-          <div class="mc-hero-grid" style="--mc-cols: ${colCount}">
-            ${phoneHeaders}
-            ${addCol}
+        <div class="mc-compare-sticky" data-mc-sticky>
+          <div class="mc-compare-hero">
+            <div class="mc-hero-grid">
+              <div class="mc-hero-label-spacer" aria-hidden="true"></div>
+              ${phoneHeaders}
+              ${addCol}
+            </div>
           </div>
+          ${renderToolbarBar(skeleton)}
         </div>
-
-        ${renderStickyMini(products, emptySlots, skeleton)}
-
-        ${renderToolbarBar(skeleton)}
 
         <div class="mc-compare-table-wrap">
           <table class="mc-compare-table" style="--mc-cols: ${colCount}">
@@ -697,25 +688,20 @@
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
   }
 
-  function bindStickyMini() {
-    const hero = app.querySelector('[data-mc-hero]');
-    const mini = app.querySelector('.mc-sticky-mini');
-    if (!hero || !mini) return;
+  function bindHeroSticky() {
+    const sticky = app.querySelector('[data-mc-sticky]');
+    if (!sticky) return;
 
-    if (state._stickyObserver) {
-      state._stickyObserver.disconnect();
+    if (state._onCompareScroll) {
+      window.removeEventListener('scroll', state._onCompareScroll);
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const visible = !entry.isIntersecting;
-        mini.classList.toggle('mc-is-visible', visible);
-        mini.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      },
-      { threshold: 0, rootMargin: '-1px 0px 0px 0px' }
-    );
-    observer.observe(hero);
-    state._stickyObserver = observer;
+    const onScroll = () => {
+      sticky.classList.toggle('is-compact', window.scrollY > 80);
+    };
+    state._onCompareScroll = onScroll;
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   }
 
   function render() {
@@ -726,7 +712,7 @@
 
     if (state.view === 'compare' && (state.products.length || state.loading)) {
       app.innerHTML = renderCompareView();
-      bindStickyMini();
+      bindHeroSticky();
     } else {
       app.innerHTML = renderSelectView();
     }
@@ -734,7 +720,7 @@
   }
 
   function bindEvents() {
-    const compareBtn = app.querySelector('.mc-btn-compare');
+    const compareBtn = app.querySelector('.mc-btn-compare-91');
     if (compareBtn) {
       compareBtn.addEventListener('mouseenter', () => {
         if (state.selected.length >= 2) {
@@ -749,31 +735,25 @@
       });
     }
 
-    app.querySelectorAll('.mc-slot-remove').forEach((btn) => {
-      btn.addEventListener('click', () => removeProduct(parseInt(btn.dataset.id, 10)));
+    app.querySelectorAll('.mc-slot-91-remove').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeProduct(parseInt(btn.dataset.id, 10));
+      });
     });
 
-    app.querySelectorAll('.mc-slot-open').forEach((btn) => {
+    app.querySelectorAll('.mc-slot-91.mc-slot-empty').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         activateSlot(parseInt(btn.dataset.slot, 10));
-        setTimeout(() => {
-          const input = app.querySelector(`.mc-search-input[data-slot="${btn.dataset.slot}"]`);
-          input?.focus();
-        }, 0);
+        setTimeout(() => app.querySelector('.mc-picker-search')?.focus(), 0);
       });
     });
 
-    app.querySelectorAll('.mc-search-input').forEach((input) => {
-      input.addEventListener('focus', () => {
-        const slot = parseInt(input.dataset.slot, 10);
-        if (state.activeSlot !== slot) activateSlot(slot);
-      });
-      input.addEventListener('input', (e) => {
-        state.activeSlot = parseInt(input.dataset.slot, 10);
-        searchProducts(e.target.value);
-      });
-    });
+    const pickerSearch = app.querySelector('.mc-picker-search');
+    if (pickerSearch) {
+      pickerSearch.addEventListener('input', (e) => searchProducts(e.target.value));
+    }
 
     app.querySelectorAll('.mc-search-dropdown li').forEach((li) => {
       li.addEventListener('click', (e) => {
@@ -799,13 +779,13 @@
       state._outsideClick = true;
       document.addEventListener('click', (e) => {
         if (state.view !== 'select' || state.activeSlot === null) return;
-        if (e.target.closest('.mc-slot-empty') || e.target.closest('.mc-search-dropdown')) return;
+        if (e.target.closest('.mc-picker-panel') || e.target.closest('.mc-slot-91.mc-slot-empty')) return;
         state.activeSlot = null;
         render();
       });
     }
 
-    app.querySelectorAll('.mc-add-btn:not(:disabled)').forEach((btn) => {
+    app.querySelectorAll('.mc-suggest-add:not(:disabled)').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.suggestId, 10);
         const p = state.suggested.find((x) => x.id === id);
