@@ -7,8 +7,8 @@
   const cfg = window.mobileCompareConfig || {};
   const REST = cfg.restUrl || '';
   const MAX = 3;
-  const SEARCH_DEBOUNCE_MS = 450;
-  const SKELETON_SPEC_ROWS = 12;
+  const SEARCH_DEBOUNCE_MS = 200;
+  const SKELETON_SPEC_ROWS = 6;
 
   const state = {
     view: 'select',
@@ -255,7 +255,7 @@
     const exclude = new Set(state.slotProducts.filter(Boolean).map((p) => p.id));
     const q = (state.searchQuery || '').trim().toLowerCase();
 
-    if (q.length >= 2 && !state.searching && state.searchedQuery === q) {
+    if (q.length >= 2 && state.searchResults.length && (state.searching || state.searchedQuery === q)) {
       return state.searchResults.filter((p) => !exclude.has(p.id));
     }
 
@@ -273,27 +273,33 @@
         <ul class="mc-search-dropdown">
           ${items.map((p) => renderDropdownItem(p)).join('')}
         </ul>`;
-    } else if (state.searchQuery.length >= 2 && !state.searching) {
+    } else if (state.searchQuery.trim().length >= 2 && !state.searching && state.searchedQuery === state.searchQuery.trim()) {
       html += `<div class="mc-search-empty">${escapeHtml(t('noResults'))}</div>`;
-    }
-
-    if (state.searching) {
-      html += `<div class="mc-search-status mc-search-status-inline">${renderSpinner()}</div>`;
     }
 
     return html;
   }
 
+  function formatDisplayPrice(product) {
+    const plain = (product.price_plain || '').trim();
+    if (plain && plain !== '0') return plain;
+    if (product.price) {
+      const d = document.createElement('div');
+      d.innerHTML = String(product.price);
+      const text = d.textContent.replace(/\s+/g, ' ').trim();
+      if (text && text !== '0') return text;
+    }
+    return '';
+  }
+
   function renderDropdownItem(p) {
-    const price = p.price_plain || (p.price ? String(p.price).replace(/<[^>]+>/g, '') : '');
-    const stock = p.in_stock === false ? t('outOfStock') : (p.in_stock === true ? t('available') : '');
-    const meta = [price, stock].filter(Boolean).join(' - ');
+    const price = formatDisplayPrice(p);
     return `
       <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price || '')}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
         <img src="${escapeHtml(p.image)}" alt="" />
         <div class="mc-dd-body">
           <span class="mc-dd-name">${escapeHtml(p.name)}</span>
-          ${meta ? `<span class="mc-dd-meta">${escapeHtml(meta)}</span>` : ''}
+          ${price ? `<span class="mc-dd-meta">${escapeHtml(price)}</span>` : ''}
         </div>
       </li>`;
   }
@@ -321,6 +327,7 @@
         }, slot);
         state.searchQuery = '';
         state.searchResults = [];
+        state.searchedQuery = '';
         state.searching = false;
         state.activeSlot = null;
         render();
@@ -359,18 +366,19 @@
     updateSlotDropdown();
 
     searchTimer = setTimeout(() => {
-      state.searching = true;
-      updateSlotDropdown();
-      api('search', { q, limit: 10 })
+      const query = q.trim();
+      api('search', { q: query, limit: 10 })
         .then((d) => {
+          if (state.searchQuery.trim() !== query) return;
           state.searchResults = d.items || [];
-          state.searchedQuery = q;
+          state.searchedQuery = query;
           state.searching = false;
           updateSlotDropdown();
         })
         .catch(() => {
+          if (state.searchQuery.trim() !== query) return;
           state.searchResults = [];
-          state.searchedQuery = q;
+          state.searchedQuery = query;
           state.searching = false;
           updateSlotDropdown();
         });
@@ -603,13 +611,8 @@
   }
 
   function formatPrice(price, plain) {
-    const raw = plain || price;
-    if (!raw || raw === '0') return '—';
-    if (plain) return String(plain).trim();
-    const d = document.createElement('div');
-    d.innerHTML = String(price);
-    const text = d.textContent.replace(/\s+/g, ' ').trim();
-    return text || '—';
+    const text = formatDisplayPrice({ price, price_plain: plain });
+    return text;
   }
 
   function compareTitle(products) {
@@ -632,7 +635,7 @@
           <img src="${escapeHtml(p.image)}" alt="" class="mc-hero-img" />
         </a>
         <h2 class="mc-hero-name">${escapeHtml(p.name)}</h2>
-        <p class="mc-hero-price">${escapeHtml(price)}</p>
+        ${price ? `<p class="mc-hero-price">${escapeHtml(price)}</p>` : ''}
         ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}
       </div>`;
   }
@@ -659,7 +662,6 @@
             <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
             <span>${escapeHtml(t('highlightBetter'))}</span>
           </label>
-          ${skeleton ? `<span class="mc-loading-inline">${renderSpinner()}</span>` : ''}
         </div>
       </div>`;
   }
