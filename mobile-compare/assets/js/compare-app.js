@@ -524,56 +524,84 @@
       </tr>`).join('');
   }
 
-  function formatPrice(price) {
-    if (!price || price === '0' || price === '—') return '—';
-    return String(price).trim();
+  function formatPrice(price, plain) {
+    const raw = plain || price;
+    if (!raw || raw === '0') return '—';
+    if (plain) return String(plain).trim();
+    const d = document.createElement('div');
+    d.innerHTML = String(price);
+    const text = d.textContent.replace(/\s+/g, ' ').trim();
+    return text || '—';
   }
 
-  function renderPhoneHeaderTh(p, skeleton) {
+  function compareTitle(products) {
+    return products.map((p) => p.name).join(' vs ');
+  }
+
+  function renderHeroPhone(p, skeleton) {
     if (skeleton && !p.image) {
       return `
-        <th class="mc-phone-col mc-phone-header">
-          <div class="mc-phone-header-inner">
-            <div class="mc-skeleton mc-skeleton-img-sm"></div>
-            <div class="mc-skeleton mc-skeleton-text"></div>
-          </div>
-        </th>`;
+        <div class="mc-hero-phone mc-hero-skeleton">
+          <div class="mc-skeleton mc-skeleton-hero-img"></div>
+          <div class="mc-skeleton mc-skeleton-text"></div>
+        </div>`;
     }
-    const price = formatPrice(p.price);
+    const price = formatPrice(p.price, p.price_plain);
     return `
-      <th class="mc-phone-col mc-phone-header">
-        <div class="mc-phone-header-inner">
-          <button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
-          <img src="${escapeHtml(p.image)}" alt="" class="mc-phone-img" />
-          <h3 class="mc-phone-name">${escapeHtml(p.name)}</h3>
-          <p class="mc-phone-price">${escapeHtml(price)}</p>
-          ${skeleton ? '' : `<a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-xs mc-btn-outline mc-phone-link">${escapeHtml(t('viewDetails'))}</a>`}
-        </div>
-      </th>`;
+      <div class="mc-hero-phone">
+        <button type="button" class="mc-hero-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
+        <a href="${escapeHtml(p.url)}" class="mc-hero-img-link">
+          <img src="${escapeHtml(p.image)}" alt="" class="mc-hero-img" />
+        </a>
+        <h2 class="mc-hero-name">${escapeHtml(p.name)}</h2>
+        <p class="mc-hero-price">${escapeHtml(price)}</p>
+        ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}
+      </div>`;
   }
 
-  function renderAddPhoneTh() {
+  function renderHeroAddSlot() {
     return `
-      <th class="mc-phone-col mc-phone-header mc-phone-add-col">
-        <div class="mc-phone-header-inner mc-phone-add">
-          <span class="mc-add-icon-sm">+</span>
-          <button type="button" class="mc-btn mc-btn-xs mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
-        </div>
-      </th>`;
+      <div class="mc-hero-phone mc-hero-add">
+        <button type="button" class="mc-btn-add-compare mc-back-select">
+          <span class="mc-btn-add-icon">+</span>
+          ${escapeHtml(t('addToCompare'))}
+        </button>
+      </div>`;
+  }
+
+  function renderStickyMini(products, emptySlots, skeleton) {
+    const cells = products.map((p) => {
+      if (skeleton && !p.image) {
+        return `<div class="mc-mini-cell"><div class="mc-skeleton mc-skeleton-mini-img"></div></div>`;
+      }
+      return `
+        <div class="mc-mini-cell">
+          <img src="${escapeHtml(p.image)}" alt="" class="mc-mini-img" />
+          <span class="mc-mini-name">${escapeHtml(p.name)}</span>
+        </div>`;
+    }).join('');
+    const empty = Array(emptySlots).fill('<div class="mc-mini-cell mc-mini-empty"></div>').join('');
+    return `
+      <div class="mc-sticky-mini" aria-hidden="true">
+        <div class="mc-mini-label"></div>
+        ${cells}${empty}
+      </div>`;
   }
 
   function renderToolbarBar(skeleton) {
     return `
-      <div class="mc-toolbar-bar">
-        <label class="mc-toggle mc-toggle-compact">
-          <input type="checkbox" class="mc-toggle-diff" ${state.showDiffOnly ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
-          <span>${escapeHtml(t('showDifferences'))}</span>
-        </label>
-        <label class="mc-toggle mc-toggle-compact">
-          <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
-          <span>${escapeHtml(t('highlightBetter'))}</span>
-        </label>
-        ${skeleton ? `<span class="mc-loading-inline">${renderSpinner()} ${escapeHtml(t('loadingCompare'))}</span>` : ''}
+      <div class="mc-filter-bar">
+        <div class="mc-filter-bar-inner">
+          <label class="mc-toggle mc-toggle-compact">
+            <input type="checkbox" class="mc-toggle-diff" ${state.showDiffOnly ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
+            <span>${escapeHtml(t('showDifferences'))}</span>
+          </label>
+          <label class="mc-toggle mc-toggle-compact">
+            <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
+            <span>${escapeHtml(t('highlightBetter'))}</span>
+          </label>
+          ${skeleton ? `<span class="mc-loading-inline">${renderSpinner()}</span>` : ''}
+        </div>
       </div>`;
   }
 
@@ -623,43 +651,71 @@
     const specs = skeleton ? [] : filteredSpecs();
     const emptySlots = MAX - products.length;
 
-    const phoneHeaders = products.map((p) => renderPhoneHeaderTh(p, skeleton)).join('');
-    const addCol = !skeleton && emptySlots > 0 ? renderAddPhoneTh() : '';
+    const phoneHeaders = products.map((p) => renderHeroPhone(p, skeleton)).join('');
+    const addCol = !skeleton && emptySlots > 0 ? renderHeroAddSlot() : '';
     const specRows = renderSpecRows(specs, emptySlots, skeleton);
     const colCount = products.length + (addCol ? 1 : 0);
+    const title = compareTitle(products);
 
     return `
       <div class="mc-page mc-compare" data-cols="${colCount}">
-        <header class="mc-header-compact">
-          <nav class="mc-breadcrumb"><a href="${escapeHtml(cfg.homeUrl || '/')}">Home</a> › Compare</nav>
-          <div class="mc-header-compact-actions">
-            <button type="button" class="mc-btn mc-btn-xs mc-btn-ghost mc-share-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('share'))}</button>
-            <button type="button" class="mc-btn mc-btn-xs mc-btn-ghost mc-clear-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
-            <button type="button" class="mc-btn mc-btn-xs mc-btn-ghost mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
+        <header class="mc-compare-top">
+          <div class="mc-compare-top-left">
+            <nav class="mc-breadcrumb"><a href="${escapeHtml(cfg.homeUrl || '/')}">Home</a> › Compare</nav>
+            <h1 class="mc-compare-title">${escapeHtml(title)}</h1>
+          </div>
+          <div class="mc-compare-top-actions">
+            <button type="button" class="mc-link-btn mc-share-btn" ${skeleton ? 'disabled' : ''}>
+              ${escapeHtml(t('share'))} <span aria-hidden="true">⎘</span>
+            </button>
+            <button type="button" class="mc-link-btn mc-clear-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
+            <button type="button" class="mc-link-btn mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
           </div>
         </header>
+
+        <div class="mc-compare-hero" data-mc-hero>
+          <div class="mc-hero-grid" style="--mc-cols: ${colCount}">
+            ${phoneHeaders}
+            ${addCol}
+          </div>
+        </div>
+
+        ${renderStickyMini(products, emptySlots, skeleton)}
 
         ${renderToolbarBar(skeleton)}
 
         <div class="mc-compare-table-wrap">
-          <table class="mc-compare-table">
-            <thead>
-              <tr class="mc-phone-header-row">
-                <th class="mc-corner-col" aria-hidden="true"></th>
-                ${phoneHeaders}
-                ${addCol}
-              </tr>
-            </thead>
+          <table class="mc-compare-table" style="--mc-cols: ${colCount}">
+            <colgroup>
+              <col class="mc-col-label" />
+              ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
+            </colgroup>
             <tbody>${specRows}</tbody>
           </table>
         </div>
-
-        ${!skeleton && emptySlots > 0 ? `
-        <footer class="mc-footer-compact">
-          <button type="button" class="mc-btn mc-btn-sm mc-btn-primary mc-back-select">+ ${escapeHtml(t('addAnotherPhone'))}</button>
-        </footer>` : ''}
       </div>
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
+  }
+
+  function bindStickyMini() {
+    const hero = app.querySelector('[data-mc-hero]');
+    const mini = app.querySelector('.mc-sticky-mini');
+    if (!hero || !mini) return;
+
+    if (state._stickyObserver) {
+      state._stickyObserver.disconnect();
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = !entry.isIntersecting;
+        mini.classList.toggle('mc-is-visible', visible);
+        mini.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      },
+      { threshold: 0, rootMargin: '-1px 0px 0px 0px' }
+    );
+    observer.observe(hero);
+    state._stickyObserver = observer;
   }
 
   function render() {
@@ -670,6 +726,7 @@
 
     if (state.view === 'compare' && (state.products.length || state.loading)) {
       app.innerHTML = renderCompareView();
+      bindStickyMini();
     } else {
       app.innerHTML = renderSelectView();
     }

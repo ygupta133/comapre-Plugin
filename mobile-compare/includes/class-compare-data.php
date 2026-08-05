@@ -272,12 +272,13 @@ class Mobile_Compare_Data {
 		$image    = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
 
 		return array(
-			'id'    => $product->get_id(),
-			'name'  => $product->get_name(),
-			'slug'  => $product->get_slug(),
-			'image' => $image,
-			'price' => $product->get_price_html(),
-			'url'   => $product->get_permalink(),
+			'id'          => $product->get_id(),
+			'name'        => $product->get_name(),
+			'slug'        => $product->get_slug(),
+			'image'       => $image,
+			'price'       => $product->get_price_html(),
+			'price_plain' => wp_strip_all_tags( $product->get_price_html() ),
+			'url'         => $product->get_permalink(),
 		);
 	}
 
