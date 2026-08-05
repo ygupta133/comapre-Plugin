@@ -7,7 +7,7 @@
   const cfg = window.mobileCompareConfig || {};
   const REST = cfg.restUrl || '';
   const MAX = 3;
-  const SEARCH_DEBOUNCE_MS = 280;
+  const SEARCH_DEBOUNCE_MS = 450;
   const SKELETON_SPEC_ROWS = 12;
 
   const state = {
@@ -21,6 +21,7 @@
     highlightBetter: true,
     searchResults: [],
     searchQuery: '',
+    searchedQuery: '',
     popular: [],
     suggested: [],
     loading: false,
@@ -252,16 +253,86 @@
 
   function slotPickerItems() {
     const exclude = new Set(state.slotProducts.filter(Boolean).map((p) => p.id));
-    if (state.searchQuery && state.searchQuery.length >= 2) {
+    const q = (state.searchQuery || '').trim().toLowerCase();
+
+    if (q.length >= 2 && !state.searching && state.searchedQuery === q) {
       return state.searchResults.filter((p) => !exclude.has(p.id));
     }
-    return state.suggested.filter((p) => !exclude.has(p.id));
+
+    const base = state.suggested.filter((p) => !exclude.has(p.id));
+    if (!q) return base;
+    return base.filter((p) => p.name.toLowerCase().includes(q));
+  }
+
+  function renderDropdownListHtml() {
+    const items = slotPickerItems();
+    let html = '';
+
+    if (items.length) {
+      html += `
+        <ul class="mc-search-dropdown">
+          ${items.map((p) => renderDropdownItem(p)).join('')}
+        </ul>`;
+    } else if (state.searchQuery.length >= 2 && !state.searching) {
+      html += `<div class="mc-search-empty">${escapeHtml(t('noResults'))}</div>`;
+    }
+
+    if (state.searching) {
+      html += `<div class="mc-search-status mc-search-status-inline">${renderSpinner()}</div>`;
+    }
+
+    return html;
+  }
+
+  function renderDropdownItem(p) {
+    const price = p.price_plain || (p.price ? String(p.price).replace(/<[^>]+>/g, '') : '');
+    const stock = p.in_stock === false ? t('outOfStock') : (p.in_stock === true ? t('available') : '');
+    const meta = [price, stock].filter(Boolean).join(' - ');
+    return `
+      <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price || '')}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
+        <img src="${escapeHtml(p.image)}" alt="" />
+        <div class="mc-dd-body">
+          <span class="mc-dd-name">${escapeHtml(p.name)}</span>
+          ${meta ? `<span class="mc-dd-meta">${escapeHtml(meta)}</span>` : ''}
+        </div>
+      </li>`;
+  }
+
+  function updateSlotDropdown() {
+    const dropdown = app.querySelector('.mc-slot-dropdown');
+    if (!dropdown) return;
+    dropdown.innerHTML = renderDropdownListHtml();
+    bindDropdownItems(dropdown);
+  }
+
+  function bindDropdownItems(root) {
+    root.querySelectorAll('.mc-search-dropdown li').forEach((li) => {
+      li.addEventListener('mousedown', (e) => e.preventDefault());
+      li.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const slot = li.dataset.slot != null ? parseInt(li.dataset.slot, 10) : state.activeSlot;
+        addProduct({
+          id: parseInt(li.dataset.id, 10),
+          name: li.dataset.name,
+          slug: li.dataset.slug,
+          image: li.dataset.image,
+          price: li.dataset.price,
+          url: li.dataset.url,
+        }, slot);
+        state.searchQuery = '';
+        state.searchResults = [];
+        state.searching = false;
+        state.activeSlot = null;
+        render();
+      });
+    });
   }
 
   function activateSlot(index) {
     state.activeSlot = index;
     state.searchQuery = '';
     state.searchResults = [];
+    state.searchedQuery = '';
     state.searching = false;
     if (!state.suggested.length) {
       api('suggested', { exclude: idsParam() }).then((d) => {
@@ -280,24 +351,28 @@
     if (!q || q.length < 2) {
       state.searchResults = [];
       state.searching = false;
-      render();
+      state.searchedQuery = '';
+      updateSlotDropdown();
       return;
     }
 
-    state.searching = true;
-    render();
+    updateSlotDropdown();
 
     searchTimer = setTimeout(() => {
+      state.searching = true;
+      updateSlotDropdown();
       api('search', { q, limit: 10 })
         .then((d) => {
           state.searchResults = d.items || [];
+          state.searchedQuery = q;
           state.searching = false;
-          render();
+          updateSlotDropdown();
         })
         .catch(() => {
           state.searchResults = [];
+          state.searchedQuery = q;
           state.searching = false;
-          render();
+          updateSlotDropdown();
         });
     }, SEARCH_DEBOUNCE_MS);
   }
@@ -396,44 +471,38 @@
   }
 
   function renderSlotDropdown() {
-    if (state.searching) {
-      return `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>`;
-    }
-    const items = slotPickerItems();
-    if (!items.length) return '';
-    return `
-      <ul class="mc-search-dropdown">
-        ${items.map((p) => `
-          <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
-            <img src="${escapeHtml(p.image)}" alt="" /> ${escapeHtml(p.name)}
-          </li>`).join('')}
-      </ul>`;
+    return renderDropdownListHtml();
   }
 
   function renderSelectSlot(index) {
     const item = state.slotProducts[index];
     if (item) {
       return `
-        <div class="mc-slot-91 mc-slot-filled" data-index="${index}">
-          <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-91-img" />
-          <span class="mc-slot-91-name">${escapeHtml(item.name)}</span>
-          <button type="button" class="mc-slot-91-remove" data-id="${item.id}" aria-label="Remove">×</button>
+        <div class="mc-slot-wrap" data-slot="${index}">
+          <div class="mc-slot-91 mc-slot-filled" data-index="${index}">
+            <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-91-img" />
+            <span class="mc-slot-91-name">${escapeHtml(item.name)}</span>
+            <button type="button" class="mc-slot-91-remove" data-id="${item.id}" aria-label="Remove">×</button>
+          </div>
         </div>`;
     }
-    const isActive = state.activeSlot === index;
-    return `
-      <button type="button" class="mc-slot-91 mc-slot-empty ${isActive ? 'is-active' : ''}" data-slot="${index}">
-        ${escapeHtml(t('selectProduct'))}
-      </button>`;
-  }
 
-  function renderPickerPanel() {
-    if (state.activeSlot === null) return '';
+    const isActive = state.activeSlot === index;
+    if (isActive) {
+      return `
+        <div class="mc-slot-wrap is-open" data-slot="${index}">
+          <div class="mc-slot-91 mc-slot-picker">
+            <input type="text" class="mc-picker-search" placeholder="${escapeHtml(t('searchOrPick'))}" value="${escapeHtml(state.searchQuery)}" autocomplete="off" />
+          </div>
+          <div class="mc-slot-dropdown">${renderSlotDropdown()}</div>
+        </div>`;
+    }
+
     return `
-      <div class="mc-picker-panel">
-        <input type="text" class="mc-picker-search" placeholder="${escapeHtml(t('searchOrPick'))}" value="${escapeHtml(state.searchQuery)}" autocomplete="off" />
-        ${state.searching ? `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>` : ''}
-        ${!state.searching ? renderSlotDropdown() : ''}
+      <div class="mc-slot-wrap" data-slot="${index}">
+        <button type="button" class="mc-slot-91 mc-slot-empty" data-slot="${index}">
+          ${escapeHtml(t('selectProduct'))}
+        </button>
       </div>`;
   }
 
@@ -456,7 +525,6 @@
             <span class="mc-vs-pill">vs</span>
             ${renderSelectSlot(2)}
           </div>
-          ${renderPickerPanel()}
           <button type="button" class="mc-btn-compare-91 ${canCompare ? 'is-ready' : ''} ${state.comparing ? 'mc-btn-loading' : ''}" ${canCompare && !state.comparing ? '' : 'disabled'}>
             ${state.comparing ? renderSpinner() : ''}
             ${escapeHtml(t('compareNow'))}
@@ -696,12 +764,8 @@
       window.removeEventListener('scroll', state._onCompareScroll);
     }
 
-    const onScroll = () => {
-      sticky.classList.toggle('is-compact', window.scrollY > 80);
-    };
-    state._onCompareScroll = onScroll;
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    /* Desktop: keep full-size hero when sticky — no compact shrink */
+    state._onCompareScroll = null;
   }
 
   function render() {
@@ -746,7 +810,14 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         activateSlot(parseInt(btn.dataset.slot, 10));
-        setTimeout(() => app.querySelector('.mc-picker-search')?.focus(), 0);
+        requestAnimationFrame(() => {
+          const input = app.querySelector('.mc-slot-wrap.is-open .mc-picker-search');
+          if (input) {
+            input.focus();
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+          }
+        });
       });
     });
 
@@ -755,31 +826,14 @@
       pickerSearch.addEventListener('input', (e) => searchProducts(e.target.value));
     }
 
-    app.querySelectorAll('.mc-search-dropdown li').forEach((li) => {
-      li.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const slot = li.dataset.slot != null ? parseInt(li.dataset.slot, 10) : state.activeSlot;
-        addProduct({
-          id: parseInt(li.dataset.id, 10),
-          name: li.dataset.name,
-          slug: li.dataset.slug,
-          image: li.dataset.image,
-          price: li.dataset.price,
-          url: li.dataset.url,
-        }, slot);
-        state.searchQuery = '';
-        state.searchResults = [];
-        state.searching = false;
-        state.activeSlot = null;
-        render();
-      });
-    });
+    const dropdown = app.querySelector('.mc-slot-dropdown');
+    if (dropdown) bindDropdownItems(dropdown);
 
     if (!state._outsideClick) {
       state._outsideClick = true;
       document.addEventListener('click', (e) => {
         if (state.view !== 'select' || state.activeSlot === null) return;
-        if (e.target.closest('.mc-picker-panel') || e.target.closest('.mc-slot-91.mc-slot-empty')) return;
+        if (e.target.closest('.mc-slot-wrap.is-open') || e.target.closest('.mc-slot-91.mc-slot-empty')) return;
         state.activeSlot = null;
         render();
       });

@@ -279,6 +279,7 @@ class Mobile_Compare_Data {
 			'price'       => $product->get_price_html(),
 			'price_plain' => wp_strip_all_tags( $product->get_price_html() ),
 			'url'         => $product->get_permalink(),
+			'in_stock'    => $product->is_in_stock(),
 		);
 	}
 
