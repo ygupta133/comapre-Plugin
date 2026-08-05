@@ -447,6 +447,26 @@ body.mobile-compare-blank-template .entry-header {
   text-align: left;
 }
 
+.mc-slot-empty .mc-search-dropdown li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.mc-slot-empty .mc-search-dropdown li:hover {
+  background: #f3f4f6;
+}
+
+.mc-slot-empty .mc-search-dropdown img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .mc-slot-filled {
   background: #fff;
   justify-content: flex-start;
@@ -811,6 +831,9 @@ body.mobile-compare-blank-template .entry-header {
   min-width: var(--mc-label-w);
   background: #f8f9fb;
   border-right: 2px solid #d1d5db;
+  position: sticky;
+  left: 0;
+  z-index: 12;
 }
 
 .mc-phone-col {
