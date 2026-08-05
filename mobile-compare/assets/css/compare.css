@@ -312,7 +312,6 @@
   background: #2563eb;
   color: #fff;
   border-color: #2563eb;
-  margin-top: 6px;
 }
 
 .mc-btn-compare {
@@ -810,12 +809,6 @@
 .mc-footer-compact {
   text-align: center;
   padding: 10px 0 4px;
-}
-
-.mc-btn-buy {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
 }
 
 /* Toggle (shared) */
