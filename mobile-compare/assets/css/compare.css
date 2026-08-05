@@ -702,6 +702,12 @@ body.mobile-compare-blank-template .entry-header {
   -webkit-box-orient: vertical;
 }
 
+/* Compare view — 91mobiles unified layout with working sticky */
+.mc-page.mc-compare {
+  --mc-label-w: 100px;
+  --mc-phone-w: 130px;
+}
+
 .mc-compare {
   max-width: 100%;
 }
