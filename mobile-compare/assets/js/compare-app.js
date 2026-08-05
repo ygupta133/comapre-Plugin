@@ -13,6 +13,7 @@
   const state = {
     view: 'select',
     selected: [],
+    slotProducts: [null, null, null],
     products: [],
     specs: [],
     config: null,
@@ -69,10 +70,14 @@
     return ids.slice().sort((a, b) => a - b).join(',');
   }
 
+  function syncSelectedFromSlots() {
+    state.selected = state.slotProducts.filter(Boolean);
+  }
+
   function applyCompareData(data) {
     state.products = data.products || [];
     state.specs = data.specs || [];
-    state.selected = state.products.map((p) => ({
+    const mapped = state.products.map((p) => ({
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -80,6 +85,11 @@
       price: p.price,
       url: p.url,
     }));
+    state.slotProducts = [null, null, null];
+    mapped.forEach((p, i) => {
+      if (i < MAX) state.slotProducts[i] = p;
+    });
+    state.selected = mapped;
   }
 
   function prefetchCompare(ids) {
@@ -220,10 +230,12 @@
     api('suggested', { exclude: idsParam() }).then((d) => { state.suggested = d.items || []; render(); });
   }
 
-  function addProduct(product) {
-    if (state.selected.find((p) => p.id === product.id)) return;
-    if (state.selected.length >= MAX) return;
-    state.selected.push(product);
+  function addProduct(product, slotIndex) {
+    if (state.slotProducts.some((p) => p && p.id === product.id)) return;
+    const idx = typeof slotIndex === 'number' ? slotIndex : state.slotProducts.findIndex((p) => !p);
+    if (idx < 0 || idx >= MAX) return;
+    state.slotProducts[idx] = product;
+    syncSelectedFromSlots();
     loadSelectData();
     render();
     if (state.selected.length >= 2) {
@@ -232,9 +244,33 @@
   }
 
   function removeProduct(id) {
-    state.selected = state.selected.filter((p) => p.id !== id);
+    state.slotProducts = state.slotProducts.map((p) => (p && p.id === id ? null : p));
+    syncSelectedFromSlots();
     loadSelectData();
     render();
+  }
+
+  function slotPickerItems() {
+    const exclude = new Set(state.slotProducts.filter(Boolean).map((p) => p.id));
+    if (state.searchQuery && state.searchQuery.length >= 2) {
+      return state.searchResults.filter((p) => !exclude.has(p.id));
+    }
+    return state.suggested.filter((p) => !exclude.has(p.id));
+  }
+
+  function activateSlot(index) {
+    state.activeSlot = index;
+    state.searchQuery = '';
+    state.searchResults = [];
+    state.searching = false;
+    if (!state.suggested.length) {
+      api('suggested', { exclude: idsParam() }).then((d) => {
+        state.suggested = d.items || [];
+        render();
+      });
+    } else {
+      render();
+    }
   }
 
   function searchProducts(q) {
@@ -359,8 +395,23 @@
       </div>`;
   }
 
+  function renderSlotDropdown() {
+    if (state.searching) {
+      return `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>`;
+    }
+    const items = slotPickerItems();
+    if (!items.length) return '';
+    return `
+      <ul class="mc-search-dropdown">
+        ${items.map((p) => `
+          <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
+            <img src="${escapeHtml(p.image)}" alt="" /> ${escapeHtml(p.name)}
+          </li>`).join('')}
+      </ul>`;
+  }
+
   function renderSelectSlot(index) {
-    const item = state.selected[index];
+    const item = state.slotProducts[index];
     if (item) {
       return `
         <div class="mc-slot-card mc-slot-filled" data-index="${index}">
@@ -371,17 +422,15 @@
     }
     const isActive = state.activeSlot === index;
     return `
-      <div class="mc-slot-card mc-slot-empty" data-index="${index}">
-        <div class="mc-slot-placeholder">+</div>
-        <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('selectProduct'))}" data-slot="${index}" value="${isActive ? escapeHtml(state.searchQuery) : ''}" autocomplete="off" />
-        ${isActive && state.searching ? `<div class="mc-search-status">${renderSpinner()}</div>` : ''}
-        ${isActive && !state.searching && state.searchResults.length ? `
-          <ul class="mc-search-dropdown">
-            ${state.searchResults.map((p) => `
-              <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}">
-                <img src="${escapeHtml(p.image)}" alt="" /> ${escapeHtml(p.name)}
-              </li>`).join('')}
-          </ul>` : ''}
+      <div class="mc-slot-card mc-slot-empty ${isActive ? 'mc-slot-active' : ''}" data-index="${index}">
+        <button type="button" class="mc-slot-open" data-slot="${index}">
+          <span class="mc-slot-placeholder">+</span>
+          <span class="mc-slot-open-label">${escapeHtml(t('selectProduct'))}</span>
+        </button>
+        <div class="mc-slot-picker ${isActive ? 'mc-slot-picker-open' : ''}">
+          <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('searchOrPick'))}" data-slot="${index}" value="${isActive ? escapeHtml(state.searchQuery) : ''}" autocomplete="off" />
+          ${isActive ? renderSlotDropdown() : ''}
+        </div>
       </div>`;
   }
 
@@ -475,35 +524,42 @@
       </tr>`).join('');
   }
 
-  function renderPhoneHeaderCell(p, skeleton) {
-    if (skeleton && !p.image) {
-      return `
-        <div class="mc-phone-header-cell">
-          <div class="mc-skeleton mc-skeleton-img-sm"></div>
-          <div class="mc-skeleton mc-skeleton-text"></div>
-        </div>`;
-    }
-    return `
-      <div class="mc-phone-header-cell">
-        <button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
-        <img src="${escapeHtml(p.image)}" alt="" class="mc-phone-img" />
-        <h3 class="mc-phone-name">${escapeHtml(p.name)}</h3>
-        <p class="mc-phone-price">${p.price}</p>
-        ${skeleton ? '' : `
-          <div class="mc-phone-actions">
-            <a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-xs mc-btn-outline">${escapeHtml(t('viewDetails'))}</a>
-            <a href="${escapeHtml(p.buy_url || p.url)}" class="mc-btn mc-btn-xs mc-btn-buy">${escapeHtml(t('buyNow'))}</a>
-          </div>
-        `}
-      </div>`;
+  function formatPrice(price) {
+    if (!price || price === '0' || price === '—') return '—';
+    return String(price).trim();
   }
 
-  function renderAddPhoneCell() {
+  function renderPhoneHeaderTh(p, skeleton) {
+    if (skeleton && !p.image) {
+      return `
+        <th class="mc-phone-col mc-phone-header">
+          <div class="mc-phone-header-inner">
+            <div class="mc-skeleton mc-skeleton-img-sm"></div>
+            <div class="mc-skeleton mc-skeleton-text"></div>
+          </div>
+        </th>`;
+    }
+    const price = formatPrice(p.price);
     return `
-      <div class="mc-phone-header-cell mc-phone-add-col">
-        <span class="mc-add-icon-sm">+</span>
-        <button type="button" class="mc-btn mc-btn-xs mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
-      </div>`;
+      <th class="mc-phone-col mc-phone-header">
+        <div class="mc-phone-header-inner">
+          <button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
+          <img src="${escapeHtml(p.image)}" alt="" class="mc-phone-img" />
+          <h3 class="mc-phone-name">${escapeHtml(p.name)}</h3>
+          <p class="mc-phone-price">${escapeHtml(price)}</p>
+          ${skeleton ? '' : `<a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-xs mc-btn-outline mc-phone-link">${escapeHtml(t('viewDetails'))}</a>`}
+        </div>
+      </th>`;
+  }
+
+  function renderAddPhoneTh() {
+    return `
+      <th class="mc-phone-col mc-phone-header mc-phone-add-col">
+        <div class="mc-phone-header-inner mc-phone-add">
+          <span class="mc-add-icon-sm">+</span>
+          <button type="button" class="mc-btn mc-btn-xs mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
+        </div>
+      </th>`;
   }
 
   function renderToolbarBar(skeleton) {
@@ -567,12 +623,13 @@
     const specs = skeleton ? [] : filteredSpecs();
     const emptySlots = MAX - products.length;
 
-    const phoneHeaders = products.map((p) => renderPhoneHeaderCell(p, skeleton)).join('');
-    const addCol = !skeleton && emptySlots > 0 ? renderAddPhoneCell() : '';
+    const phoneHeaders = products.map((p) => renderPhoneHeaderTh(p, skeleton)).join('');
+    const addCol = !skeleton && emptySlots > 0 ? renderAddPhoneTh() : '';
     const specRows = renderSpecRows(specs, emptySlots, skeleton);
+    const colCount = products.length + (addCol ? 1 : 0);
 
     return `
-      <div class="mc-page mc-compare">
+      <div class="mc-page mc-compare" data-cols="${colCount}">
         <header class="mc-header-compact">
           <nav class="mc-breadcrumb"><a href="${escapeHtml(cfg.homeUrl || '/')}">Home</a> › Compare</nav>
           <div class="mc-header-compact-actions">
@@ -584,18 +641,15 @@
 
         ${renderToolbarBar(skeleton)}
 
-        <div class="mc-sticky-phone-bar">
-          <div class="mc-sync-scroll" data-mc-sync>
-            <div class="mc-phone-header-track">
-              <div class="mc-label-spacer" aria-hidden="true"></div>
-              ${phoneHeaders}
-              ${addCol}
-            </div>
-          </div>
-        </div>
-
-        <div class="mc-sync-scroll mc-spec-scroll" data-mc-sync>
-          <table class="mc-compare-table mc-spec-only">
+        <div class="mc-compare-table-wrap">
+          <table class="mc-compare-table">
+            <thead>
+              <tr class="mc-phone-header-row">
+                <th class="mc-corner-col" aria-hidden="true"></th>
+                ${phoneHeaders}
+                ${addCol}
+              </tr>
+            </thead>
             <tbody>${specRows}</tbody>
           </table>
         </div>
@@ -606,23 +660,6 @@
         </footer>` : ''}
       </div>
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
-  }
-
-  function bindScrollSync() {
-    const scrollers = app.querySelectorAll('[data-mc-sync]');
-    if (scrollers.length < 2) return;
-    let syncing = false;
-    scrollers.forEach((el) => {
-      el.addEventListener('scroll', () => {
-        if (syncing) return;
-        syncing = true;
-        const left = el.scrollLeft;
-        scrollers.forEach((other) => {
-          if (other !== el) other.scrollLeft = left;
-        });
-        syncing = false;
-      }, { passive: true });
-    });
   }
 
   function render() {
@@ -659,9 +696,21 @@
       btn.addEventListener('click', () => removeProduct(parseInt(btn.dataset.id, 10)));
     });
 
+    app.querySelectorAll('.mc-slot-open').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        activateSlot(parseInt(btn.dataset.slot, 10));
+        setTimeout(() => {
+          const input = app.querySelector(`.mc-search-input[data-slot="${btn.dataset.slot}"]`);
+          input?.focus();
+        }, 0);
+      });
+    });
+
     app.querySelectorAll('.mc-search-input').forEach((input) => {
       input.addEventListener('focus', () => {
-        state.activeSlot = parseInt(input.dataset.slot, 10);
+        const slot = parseInt(input.dataset.slot, 10);
+        if (state.activeSlot !== slot) activateSlot(slot);
       });
       input.addEventListener('input', (e) => {
         state.activeSlot = parseInt(input.dataset.slot, 10);
@@ -670,7 +719,9 @@
     });
 
     app.querySelectorAll('.mc-search-dropdown li').forEach((li) => {
-      li.addEventListener('click', () => {
+      li.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const slot = li.dataset.slot != null ? parseInt(li.dataset.slot, 10) : state.activeSlot;
         addProduct({
           id: parseInt(li.dataset.id, 10),
           name: li.dataset.name,
@@ -678,7 +729,7 @@
           image: li.dataset.image,
           price: li.dataset.price,
           url: li.dataset.url,
-        });
+        }, slot);
         state.searchQuery = '';
         state.searchResults = [];
         state.searching = false;
@@ -687,11 +738,24 @@
       });
     });
 
+    if (!state._outsideClick) {
+      state._outsideClick = true;
+      document.addEventListener('click', (e) => {
+        if (state.view !== 'select' || state.activeSlot === null) return;
+        if (e.target.closest('.mc-slot-empty') || e.target.closest('.mc-search-dropdown')) return;
+        state.activeSlot = null;
+        render();
+      });
+    }
+
     app.querySelectorAll('.mc-add-btn:not(:disabled)').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.suggestId, 10);
         const p = state.suggested.find((x) => x.id === id);
-        if (p) addProduct(p);
+        if (p) {
+          const slot = state.slotProducts.findIndex((s) => !s);
+          if (slot >= 0) addProduct(p, slot);
+        }
       });
     });
 
@@ -720,6 +784,7 @@
 
     app.querySelector('.mc-clear-btn')?.addEventListener('click', () => {
       state.selected = [];
+      state.slotProducts = [null, null, null];
       state.products = [];
       state.specs = [];
       state.view = 'select';
@@ -745,13 +810,11 @@
     app.querySelectorAll('[data-remove-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.removeId, 10);
-        state.selected = state.selected.filter((p) => p.id !== id);
+        removeProduct(id);
         const remaining = state.selected.map((p) => p.id);
         navigateCompare(remaining);
       });
     });
-
-    bindScrollSync();
   }
 
   /* ─── Init ─── */

@@ -203,6 +203,7 @@ class Mobile_Compare_REST_API {
 					'subtitle'           => __( 'Compare up to 3 smartphones and find the best one for you.', 'mobile-compare' ),
 					'selectProduct'      => __( 'Select a product', 'mobile-compare' ),
 					'selectLabel'        => __( 'Select Mobiles to Compare', 'mobile-compare' ),
+					'searchOrPick'       => __( 'Search or pick a phone', 'mobile-compare' ),
 					'compareNow'         => __( 'Compare Now!', 'mobile-compare' ),
 					'addToCompare'       => __( 'Add to Compare', 'mobile-compare' ),
 					'addedToCompare'     => __( 'Added to Compare', 'mobile-compare' ),
