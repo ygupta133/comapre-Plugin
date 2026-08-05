@@ -25,6 +25,7 @@ final class Mobile_Compare_Plugin {
 
 		add_shortcode( 'mobile_compare', array( $this, 'render_shortcode' ) );
 		add_filter( 'template_include', array( $this, 'maybe_use_compare_template' ) );
+		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 	}
 
 	/**
@@ -57,5 +58,18 @@ final class Mobile_Compare_Plugin {
 		}
 
 		return $template;
+	}
+
+	/**
+	 * Body class for compare pages — hides duplicate theme titles via CSS.
+	 *
+	 * @param string[] $classes Body classes.
+	 * @return string[]
+	 */
+	public function add_body_class( array $classes ): array {
+		if ( Mobile_Compare_Assets::is_compare_context() ) {
+			$classes[] = 'mobile-compare-active';
+		}
+		return $classes;
 	}
 }

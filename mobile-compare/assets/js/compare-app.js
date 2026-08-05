@@ -363,17 +363,18 @@
     const item = state.selected[index];
     if (item) {
       return `
-        <div class="mc-slot mc-slot-filled" data-index="${index}">
+        <div class="mc-slot-card mc-slot-filled" data-index="${index}">
+          <button type="button" class="mc-slot-remove" data-id="${item.id}" aria-label="Remove">×</button>
           <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-img" />
           <span class="mc-slot-name">${escapeHtml(item.name)}</span>
-          <button type="button" class="mc-slot-remove" data-id="${item.id}" aria-label="Remove">×</button>
         </div>`;
     }
     const isActive = state.activeSlot === index;
     return `
-      <div class="mc-slot mc-slot-empty" data-index="${index}">
+      <div class="mc-slot-card mc-slot-empty" data-index="${index}">
+        <div class="mc-slot-placeholder">+</div>
         <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('selectProduct'))}" data-slot="${index}" value="${isActive ? escapeHtml(state.searchQuery) : ''}" autocomplete="off" />
-        ${isActive && state.searching ? `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>` : ''}
+        ${isActive && state.searching ? `<div class="mc-search-status">${renderSpinner()}</div>` : ''}
         ${isActive && !state.searching && state.searchResults.length ? `
           <ul class="mc-search-dropdown">
             ${state.searchResults.map((p) => `
@@ -389,13 +390,10 @@
     return `
       <div class="mc-page mc-select">
         ${state.error ? `<div class="mc-alert mc-alert-error" role="alert">${escapeHtml(state.error)}</div>` : ''}
-        <header class="mc-header">
-          <h1 class="mc-title">${escapeHtml(t('title'))}</h1>
-        </header>
 
         <section class="mc-select-section">
-          <h2 class="mc-section-label">Select Mobiles to Compare</h2>
-          <div class="mc-slots-row">
+          <p class="mc-section-label">${escapeHtml(t('selectLabel'))}</p>
+          <div class="mc-slots-scroll">
             ${renderSelectSlot(0)}
             <span class="mc-vs-badge">vs</span>
             ${renderSelectSlot(1)}
@@ -444,8 +442,8 @@
 
         ${state.popular.length ? `
         <section class="mc-section">
-          <h2>${escapeHtml(t('popularTitle'))}</h2>
-          <div class="mc-popular-grid">
+          <h2 class="mc-section-title">${escapeHtml(t('popularTitle'))}</h2>
+          <div class="mc-popular-scroll">
             ${state.popular.map((pair) => {
               const a = pair.products[0];
               const b = pair.products[1];
@@ -477,59 +475,50 @@
       </tr>`).join('');
   }
 
-  function renderPhoneHeaderCell(p, i, skeleton) {
+  function renderPhoneHeaderCell(p, skeleton) {
     if (skeleton && !p.image) {
       return `
-        <th class="mc-phone-col mc-phone-header">
-          <div class="mc-phone-header-inner mc-phone-skeleton">
-            <div class="mc-skeleton mc-skeleton-img-sm"></div>
-            <div class="mc-skeleton mc-skeleton-text"></div>
-            <div class="mc-skeleton mc-skeleton-text mc-skeleton-text-sm"></div>
-          </div>
-        </th>`;
+        <div class="mc-phone-header-cell">
+          <div class="mc-skeleton mc-skeleton-img-sm"></div>
+          <div class="mc-skeleton mc-skeleton-text"></div>
+        </div>`;
     }
     return `
-      <th class="mc-phone-col mc-phone-header">
-        <div class="mc-phone-header-inner">
-          <button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
-          <img src="${escapeHtml(p.image)}" alt="" class="mc-phone-img" />
-          <h3 class="mc-phone-name">${escapeHtml(p.name)}</h3>
-          <p class="mc-phone-price">${p.price}</p>
-          ${skeleton ? `
-            <div class="mc-skeleton mc-skeleton-btn-sm"></div>
-          ` : `
-            <a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-sm mc-btn-outline">${escapeHtml(t('viewDetails'))}</a>
-            <a href="${escapeHtml(p.buy_url || p.url)}" class="mc-btn mc-btn-sm mc-btn-buy">${escapeHtml(t('buyNow'))}</a>
-          `}
-        </div>
-      </th>`;
+      <div class="mc-phone-header-cell">
+        <button type="button" class="mc-card-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
+        <img src="${escapeHtml(p.image)}" alt="" class="mc-phone-img" />
+        <h3 class="mc-phone-name">${escapeHtml(p.name)}</h3>
+        <p class="mc-phone-price">${p.price}</p>
+        ${skeleton ? '' : `
+          <div class="mc-phone-actions">
+            <a href="${escapeHtml(p.url)}" class="mc-btn mc-btn-xs mc-btn-outline">${escapeHtml(t('viewDetails'))}</a>
+            <a href="${escapeHtml(p.buy_url || p.url)}" class="mc-btn mc-btn-xs mc-btn-buy">${escapeHtml(t('buyNow'))}</a>
+          </div>
+        `}
+      </div>`;
   }
 
   function renderAddPhoneCell() {
     return `
-      <th class="mc-phone-col mc-phone-header mc-phone-add-col">
-        <div class="mc-phone-header-inner mc-phone-add">
-          <span class="mc-add-icon-sm">+</span>
-          <button type="button" class="mc-btn mc-btn-sm mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
-        </div>
-      </th>`;
+      <div class="mc-phone-header-cell mc-phone-add-col">
+        <span class="mc-add-icon-sm">+</span>
+        <button type="button" class="mc-btn mc-btn-xs mc-btn-outline mc-back-select">${escapeHtml(t('addPhone'))}</button>
+      </div>`;
   }
 
-  function renderToolbarCell(skeleton) {
+  function renderToolbarBar(skeleton) {
     return `
-      <th class="mc-label-col mc-toolbar-cell">
-        <div class="mc-toolbar-inner">
-          <label class="mc-toggle mc-toggle-compact">
-            <input type="checkbox" class="mc-toggle-diff" ${state.showDiffOnly ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
-            <span>${escapeHtml(t('showDifferences'))}</span>
-          </label>
-          <label class="mc-toggle mc-toggle-compact">
-            <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
-            <span>${escapeHtml(t('highlightBetter'))}</span>
-          </label>
-          ${skeleton ? `<div class="mc-loading-banner">${renderSpinner()} ${escapeHtml(t('loadingCompare'))}</div>` : ''}
-        </div>
-      </th>`;
+      <div class="mc-toolbar-bar">
+        <label class="mc-toggle mc-toggle-compact">
+          <input type="checkbox" class="mc-toggle-diff" ${state.showDiffOnly ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
+          <span>${escapeHtml(t('showDifferences'))}</span>
+        </label>
+        <label class="mc-toggle mc-toggle-compact">
+          <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
+          <span>${escapeHtml(t('highlightBetter'))}</span>
+        </label>
+        ${skeleton ? `<span class="mc-loading-inline">${renderSpinner()} ${escapeHtml(t('loadingCompare'))}</span>` : ''}
+      </div>`;
   }
 
   function renderSpecRows(specs, emptySlots, skeleton) {
@@ -578,7 +567,7 @@
     const specs = skeleton ? [] : filteredSpecs();
     const emptySlots = MAX - products.length;
 
-    const phoneHeaders = products.map((p, i) => renderPhoneHeaderCell(p, i, skeleton)).join('');
+    const phoneHeaders = products.map((p) => renderPhoneHeaderCell(p, skeleton)).join('');
     const addCol = !skeleton && emptySlots > 0 ? renderAddPhoneCell() : '';
     const specRows = renderSpecRows(specs, emptySlots, skeleton);
 
@@ -593,15 +582,20 @@
           </div>
         </header>
 
-        <div class="mc-compare-scroll">
-          <table class="mc-compare-table">
-            <thead>
-              <tr class="mc-phone-header-row">
-                ${renderToolbarCell(skeleton)}
-                ${phoneHeaders}
-                ${addCol}
-              </tr>
-            </thead>
+        ${renderToolbarBar(skeleton)}
+
+        <div class="mc-sticky-phone-bar">
+          <div class="mc-sync-scroll" data-mc-sync>
+            <div class="mc-phone-header-track">
+              <div class="mc-label-spacer" aria-hidden="true"></div>
+              ${phoneHeaders}
+              ${addCol}
+            </div>
+          </div>
+        </div>
+
+        <div class="mc-sync-scroll mc-spec-scroll" data-mc-sync>
+          <table class="mc-compare-table mc-spec-only">
             <tbody>${specRows}</tbody>
           </table>
         </div>
@@ -612,6 +606,23 @@
         </footer>` : ''}
       </div>
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
+  }
+
+  function bindScrollSync() {
+    const scrollers = app.querySelectorAll('[data-mc-sync]');
+    if (scrollers.length < 2) return;
+    let syncing = false;
+    scrollers.forEach((el) => {
+      el.addEventListener('scroll', () => {
+        if (syncing) return;
+        syncing = true;
+        const left = el.scrollLeft;
+        scrollers.forEach((other) => {
+          if (other !== el) other.scrollLeft = left;
+        });
+        syncing = false;
+      }, { passive: true });
+    });
   }
 
   function render() {
@@ -739,6 +750,8 @@
         navigateCompare(remaining);
       });
     });
+
+    bindScrollSync();
   }
 
   /* ─── Init ─── */
