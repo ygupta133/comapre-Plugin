@@ -658,7 +658,7 @@
     const title = compareTitle(products);
 
     return `
-      <div class="mc-page mc-compare" data-cols="${colCount}">
+      <div class="mc-page mc-compare" data-cols="${colCount}" style="--mc-cols:${colCount}">
         <header class="mc-compare-top">
           <div class="mc-compare-top-left">
             <nav class="mc-breadcrumb"><a href="${escapeHtml(cfg.homeUrl || '/')}">Home</a> › Compare</nav>
