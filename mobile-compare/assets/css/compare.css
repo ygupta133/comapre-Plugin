@@ -1096,14 +1096,44 @@ body.mobile-compare-blank-template .entry-header {
   cursor: not-allowed;
 }
 
-/* Sticky hero + filter bar — offset for WP admin bar */
+/* Sticky hero — slides down from top on scroll (91mobiles desktop) */
+.mc-compare-sticky-anchor {
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.mc-compare-sticky-spacer {
+  height: 0;
+  transition: height 0.2s ease;
+}
+
 .mc-compare-sticky {
-  position: sticky;
-  top: var(--mc-sticky-top, 0px);
+  position: relative;
   z-index: 99;
   background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   overflow: visible;
+  transition: box-shadow 0.2s ease;
+}
+
+.mc-compare-sticky.is-pinned {
+  position: fixed;
+  top: var(--mc-sticky-top, 0px);
+  left: 0;
+  z-index: 99;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  animation: mc-sticky-slide 0.28s ease forwards;
+}
+
+@keyframes mc-sticky-slide {
+  from {
+    transform: translateY(-100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 body.admin-bar .mobile-compare-root {
@@ -1113,6 +1143,17 @@ body.admin-bar .mobile-compare-root {
 @media screen and (max-width: 782px) {
   body.admin-bar .mobile-compare-root {
     --mc-sticky-top: 46px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .mc-compare-sticky.is-pinned {
+    position: relative;
+    top: auto;
+    left: auto !important;
+    width: auto !important;
+    box-shadow: none;
+    animation: none;
   }
 }
 

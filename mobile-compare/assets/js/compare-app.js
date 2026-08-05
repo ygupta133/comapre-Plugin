@@ -739,6 +739,7 @@
           </div>
         </header>
 
+        <div class="mc-compare-sticky-anchor" data-mc-sticky-anchor aria-hidden="true"></div>
         <div class="mc-compare-sticky" data-mc-sticky>
           <div class="mc-compare-hero">
             <div class="mc-hero-grid">
@@ -749,6 +750,7 @@
           </div>
           ${renderToolbarBar(skeleton)}
         </div>
+        <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
 
         <div class="mc-compare-table-wrap">
           <table class="mc-compare-table" style="--mc-cols: ${colCount}">
@@ -765,21 +767,86 @@
 
   function bindHeroSticky() {
     const sticky = app.querySelector('[data-mc-sticky]');
-    if (!sticky) return;
+    const anchor = app.querySelector('[data-mc-sticky-anchor]');
+    const spacer = app.querySelector('[data-mc-sticky-spacer]');
+    const page = app.querySelector('.mc-page.mc-compare');
+    if (!sticky || !anchor || !page) return;
 
+    if (state._stickyObserver) {
+      state._stickyObserver.disconnect();
+      state._stickyObserver = null;
+    }
     if (state._onStickyResize) {
       window.removeEventListener('resize', state._onStickyResize);
     }
+    if (state._onStickyScroll) {
+      window.removeEventListener('scroll', state._onStickyScroll);
+    }
+
+    const getStickyTop = () => {
+      const adminBar = document.getElementById('wpadminbar');
+      return adminBar ? adminBar.offsetHeight : 0;
+    };
+
+    const syncPinnedLayout = () => {
+      const top = getStickyTop();
+      document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+
+      if (!sticky.classList.contains('is-pinned')) {
+        sticky.style.left = '';
+        sticky.style.width = '';
+        return;
+      }
+
+      const rect = page.getBoundingClientRect();
+      sticky.style.left = `${rect.left}px`;
+      sticky.style.width = `${rect.width}px`;
+    };
+
+    const setPinned = (pinned) => {
+      if (window.innerWidth < 768) {
+        sticky.classList.remove('is-pinned');
+        if (spacer) spacer.style.height = '0px';
+        sticky.style.left = '';
+        sticky.style.width = '';
+        return;
+      }
+
+      sticky.classList.toggle('is-pinned', pinned);
+      if (spacer) {
+        spacer.style.height = pinned ? `${sticky.offsetHeight}px` : '0px';
+      }
+      syncPinnedLayout();
+    };
+
+    const setupObserver = () => {
+      if (state._stickyObserver) {
+        state._stickyObserver.disconnect();
+      }
+      state._stickyObserver = new IntersectionObserver(
+        ([entry]) => setPinned(!entry.isIntersecting),
+        {
+          root: null,
+          rootMargin: `-${getStickyTop()}px 0px 0px 0px`,
+          threshold: 0,
+        }
+      );
+      state._stickyObserver.observe(anchor);
+    };
 
     const applyStickyOffset = () => {
-      const adminBar = document.getElementById('wpadminbar');
-      const top = adminBar ? adminBar.offsetHeight : 0;
-      document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+      syncPinnedLayout();
+      if (spacer && sticky.classList.contains('is-pinned')) {
+        spacer.style.height = `${sticky.offsetHeight}px`;
+      }
+      setupObserver();
     };
 
     state._onStickyResize = applyStickyOffset;
+    state._onStickyScroll = syncPinnedLayout;
     applyStickyOffset();
     window.addEventListener('resize', applyStickyOffset, { passive: true });
+    window.addEventListener('scroll', syncPinnedLayout, { passive: true });
   }
 
   function render() {
