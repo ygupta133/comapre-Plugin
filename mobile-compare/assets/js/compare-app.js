@@ -798,27 +798,42 @@
         return;
       }
 
+      if (window.innerWidth < 768) {
+        sticky.style.left = '0';
+        sticky.style.width = '100%';
+        return;
+      }
+
       const rect = page.getBoundingClientRect();
       sticky.style.left = `${rect.left}px`;
       sticky.style.width = `${rect.width}px`;
     };
 
     const setPinned = (pinned) => {
-      if (window.innerWidth < 768) {
-        sticky.classList.remove('is-pinned');
-        if (spacer) spacer.style.height = '0px';
-        sticky.style.left = '';
-        sticky.style.width = '';
-        return;
-      }
+      const isMobile = window.innerWidth < 768;
 
       sticky.classList.toggle('is-pinned', pinned);
+      sticky.classList.toggle('is-pinned-mobile', pinned && isMobile);
+
       if (spacer) {
         requestAnimationFrame(() => {
           spacer.style.height = pinned ? `${sticky.offsetHeight}px` : '0px';
         });
       }
-      syncPinnedLayout();
+
+      if (pinned) {
+        if (isMobile) {
+          sticky.style.left = '0';
+          sticky.style.width = '100%';
+        } else {
+          const rect = page.getBoundingClientRect();
+          sticky.style.left = `${rect.left}px`;
+          sticky.style.width = `${rect.width}px`;
+        }
+      } else {
+        sticky.style.left = '';
+        sticky.style.width = '';
+      }
     };
 
     const setupObserver = () => {
@@ -833,8 +848,38 @@
           threshold: 0,
         }
       );
-      state._stickyObserver.observe(anchor);
+    state._stickyObserver.observe(anchor);
+  }
+
+  function bindMobileScrollSync() {
+    if (state._mobileScrollCleanup) {
+      state._mobileScrollCleanup();
+      state._mobileScrollCleanup = null;
+    }
+    if (window.innerWidth >= 768) return;
+
+    const heroGrid = app.querySelector('.mc-hero-grid');
+    const tableWrap = app.querySelector('.mc-compare-table-wrap');
+    if (!heroGrid || !tableWrap) return;
+
+    let lock = false;
+    const sync = (from, to) => {
+      if (lock) return;
+      lock = true;
+      to.scrollLeft = from.scrollLeft;
+      requestAnimationFrame(() => { lock = false; });
     };
+
+    const onTable = () => sync(tableWrap, heroGrid);
+    const onHero = () => sync(heroGrid, tableWrap);
+
+    tableWrap.addEventListener('scroll', onTable, { passive: true });
+    heroGrid.addEventListener('scroll', onHero, { passive: true });
+    state._mobileScrollCleanup = () => {
+      tableWrap.removeEventListener('scroll', onTable);
+      heroGrid.removeEventListener('scroll', onHero);
+    };
+  };
 
     const applyStickyOffset = () => {
       syncPinnedLayout();
@@ -860,6 +905,7 @@
     if (state.view === 'compare' && (state.products.length || state.loading)) {
       app.innerHTML = renderCompareView();
       bindHeroSticky();
+      bindMobileScrollSync();
     } else {
       app.innerHTML = renderSelectView();
     }
