@@ -676,9 +676,10 @@
       </div>`;
   }
 
-  function renderSpecRows(specs, emptySlots, skeleton) {
+  function renderSpecRows(specs, emptySlots, skeleton, colSpan) {
+    const totalCols = colSpan || (MAX + 1);
     if (skeleton) {
-      return renderSkeletonSpecRows(MAX);
+      return renderSkeletonSpecRows(totalCols - 1);
     }
 
     let lastGroup = '';
@@ -689,7 +690,7 @@
         lastGroup = row.group;
         html += `
           <tr class="mc-spec-group-row">
-            <th class="mc-spec-group" colspan="${MAX + 1}">${escapeHtml(row.group)}</th>
+            <th class="mc-spec-group" colspan="${totalCols}">${escapeHtml(row.group)}</th>
           </tr>`;
       }
 
@@ -722,14 +723,25 @@
     const specs = specsLoading ? [] : filteredSpecs();
     const emptySlots = MAX - products.length;
 
+    const phoneCount = products.length;
+    const showAddSlot = !specsLoading && emptySlots > 0;
+    const isMobileView = window.innerWidth < 768;
+    const showHeroAdd = showAddSlot && !isMobileView;
+    const colCount = phoneCount + (showHeroAdd ? 1 : 0);
+
     const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image)).join('');
-    const addCol = !specsLoading && emptySlots > 0 ? renderHeroAddSlot() : '';
+    const addCol = showHeroAdd ? renderHeroAddSlot() : '';
     const specRows = renderSpecRows(specs, emptySlots, specsLoading);
-    const colCount = products.length + (addCol ? 1 : 0);
     const title = compareTitle(products);
+    const fabBtn = showAddSlot && isMobileView
+      ? `<button type="button" class="mc-fab-compare mc-back-select" aria-label="${escapeHtml(t('fabCompare'))}">
+          <span class="mc-fab-icon">+</span>
+          <span class="mc-fab-label">${escapeHtml(t('fabCompare'))}</span>
+        </button>`
+      : '';
 
     return `
-      <div class="mc-page mc-compare" data-cols="${colCount}" style="--mc-cols:${colCount}">
+      <div class="mc-page mc-compare" data-cols="${colCount}" data-phone-cols="${phoneCount}" style="--mc-cols:${colCount};--mc-phone-cols:${phoneCount}">
         <header class="mc-compare-top">
           <div class="mc-compare-top-left">
             <nav class="mc-breadcrumb"><a href="${escapeHtml(cfg.homeUrl || '/')}">Home</a> › Compare</nav>
@@ -757,16 +769,17 @@
             <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
 
             <div class="mc-compare-table-wrap">
-              <table class="mc-compare-table" style="--mc-cols: ${colCount}">
+              <table class="mc-compare-table" style="--mc-cols: ${phoneCount}">
                 <colgroup>
                   <col class="mc-col-label" />
-                  ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
+                  ${Array(phoneCount).fill('<col class="mc-col-phone" />').join('')}
                 </colgroup>
                 <tbody>${specRows}</tbody>
               </table>
             </div>
           </div>
         </div>
+        ${fabBtn}
       </div>
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
   }
@@ -790,13 +803,46 @@
     }
 
     const getStickyTop = () => {
+      let top = 0;
       const adminBar = document.getElementById('wpadminbar');
-      return adminBar ? adminBar.offsetHeight : 0;
+      if (adminBar) top += adminBar.offsetHeight;
+
+      if (window.innerWidth < 768) {
+        const headerSelectors = [
+          '.header-top',
+          '.main-nav',
+          '.header_wrap',
+          '#main-nav',
+          '.site-header',
+          '#masthead',
+          'header.header',
+          '.rh-header',
+          '.top_header',
+          '.navbar',
+        ];
+        headerSelectors.forEach((sel) => {
+          document.querySelectorAll(sel).forEach((el) => {
+            if (el.closest('.mobile-compare-root, #mobile-compare-app')) return;
+            const style = getComputedStyle(el);
+            if (style.position !== 'fixed' && style.position !== 'sticky') return;
+            const rect = el.getBoundingClientRect();
+            if (rect.top <= 2 && rect.height > 24 && rect.height < 220) {
+              top = Math.max(top, rect.bottom);
+            }
+          });
+        });
+      }
+
+      return top;
     };
 
     const syncPinnedLayout = () => {
       const top = getStickyTop();
       document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+
+      if (sticky.classList.contains('is-pinned')) {
+        sticky.style.top = `${top}px`;
+      }
 
       if (!sticky.classList.contains('is-pinned')) {
         sticky.style.left = '';

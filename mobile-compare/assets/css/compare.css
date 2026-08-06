@@ -1274,7 +1274,8 @@ body.admin-bar .mobile-compare-root {
     top: var(--mc-sticky-top, 0px);
     left: 0 !important;
     width: 100% !important;
-    z-index: 99;
+    z-index: 100;
+    background: #fff;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
     animation: mc-sticky-slide 0.28s ease forwards;
     will-change: transform;
@@ -1307,9 +1308,17 @@ body.admin-bar .mobile-compare-root {
     overflow: visible;
   }
 
-  /* Hero uses full width for phones — label column only in spec table */
+  /* Hero label column aligns with spec labels — phones align with spec values */
   .mc-compare-sticky .mc-hero-label-spacer {
-    display: none;
+    display: block;
+    width: var(--mc-label-w);
+    min-width: var(--mc-label-w);
+    background: #fafafa;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  .mc-compare-sticky.is-pinned .mc-hero-label-spacer {
+    min-height: 64px;
   }
 
   .mc-compare-sticky .mc-hero-phone {
@@ -1318,6 +1327,10 @@ body.admin-bar .mobile-compare-root {
   }
 
   /* Compact horizontal row when pinned (like desktop) */
+  .mc-compare-sticky.is-pinned .mc-hero-grid {
+    grid-template-columns: var(--mc-label-w) repeat(var(--mc-phone-cols, var(--mc-cols, 3)), minmax(0, 1fr));
+  }
+
   .mc-compare-sticky.is-pinned .mc-hero-phone {
     display: grid;
     grid-template-columns: 44px 1fr;
@@ -1692,6 +1705,10 @@ body.admin-bar .mobile-compare-root {
   flex-shrink: 0;
 }
 
+.mc-fab-compare {
+  display: none;
+}
+
 .mc-toggle-compact input {
   width: 15px;
   height: 15px;
@@ -1790,7 +1807,7 @@ body.admin-bar .mobile-compare-root {
   }
 
   .mc-page.mc-compare {
-    --mc-label-w: 76px;
+    --mc-label-w: 72px;
   }
 
   /* Compare page header */
@@ -1823,13 +1840,17 @@ body.admin-bar .mobile-compare-root {
   }
 
   .mc-hero-grid {
-    grid-template-columns: repeat(var(--mc-cols, 3), minmax(0, 1fr));
+    grid-template-columns: var(--mc-label-w) repeat(var(--mc-phone-cols, var(--mc-cols, 3)), minmax(0, 1fr));
     width: 100%;
     overflow: visible;
   }
 
   .mc-hero-label-spacer {
-    display: none;
+    display: block;
+    width: var(--mc-label-w);
+    min-width: var(--mc-label-w);
+    background: #fafafa;
+    border-right: 1px solid #e8e8e8;
   }
 
   .mc-hero-phone {
@@ -1885,6 +1906,14 @@ body.admin-bar .mobile-compare-root {
     font-size: 0.8rem;
   }
 
+  .mc-col-label {
+    width: var(--mc-label-w);
+  }
+
+  .mc-col-phone {
+    width: calc((100% - var(--mc-label-w)) / var(--mc-phone-cols, var(--mc-cols, 3)));
+  }
+
   .mc-spec-label {
     position: sticky;
     left: 0;
@@ -1903,9 +1932,8 @@ body.admin-bar .mobile-compare-root {
   }
 
   .mc-spec-group {
-    position: sticky;
-    left: 0;
-    z-index: 2;
+    position: static;
+    left: auto;
     font-size: 0.72rem;
     padding: 8px 10px;
   }
@@ -1929,6 +1957,36 @@ body.admin-bar .mobile-compare-root {
 
   .mc-toggle-compact {
     font-size: 0.72rem;
+  }
+
+  /* Floating Compare button (91mobiles style) */
+  .mc-fab-compare {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    right: 14px;
+    bottom: 18px;
+    z-index: 120;
+    padding: 10px 18px;
+    background: var(--mc-orange);
+    color: #fff;
+    border: none;
+    border-radius: 28px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255, 101, 54, 0.45);
+  }
+
+  .mc-fab-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    font-weight: 400;
+  }
+
+  .mc-fab-label {
+    line-height: 1;
   }
 
   /* Selection page — stacked full-width slots */
