@@ -629,17 +629,19 @@
     return products.map((p) => p.name).join(' vs ');
   }
 
-  function renderHeroPhone(p, skeleton) {
+  function renderHeroPhone(p, skeleton, asCell) {
+    const tag = asCell ? 'th' : 'div';
+    const scope = asCell ? ' scope="col"' : '';
     if (skeleton && !p.image) {
       return `
-        <div class="mc-hero-phone mc-hero-skeleton">
+        <${tag} class="mc-hero-phone mc-hero-skeleton"${scope}>
           <div class="mc-skeleton mc-skeleton-hero-img"></div>
           <div class="mc-skeleton mc-skeleton-text"></div>
-        </div>`;
+        </${tag}>`;
     }
     const price = formatPrice(p.price, p.price_plain);
     return `
-      <div class="mc-hero-phone">
+      <${tag} class="mc-hero-phone"${scope}>
         <button type="button" class="mc-hero-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
         <a href="${escapeHtml(p.url)}" class="mc-hero-img-link">
           <img src="${escapeHtml(p.image)}" alt="" class="mc-hero-img" />
@@ -647,7 +649,7 @@
         <h2 class="mc-hero-name">${escapeHtml(p.name)}</h2>
         ${price ? `<p class="mc-hero-price">${escapeHtml(price)}</p>` : ''}
         ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}
-      </div>`;
+      </${tag}>`;
   }
 
   function renderHeroAddSlot() {
@@ -709,6 +711,52 @@
     return html;
   }
 
+  function renderCompareViewMobile(products, specsLoading, specs, emptySlots, phoneCount, showAddSlot, title, specRows, fabBtn) {
+    const labelPct = 24;
+    const phonePct = ((100 - labelPct) / phoneCount).toFixed(4);
+    const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image, true)).join('');
+    const cols = `
+      <col class="mc-col-label" style="width:${labelPct}%" />
+      ${Array(phoneCount).fill(`<col class="mc-col-phone" style="width:${phonePct}%" />`).join('')}`;
+
+    return `
+      <div class="mc-page mc-compare mc-compare--mobile-unified" data-phone-cols="${phoneCount}" style="--mc-phone-cols:${phoneCount}">
+        <header class="mc-compare-top">
+          <div class="mc-compare-top-left">
+            <nav class="mc-breadcrumb"><a href="${escapeHtml(cfg.homeUrl || '/')}">Home</a> › Compare</nav>
+            <h1 class="mc-compare-title">${escapeHtml(title)}</h1>
+          </div>
+          <div class="mc-compare-top-actions">
+            <button type="button" class="mc-link-btn mc-clear-btn" ${specsLoading ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
+            <button type="button" class="mc-link-btn mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
+          </div>
+        </header>
+
+        <div class="mc-compare-sync">
+          <div class="mc-compare-sticky-anchor" data-mc-sticky-anchor aria-hidden="true"></div>
+          <div class="mc-compare-table-wrap">
+            <table class="mc-compare-table mc-compare-unified">
+              <colgroup>${cols}</colgroup>
+              <thead data-mc-sticky>
+                <tr class="mc-hero-row">
+                  <th class="mc-hero-label-spacer" aria-hidden="true"></th>
+                  ${phoneHeaders}
+                </tr>
+                <tr class="mc-filter-row">
+                  <th class="mc-filter-cell" colspan="${phoneCount + 1}">
+                    ${renderToolbarBar(specsLoading)}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>${specRows}</tbody>
+            </table>
+          </div>
+        </div>
+        ${fabBtn}
+      </div>
+      ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
+  }
+
   function renderCompareView() {
     const specsLoading = state.loading && !state.specs.length;
     const products = specsLoading && !state.products.length
@@ -731,7 +779,7 @@
 
     const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image)).join('');
     const addCol = showHeroAdd ? renderHeroAddSlot() : '';
-    const specRows = renderSpecRows(specs, emptySlots, specsLoading);
+    const specRows = renderSpecRows(specs, emptySlots, specsLoading, phoneCount + 1);
     const title = compareTitle(products);
     const fabBtn = showAddSlot && isMobileView
       ? `<button type="button" class="mc-fab-compare mc-back-select" aria-label="${escapeHtml(t('fabCompare'))}">
@@ -739,6 +787,10 @@
           <span class="mc-fab-label">${escapeHtml(t('fabCompare'))}</span>
         </button>`
       : '';
+
+    if (isMobileView) {
+      return renderCompareViewMobile(products, specsLoading, specs, emptySlots, phoneCount, showAddSlot, title, specRows, fabBtn);
+    }
 
     return `
       <div class="mc-page mc-compare" data-cols="${colCount}" data-phone-cols="${phoneCount}" style="--mc-cols:${colCount};--mc-phone-cols:${phoneCount}">
@@ -785,6 +837,12 @@
   }
 
   function bindHeroSticky() {
+    const mobileUnified = app.querySelector('.mc-compare--mobile-unified');
+    if (mobileUnified) {
+      bindMobileUnifiedSticky(mobileUnified);
+      return;
+    }
+
     const sticky = app.querySelector('[data-mc-sticky]');
     const anchor = app.querySelector('[data-mc-sticky-anchor]');
     const spacer = app.querySelector('[data-mc-sticky-spacer]');
@@ -802,39 +860,7 @@
       window.removeEventListener('scroll', state._onStickyScroll);
     }
 
-    const getStickyTop = () => {
-      let top = 0;
-      const adminBar = document.getElementById('wpadminbar');
-      if (adminBar) top += adminBar.offsetHeight;
-
-      if (window.innerWidth < 768) {
-        const headerSelectors = [
-          '.header-top',
-          '.main-nav',
-          '.header_wrap',
-          '#main-nav',
-          '.site-header',
-          '#masthead',
-          'header.header',
-          '.rh-header',
-          '.top_header',
-          '.navbar',
-        ];
-        headerSelectors.forEach((sel) => {
-          document.querySelectorAll(sel).forEach((el) => {
-            if (el.closest('.mobile-compare-root, #mobile-compare-app')) return;
-            const style = getComputedStyle(el);
-            if (style.position !== 'fixed' && style.position !== 'sticky') return;
-            const rect = el.getBoundingClientRect();
-            if (rect.top <= 2 && rect.height > 24 && rect.height < 220) {
-              top = Math.max(top, rect.bottom);
-            }
-          });
-        });
-      }
-
-      return top;
-    };
+    const getStickyTop = () => getSiteHeaderOffset();
 
     const syncPinnedLayout = () => {
       const top = getStickyTop();
@@ -932,6 +958,92 @@
     applyStickyOffset();
     window.addEventListener('resize', applyStickyOffset, { passive: true });
     window.addEventListener('scroll', syncPinnedLayout, { passive: true });
+  }
+
+  function getSiteHeaderOffset() {
+    let top = 0;
+    const adminBar = document.getElementById('wpadminbar');
+    if (adminBar) top += adminBar.offsetHeight;
+
+    if (window.innerWidth < 768) {
+      const headerSelectors = [
+        '.header-top',
+        '.main-nav',
+        '.header_wrap',
+        '#main-nav',
+        '.site-header',
+        '#masthead',
+        'header.header',
+        '.rh-header',
+        '.top_header',
+        '.navbar',
+      ];
+      headerSelectors.forEach((sel) => {
+        document.querySelectorAll(sel).forEach((el) => {
+          if (el.closest('.mobile-compare-root, #mobile-compare-app')) return;
+          const style = getComputedStyle(el);
+          if (style.position !== 'fixed' && style.position !== 'sticky') return;
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 2 && rect.height > 24 && rect.height < 220) {
+            top = Math.max(top, rect.bottom);
+          }
+        });
+      });
+    }
+
+    return top;
+  }
+
+  function bindMobileUnifiedSticky(page) {
+    const thead = page.querySelector('thead[data-mc-sticky]');
+    const anchor = page.querySelector('[data-mc-sticky-anchor]');
+    if (!thead || !anchor) return;
+
+    if (state._stickyObserver) {
+      state._stickyObserver.disconnect();
+      state._stickyObserver = null;
+    }
+    if (state._onStickyResize) {
+      window.removeEventListener('resize', state._onStickyResize);
+    }
+    if (state._onStickyScroll) {
+      window.removeEventListener('scroll', state._onStickyScroll);
+    }
+
+    const syncTop = () => {
+      const top = getSiteHeaderOffset();
+      document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+    };
+
+    const setCompact = (compact) => {
+      thead.classList.toggle('is-compact', compact);
+    };
+
+    const setupObserver = () => {
+      if (state._stickyObserver) {
+        state._stickyObserver.disconnect();
+      }
+      const top = getSiteHeaderOffset();
+      state._stickyObserver = new IntersectionObserver(
+        ([entry]) => setCompact(!entry.isIntersecting),
+        {
+          root: null,
+          rootMargin: `-${top}px 0px 0px 0px`,
+          threshold: 0,
+        }
+      );
+      state._stickyObserver.observe(anchor);
+    };
+
+    state._onStickyResize = () => {
+      syncTop();
+      setupObserver();
+    };
+    state._onStickyScroll = syncTop;
+    syncTop();
+    setupObserver();
+    window.addEventListener('resize', state._onStickyResize, { passive: true });
+    window.addEventListener('scroll', state._onStickyScroll, { passive: true });
   }
 
   function bindMobileScrollSync() {

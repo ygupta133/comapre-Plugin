@@ -2137,3 +2137,174 @@ body.admin-bar .mobile-compare-root {
     width: 100%;
   }
 }
+
+/* Mobile: single table — hero phones + specs share exact same columns */
+@media (max-width: 767px) {
+  .mc-compare--mobile-unified .mc-compare-sync {
+    overflow: visible;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mc-compare--mobile-unified .mc-compare-table-wrap {
+    border: 1px solid #e8e8e8;
+    background: #fff;
+    overflow: visible;
+  }
+
+  .mc-compare--mobile-unified .mc-compare-unified {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 0.8rem;
+  }
+
+  .mc-compare--mobile-unified thead {
+    position: sticky;
+    top: var(--mc-sticky-top, 0px);
+    z-index: 100;
+    background: #fff;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  .mc-compare--mobile-unified th.mc-hero-label-spacer {
+    background: #fafafa;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0;
+    font-weight: 400;
+  }
+
+  .mc-compare--mobile-unified th.mc-hero-phone {
+    vertical-align: top;
+    text-align: center;
+    padding: 12px 6px 10px;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    background: #fff;
+    font-weight: 400;
+    position: relative;
+  }
+
+  .mc-compare--mobile-unified th.mc-hero-phone:last-child {
+    border-right: none;
+  }
+
+  .mc-compare--mobile-unified .mc-hero-img {
+    height: 100px;
+  }
+
+  .mc-compare--mobile-unified .mc-hero-name {
+    font-size: 0.76rem;
+    line-height: 1.25;
+    margin: 0 0 4px;
+  }
+
+  .mc-compare--mobile-unified .mc-hero-price {
+    font-size: 0.8rem;
+    margin: 0 0 4px;
+  }
+
+  .mc-compare--mobile-unified .mc-filter-cell {
+    padding: 0;
+    border-bottom: 1px solid #e8e8e8;
+    background: #fafafa;
+    font-weight: 400;
+  }
+
+  .mc-compare--mobile-unified .mc-filter-bar {
+    border: none;
+    border-radius: 0;
+    padding: 8px 10px;
+  }
+
+  .mc-compare--mobile-unified .mc-spec-label {
+    position: static;
+    left: auto;
+    box-shadow: none;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 10px 6px;
+    font-size: 0.72rem;
+    border-right: 1px solid #e8e8e8;
+    background: #fff;
+  }
+
+  .mc-compare--mobile-unified .mc-spec-row:nth-child(even) .mc-spec-label {
+    background: #fafafa;
+  }
+
+  .mc-compare--mobile-unified .mc-phone-col {
+    padding: 10px 6px;
+    font-size: 0.72rem;
+    word-break: break-word;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  .mc-compare--mobile-unified tr.mc-spec-row td.mc-phone-col:last-child {
+    border-right: none;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact th.mc-hero-phone {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    grid-template-rows: auto auto;
+    gap: 0 6px;
+    align-items: center;
+    min-height: 58px;
+    padding: 6px 20px 6px 6px;
+    text-align: left;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-img-link {
+    grid-row: 1 / 3;
+    grid-column: 1;
+    margin: 0;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-img {
+    height: 40px;
+    max-width: 40px;
+    margin: 0;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-name {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.62rem;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-price {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 0.65rem;
+    margin: 0;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-store-link {
+    display: none;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-close {
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.75rem;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-filter-bar {
+    padding: 4px 8px;
+  }
+}
