@@ -42,12 +42,15 @@
   function api(path, params) {
     const url = new URL(REST.replace(/\/$/, '') + '/' + path.replace(/^\//, ''));
     if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     return fetch(url.toString(), {
       headers: { 'X-WP-Nonce': cfg.restNonce || '' },
+      signal: controller.signal,
     }).then((r) => {
       if (!r.ok) throw new Error('API error');
       return r.json();
-    });
+    }).finally(() => clearTimeout(timer));
   }
 
   function t(key) {
@@ -669,7 +672,6 @@
             <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
             <span>${escapeHtml(t('highlightBetter'))}</span>
           </label>
-          ${skeleton ? `<span class="mc-loading-inline">${renderSpinner('fast')}<span class="mc-loading-text">${escapeHtml(t('loadingCompare'))}</span></span>` : ''}
         </div>
       </div>`;
   }
@@ -707,8 +709,8 @@
   }
 
   function renderCompareView() {
-    const skeleton = state.loading;
-    const products = skeleton && !state.products.length
+    const specsLoading = state.loading && !state.specs.length;
+    const products = specsLoading && !state.products.length
       ? Array(Math.min(state.selected.length || 2, MAX)).fill(null).map((_, i) => ({
           id: i,
           name: '…',
@@ -717,12 +719,12 @@
           url: '#',
         }))
       : state.products;
-    const specs = skeleton ? [] : filteredSpecs();
+    const specs = specsLoading ? [] : filteredSpecs();
     const emptySlots = MAX - products.length;
 
-    const phoneHeaders = products.map((p) => renderHeroPhone(p, skeleton)).join('');
-    const addCol = !skeleton && emptySlots > 0 ? renderHeroAddSlot() : '';
-    const specRows = renderSpecRows(specs, emptySlots, skeleton);
+    const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image)).join('');
+    const addCol = !specsLoading && emptySlots > 0 ? renderHeroAddSlot() : '';
+    const specRows = renderSpecRows(specs, emptySlots, specsLoading);
     const colCount = products.length + (addCol ? 1 : 0);
     const title = compareTitle(products);
 
@@ -734,7 +736,7 @@
             <h1 class="mc-compare-title">${escapeHtml(title)}</h1>
           </div>
           <div class="mc-compare-top-actions">
-            <button type="button" class="mc-link-btn mc-clear-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
+            <button type="button" class="mc-link-btn mc-clear-btn" ${specsLoading ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
             <button type="button" class="mc-link-btn mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
           </div>
         </header>
@@ -750,7 +752,7 @@
                   ${addCol}
                 </div>
               </div>
-              ${renderToolbarBar(skeleton)}
+              ${renderToolbarBar(specsLoading)}
             </div>
             <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
 

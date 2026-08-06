@@ -1275,8 +1275,9 @@ body.admin-bar .mobile-compare-root {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     overflow-y: visible;
-    margin: 0 -8px;
-    padding: 0 8px;
+    margin: 0;
+    padding: 0;
+    width: 100%;
   }
 
   .mc-compare-sync-inner {
@@ -1658,10 +1659,44 @@ body.admin-bar .mobile-compare-root {
 
 /* Mobile overrides — desktop untouched above 768px */
 @media (max-width: 767px) {
+  body.mobile-compare-active .site-main,
+  body.mobile-compare-active .content-area,
+  body.mobile-compare-active .entry-content,
+  body.mobile-compare-active .container,
+  body.mobile-compare-active .rh-container,
+  body.mobile-compare-active #content,
+  body.mobile-compare-blank-template .mobile-compare-blank-main {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .mobile-compare-root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .mobile-compare-blank-main {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
   .mobile-compare-root,
   .mobile-compare-blank-main {
     font-size: 15px;
     -webkit-font-smoothing: antialiased;
+  }
+
+  .mc-page {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   .mc-page.mc-compare {
@@ -1673,7 +1708,8 @@ body.admin-bar .mobile-compare-root {
   .mc-compare-top {
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    padding: 8px 10px 0;
   }
 
   .mc-compare-title {
@@ -1795,7 +1831,17 @@ body.admin-bar .mobile-compare-root {
   }
 
   .mc-select-91 {
-    padding: 12px;
+    padding: 10px;
+    margin: 0 10px;
+    border-radius: 0;
+  }
+
+  .mc-header-91 {
+    padding: 0 10px;
+  }
+
+  .mc-section-91 {
+    padding: 0 10px;
   }
 
   .mc-slots-91 {
