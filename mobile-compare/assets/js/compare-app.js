@@ -818,9 +818,10 @@
     const setPinned = (pinned) => {
       const isMobile = window.innerWidth < 768;
 
-      /* Mobile: CSS sticky inside single h-scroll — no fixed pin */
+      /* Mobile: CSS sticky + compact class when scrolled (no fixed pin) */
       if (isMobile) {
-        sticky.classList.remove('is-pinned', 'is-pinned-mobile');
+        sticky.classList.remove('is-pinned');
+        sticky.classList.toggle('is-pinned-mobile', pinned);
         if (spacer) spacer.style.height = '0px';
         sticky.style.left = '';
         sticky.style.width = '';
