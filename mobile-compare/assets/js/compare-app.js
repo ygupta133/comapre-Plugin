@@ -858,15 +858,8 @@
           threshold: 0,
         }
       );
-    state._stickyObserver.observe(anchor);
-  }
-
-  function bindMobileScrollSync() {
-    if (state._mobileScrollCleanup) {
-      state._mobileScrollCleanup();
-      state._mobileScrollCleanup = null;
-    }
-  };
+      state._stickyObserver.observe(anchor);
+    };
 
     const applyStickyOffset = () => {
       syncPinnedLayout();
@@ -881,6 +874,14 @@
     applyStickyOffset();
     window.addEventListener('resize', applyStickyOffset, { passive: true });
     window.addEventListener('scroll', syncPinnedLayout, { passive: true });
+  }
+
+  function bindMobileScrollSync() {
+    if (state._mobileScrollCleanup) {
+      state._mobileScrollCleanup();
+      state._mobileScrollCleanup = null;
+    }
+    /* Mobile horizontal scroll is handled by .mc-compare-sync CSS wrapper */
   }
 
   function render() {
