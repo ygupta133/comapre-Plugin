@@ -739,27 +739,31 @@
           </div>
         </header>
 
-        <div class="mc-compare-sticky-anchor" data-mc-sticky-anchor aria-hidden="true"></div>
-        <div class="mc-compare-sticky" data-mc-sticky>
-          <div class="mc-compare-hero">
-            <div class="mc-hero-grid">
-              <div class="mc-hero-label-spacer" aria-hidden="true"></div>
-              ${phoneHeaders}
-              ${addCol}
+        <div class="mc-compare-sync" data-mc-hscroll>
+          <div class="mc-compare-sync-inner">
+            <div class="mc-compare-sticky-anchor" data-mc-sticky-anchor aria-hidden="true"></div>
+            <div class="mc-compare-sticky" data-mc-sticky>
+              <div class="mc-compare-hero">
+                <div class="mc-hero-grid">
+                  <div class="mc-hero-label-spacer" aria-hidden="true"></div>
+                  ${phoneHeaders}
+                  ${addCol}
+                </div>
+              </div>
+              ${renderToolbarBar(skeleton)}
+            </div>
+            <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
+
+            <div class="mc-compare-table-wrap">
+              <table class="mc-compare-table" style="--mc-cols: ${colCount}">
+                <colgroup>
+                  <col class="mc-col-label" />
+                  ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
+                </colgroup>
+                <tbody>${specRows}</tbody>
+              </table>
             </div>
           </div>
-          ${renderToolbarBar(skeleton)}
-        </div>
-        <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
-
-        <div class="mc-compare-table-wrap">
-          <table class="mc-compare-table" style="--mc-cols: ${colCount}">
-            <colgroup>
-              <col class="mc-col-label" />
-              ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
-            </colgroup>
-            <tbody>${specRows}</tbody>
-          </table>
         </div>
       </div>
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
@@ -812,8 +816,17 @@
     const setPinned = (pinned) => {
       const isMobile = window.innerWidth < 768;
 
+      /* Mobile: CSS sticky inside single h-scroll — no fixed pin */
+      if (isMobile) {
+        sticky.classList.remove('is-pinned', 'is-pinned-mobile');
+        if (spacer) spacer.style.height = '0px';
+        sticky.style.left = '';
+        sticky.style.width = '';
+        return;
+      }
+
       sticky.classList.toggle('is-pinned', pinned);
-      sticky.classList.toggle('is-pinned-mobile', pinned && isMobile);
+      sticky.classList.remove('is-pinned-mobile');
 
       if (spacer) {
         requestAnimationFrame(() => {
@@ -822,14 +835,9 @@
       }
 
       if (pinned) {
-        if (isMobile) {
-          sticky.style.left = '0';
-          sticky.style.width = '100%';
-        } else {
-          const rect = page.getBoundingClientRect();
-          sticky.style.left = `${rect.left}px`;
-          sticky.style.width = `${rect.width}px`;
-        }
+        const rect = page.getBoundingClientRect();
+        sticky.style.left = `${rect.left}px`;
+        sticky.style.width = `${rect.width}px`;
       } else {
         sticky.style.left = '';
         sticky.style.width = '';
@@ -856,29 +864,6 @@
       state._mobileScrollCleanup();
       state._mobileScrollCleanup = null;
     }
-    if (window.innerWidth >= 768) return;
-
-    const heroGrid = app.querySelector('.mc-hero-grid');
-    const tableWrap = app.querySelector('.mc-compare-table-wrap');
-    if (!heroGrid || !tableWrap) return;
-
-    let lock = false;
-    const sync = (from, to) => {
-      if (lock) return;
-      lock = true;
-      to.scrollLeft = from.scrollLeft;
-      requestAnimationFrame(() => { lock = false; });
-    };
-
-    const onTable = () => sync(tableWrap, heroGrid);
-    const onHero = () => sync(heroGrid, tableWrap);
-
-    tableWrap.addEventListener('scroll', onTable, { passive: true });
-    heroGrid.addEventListener('scroll', onHero, { passive: true });
-    state._mobileScrollCleanup = () => {
-      tableWrap.removeEventListener('scroll', onTable);
-      heroGrid.removeEventListener('scroll', onHero);
-    };
   };
 
     const applyStickyOffset = () => {
