@@ -3,7 +3,7 @@
  * Plugin Name: Mobile Compare
  * Plugin URI:  https://github.com/yogesh/comapre-Plugin
  * Description: Fast 91mobiles-style product comparison for WooCommerce. Independent SPA, optimized for ReHub and large catalogs.
- * Version:     2.0.1
+ * Version:     2.0.2
  * Author:      Yogesh
  * Text Domain: mobile-compare
  * Requires at least: 6.0

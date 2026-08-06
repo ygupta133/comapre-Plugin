@@ -1125,6 +1125,110 @@ body.mobile-compare-blank-template .entry-header {
   animation: mc-sticky-slide 0.28s ease forwards;
 }
 
+/* Pinned bar — compact horizontal row like 91mobiles */
+.mc-compare-sticky.is-pinned .mc-compare-hero {
+  border-radius: 0;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-label-spacer {
+  min-height: 68px;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-phone {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 1px 10px;
+  align-items: center;
+  min-height: 68px;
+  padding: 8px 26px 8px 10px;
+  text-align: left;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-img-link {
+  grid-row: 1 / 4;
+  grid-column: 1;
+  margin: 0;
+  align-self: center;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-img {
+  height: 52px;
+  width: auto;
+  max-width: 52px;
+  margin: 0;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-name {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 0.76rem;
+  margin: 0;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-price {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--mc-text);
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-store-link {
+  grid-column: 2;
+  grid-row: 3;
+  font-size: 0.7rem;
+  margin: 0;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-close {
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  font-size: 0.85rem;
+}
+
+.mc-compare-sticky.is-pinned .mc-hero-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+  padding: 8px;
+}
+
+.mc-compare-sticky.is-pinned .mc-btn-add-compare {
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  border-radius: 22px;
+  box-shadow: none;
+  gap: 4px;
+}
+
+.mc-compare-sticky.is-pinned .mc-btn-add-icon {
+  font-size: 1rem;
+}
+
+.mc-compare-sticky.is-pinned .mc-filter-bar {
+  padding: 5px 12px;
+}
+
+.mc-compare-sticky.is-pinned .mc-toggle-compact {
+  font-size: 0.78rem;
+  gap: 6px;
+}
+
+.mc-compare-sticky.is-pinned .mc-toggle-compact input {
+  width: 13px;
+  height: 13px;
+}
+
 @keyframes mc-sticky-slide {
   from {
     transform: translateY(-100%);

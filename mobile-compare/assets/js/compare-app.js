@@ -814,7 +814,9 @@
 
       sticky.classList.toggle('is-pinned', pinned);
       if (spacer) {
-        spacer.style.height = pinned ? `${sticky.offsetHeight}px` : '0px';
+        requestAnimationFrame(() => {
+          spacer.style.height = pinned ? `${sticky.offsetHeight}px` : '0px';
+        });
       }
       syncPinnedLayout();
     };
