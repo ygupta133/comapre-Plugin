@@ -7,8 +7,8 @@
   const cfg = window.mobileCompareConfig || {};
   const REST = cfg.restUrl || '';
   const MAX = 3;
-  const SEARCH_DEBOUNCE_MS = 280;
-  const SKELETON_SPEC_ROWS = 12;
+  const SEARCH_DEBOUNCE_MS = 200;
+  const SKELETON_SPEC_ROWS = 6;
 
   const state = {
     view: 'select',
@@ -21,6 +21,7 @@
     highlightBetter: true,
     searchResults: [],
     searchQuery: '',
+    searchedQuery: '',
     popular: [],
     suggested: [],
     loading: false,
@@ -41,12 +42,15 @@
   function api(path, params) {
     const url = new URL(REST.replace(/\/$/, '') + '/' + path.replace(/^\//, ''));
     if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     return fetch(url.toString(), {
       headers: { 'X-WP-Nonce': cfg.restNonce || '' },
+      signal: controller.signal,
     }).then((r) => {
       if (!r.ok) throw new Error('API error');
       return r.json();
-    });
+    }).finally(() => clearTimeout(timer));
   }
 
   function t(key) {
@@ -83,6 +87,7 @@
       slug: p.slug,
       image: p.image,
       price: p.price,
+      price_plain: p.price_plain || '',
       url: p.url,
     }));
     state.slotProducts = [null, null, null];
@@ -134,7 +139,8 @@
       name: p.name,
       slug: p.slug,
       image: p.image,
-      price: p.price || '—',
+      price: p.price || '',
+      price_plain: p.price_plain || '',
       url: p.url || '#',
       buy_url: p.url || '#',
     }));
@@ -252,16 +258,107 @@
 
   function slotPickerItems() {
     const exclude = new Set(state.slotProducts.filter(Boolean).map((p) => p.id));
-    if (state.searchQuery && state.searchQuery.length >= 2) {
+    const q = (state.searchQuery || '').trim().toLowerCase();
+
+    if (q.length >= 2 && state.searchResults.length && (state.searching || state.searchedQuery === q)) {
       return state.searchResults.filter((p) => !exclude.has(p.id));
     }
-    return state.suggested.filter((p) => !exclude.has(p.id));
+
+    const base = state.suggested.filter((p) => !exclude.has(p.id));
+    if (!q) return base;
+    return base.filter((p) => p.name.toLowerCase().includes(q));
+  }
+
+  function renderDropdownListHtml() {
+    const items = slotPickerItems();
+    let html = '';
+
+    if (items.length) {
+      html += `
+        <ul class="mc-search-dropdown">
+          ${items.map((p) => renderDropdownItem(p)).join('')}
+        </ul>`;
+    } else if (state.searchQuery.trim().length >= 2 && !state.searching && state.searchedQuery === state.searchQuery.trim()) {
+      html += `<div class="mc-search-empty">${escapeHtml(t('noResults'))}</div>`;
+    }
+
+    if (state.searching) {
+      html += `<div class="mc-search-status mc-search-status-inline">${renderSpinner('fast')}</div>`;
+    }
+
+    return html;
+  }
+
+  function decodeEntities(str) {
+    if (!str) return '';
+    const d = document.createElement('textarea');
+    d.innerHTML = String(str);
+    return d.value.replace(/\s+/g, ' ').trim();
+  }
+
+  function formatDisplayPrice(product) {
+    const plain = (product.price_plain || '').trim();
+    if (plain && plain !== '0') {
+      return decodeEntities(plain);
+    }
+    if (product.price) {
+      const el = document.createElement('div');
+      el.innerHTML = String(product.price);
+      const text = el.textContent.replace(/\s+/g, ' ').trim();
+      if (text && text !== '0') return text;
+    }
+    return '';
+  }
+
+  function renderDropdownItem(p) {
+    const price = formatDisplayPrice(p);
+    return `
+      <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price || '')}" data-price-plain="${escapeHtml(p.price_plain || '')}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
+        <img src="${escapeHtml(p.image)}" alt="" />
+        <div class="mc-dd-body">
+          <span class="mc-dd-name">${escapeHtml(p.name)}</span>
+          ${price ? `<span class="mc-dd-meta">${escapeHtml(price)}</span>` : ''}
+        </div>
+      </li>`;
+  }
+
+  function updateSlotDropdown() {
+    const dropdown = app.querySelector('.mc-slot-dropdown');
+    if (!dropdown) return;
+    dropdown.innerHTML = renderDropdownListHtml();
+    bindDropdownItems(dropdown);
+  }
+
+  function bindDropdownItems(root) {
+    root.querySelectorAll('.mc-search-dropdown li').forEach((li) => {
+      li.addEventListener('mousedown', (e) => e.preventDefault());
+      li.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const slot = li.dataset.slot != null ? parseInt(li.dataset.slot, 10) : state.activeSlot;
+        addProduct({
+          id: parseInt(li.dataset.id, 10),
+          name: li.dataset.name,
+          slug: li.dataset.slug,
+          image: li.dataset.image,
+          price: li.dataset.price,
+          price_plain: li.dataset.pricePlain || '',
+          url: li.dataset.url,
+        }, slot);
+        state.searchQuery = '';
+        state.searchResults = [];
+        state.searchedQuery = '';
+        state.searching = false;
+        state.activeSlot = null;
+        render();
+      });
+    });
   }
 
   function activateSlot(index) {
     state.activeSlot = index;
     state.searchQuery = '';
     state.searchResults = [];
+    state.searchedQuery = '';
     state.searching = false;
     if (!state.suggested.length) {
       api('suggested', { exclude: idsParam() }).then((d) => {
@@ -280,24 +377,31 @@
     if (!q || q.length < 2) {
       state.searchResults = [];
       state.searching = false;
-      render();
+      state.searchedQuery = '';
+      updateSlotDropdown();
       return;
     }
 
-    state.searching = true;
-    render();
+    updateSlotDropdown();
 
     searchTimer = setTimeout(() => {
-      api('search', { q, limit: 10 })
+      const query = q.trim();
+      state.searching = true;
+      updateSlotDropdown();
+      api('search', { q: query, limit: 10 })
         .then((d) => {
+          if (state.searchQuery.trim() !== query) return;
           state.searchResults = d.items || [];
+          state.searchedQuery = query;
           state.searching = false;
-          render();
+          updateSlotDropdown();
         })
         .catch(() => {
+          if (state.searchQuery.trim() !== query) return;
           state.searchResults = [];
+          state.searchedQuery = query;
           state.searching = false;
-          render();
+          updateSlotDropdown();
         });
     }, SEARCH_DEBOUNCE_MS);
   }
@@ -358,17 +462,6 @@
     }, 3200);
   }
 
-  function shareCompare() {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: t('title'), url });
-    } else if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
-    } else {
-      showToast(url);
-    }
-  }
-
   function slugPathFromUrl(url) {
     const base = (cfg.compareUrl || '/compare/').replace(/\/+$/, '');
     const path = url.replace(window.location.origin, '').replace(/\/+$/, '');
@@ -381,8 +474,8 @@
 
   /* ─── Render helpers ─── */
 
-  function renderSpinner() {
-    return '<span class="mc-spinner" aria-hidden="true"></span>';
+  function renderSpinner(fast) {
+    return `<span class="mc-spinner${fast ? ' mc-spinner-fast' : ''}" aria-hidden="true"></span>`;
   }
 
   function renderBootView() {
@@ -396,41 +489,38 @@
   }
 
   function renderSlotDropdown() {
-    if (state.searching) {
-      return `<div class="mc-search-status">${renderSpinner()} ${escapeHtml(t('loadingSearch'))}</div>`;
-    }
-    const items = slotPickerItems();
-    if (!items.length) return '';
-    return `
-      <ul class="mc-search-dropdown">
-        ${items.map((p) => `
-          <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
-            <img src="${escapeHtml(p.image)}" alt="" /> ${escapeHtml(p.name)}
-          </li>`).join('')}
-      </ul>`;
+    return renderDropdownListHtml();
   }
 
   function renderSelectSlot(index) {
     const item = state.slotProducts[index];
     if (item) {
       return `
-        <div class="mc-slot-card mc-slot-filled" data-index="${index}">
-          <button type="button" class="mc-slot-remove" data-id="${item.id}" aria-label="Remove">×</button>
-          <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-img" />
-          <span class="mc-slot-name">${escapeHtml(item.name)}</span>
+        <div class="mc-slot-wrap" data-slot="${index}">
+          <div class="mc-slot-91 mc-slot-filled" data-index="${index}">
+            <img src="${escapeHtml(item.image)}" alt="" class="mc-slot-91-img" />
+            <span class="mc-slot-91-name">${escapeHtml(item.name)}</span>
+            <button type="button" class="mc-slot-91-remove" data-id="${item.id}" aria-label="Remove">×</button>
+          </div>
         </div>`;
     }
+
     const isActive = state.activeSlot === index;
+    if (isActive) {
+      return `
+        <div class="mc-slot-wrap is-open" data-slot="${index}">
+          <div class="mc-slot-91 mc-slot-picker">
+            <input type="text" class="mc-picker-search" placeholder="${escapeHtml(t('searchOrPick'))}" value="${escapeHtml(state.searchQuery)}" autocomplete="off" />
+          </div>
+          <div class="mc-slot-dropdown">${renderSlotDropdown()}</div>
+        </div>`;
+    }
+
     return `
-      <div class="mc-slot-card mc-slot-empty ${isActive ? 'mc-slot-active' : ''}" data-index="${index}">
-        <button type="button" class="mc-slot-open" data-slot="${index}">
-          <span class="mc-slot-placeholder">+</span>
-          <span class="mc-slot-open-label">${escapeHtml(t('selectProduct'))}</span>
+      <div class="mc-slot-wrap" data-slot="${index}">
+        <button type="button" class="mc-slot-91 mc-slot-empty" data-slot="${index}">
+          ${escapeHtml(t('selectProduct'))}
         </button>
-        <div class="mc-slot-picker ${isActive ? 'mc-slot-picker-open' : ''}">
-          <input type="text" class="mc-search-input" placeholder="${escapeHtml(t('searchOrPick'))}" data-slot="${index}" value="${isActive ? escapeHtml(state.searchQuery) : ''}" autocomplete="off" />
-          ${isActive ? renderSlotDropdown() : ''}
-        </div>
       </div>`;
   }
 
@@ -440,16 +530,20 @@
       <div class="mc-page mc-select">
         ${state.error ? `<div class="mc-alert mc-alert-error" role="alert">${escapeHtml(state.error)}</div>` : ''}
 
-        <section class="mc-select-section">
+        <header class="mc-header mc-header-91">
+          <h1 class="mc-title">${escapeHtml(t('title'))}</h1>
+        </header>
+
+        <section class="mc-select-section mc-select-91">
           <p class="mc-section-label">${escapeHtml(t('selectLabel'))}</p>
-          <div class="mc-slots-scroll">
+          <div class="mc-slots-91">
             ${renderSelectSlot(0)}
-            <span class="mc-vs-badge">vs</span>
+            <span class="mc-vs-pill">vs</span>
             ${renderSelectSlot(1)}
-            <span class="mc-vs-badge">vs</span>
+            <span class="mc-vs-pill">vs</span>
             ${renderSelectSlot(2)}
           </div>
-          <button type="button" class="mc-btn mc-btn-primary mc-btn-compare ${canCompare ? '' : 'mc-disabled'} ${state.comparing ? 'mc-btn-loading' : ''}" ${canCompare && !state.comparing ? '' : 'disabled'}>
+          <button type="button" class="mc-btn-compare-91 ${canCompare ? 'is-ready' : ''} ${state.comparing ? 'mc-btn-loading' : ''}" ${canCompare && !state.comparing ? '' : 'disabled'}>
             ${state.comparing ? renderSpinner() : ''}
             ${escapeHtml(t('compareNow'))}
           </button>
@@ -464,18 +558,20 @@
         </section>` : ''}
 
         ${state.suggested.length ? `
-        <section class="mc-section">
-          <h2>${escapeHtml(t('suggestedTitle'))}</h2>
-          <div class="mc-card-grid">
+        <section class="mc-section mc-section-91">
+          <h2 class="mc-section-title">${escapeHtml(t('suggestedTitle'))}</h2>
+          <div class="mc-suggest-91">
             ${state.suggested.map((p) => {
               const added = state.selected.some((s) => s.id === p.id);
               return `
-              <article class="mc-product-card">
+              <article class="mc-suggest-item">
                 <img src="${escapeHtml(p.image)}" alt="" />
-                <h3>${escapeHtml(p.name)}</h3>
-                <button type="button" class="mc-btn mc-btn-outline mc-add-btn ${added ? 'mc-added' : ''}" data-suggest-id="${p.id}" ${added ? 'disabled' : ''}>
-                  ${added ? '+ ' + escapeHtml(t('addedToCompare')) : '+ ' + escapeHtml(t('addToCompare'))}
-                </button>
+                <div class="mc-suggest-body">
+                  <h3>${escapeHtml(p.name)}</h3>
+                  <button type="button" class="mc-suggest-add ${added ? 'is-added' : ''}" data-suggest-id="${p.id}" ${added ? 'disabled' : ''}>
+                    ${added ? escapeHtml(t('addedToCompare')) : '+ ' + escapeHtml(t('addToCompare'))}
+                  </button>
+                </div>
               </article>`;
             }).join('')}
           </div>
@@ -490,9 +586,9 @@
         </section>` : ''}
 
         ${state.popular.length ? `
-        <section class="mc-section">
+        <section class="mc-section mc-section-91">
           <h2 class="mc-section-title">${escapeHtml(t('popularTitle'))}</h2>
-          <div class="mc-popular-scroll">
+          <div class="mc-popular-91">
             ${state.popular.map((pair) => {
               const a = pair.products[0];
               const b = pair.products[1];
@@ -525,13 +621,8 @@
   }
 
   function formatPrice(price, plain) {
-    const raw = plain || price;
-    if (!raw || raw === '0') return '—';
-    if (plain) return String(plain).trim();
-    const d = document.createElement('div');
-    d.innerHTML = String(price);
-    const text = d.textContent.replace(/\s+/g, ' ').trim();
-    return text || '—';
+    const text = formatDisplayPrice({ price, price_plain: plain });
+    return text;
   }
 
   function compareTitle(products) {
@@ -554,7 +645,7 @@
           <img src="${escapeHtml(p.image)}" alt="" class="mc-hero-img" />
         </a>
         <h2 class="mc-hero-name">${escapeHtml(p.name)}</h2>
-        <p class="mc-hero-price">${escapeHtml(price)}</p>
+        ${price ? `<p class="mc-hero-price">${escapeHtml(price)}</p>` : ''}
         ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}
       </div>`;
   }
@@ -566,25 +657,6 @@
           <span class="mc-btn-add-icon">+</span>
           ${escapeHtml(t('addToCompare'))}
         </button>
-      </div>`;
-  }
-
-  function renderStickyMini(products, emptySlots, skeleton) {
-    const cells = products.map((p) => {
-      if (skeleton && !p.image) {
-        return `<div class="mc-mini-cell"><div class="mc-skeleton mc-skeleton-mini-img"></div></div>`;
-      }
-      return `
-        <div class="mc-mini-cell">
-          <img src="${escapeHtml(p.image)}" alt="" class="mc-mini-img" />
-          <span class="mc-mini-name">${escapeHtml(p.name)}</span>
-        </div>`;
-    }).join('');
-    const empty = Array(emptySlots).fill('<div class="mc-mini-cell mc-mini-empty"></div>').join('');
-    return `
-      <div class="mc-sticky-mini" aria-hidden="true">
-        <div class="mc-mini-label"></div>
-        ${cells}${empty}
       </div>`;
   }
 
@@ -600,7 +672,6 @@
             <input type="checkbox" class="mc-toggle-highlight" ${state.highlightBetter ? 'checked' : ''} ${skeleton ? 'disabled' : ''} />
             <span>${escapeHtml(t('highlightBetter'))}</span>
           </label>
-          ${skeleton ? `<span class="mc-loading-inline">${renderSpinner()}</span>` : ''}
         </div>
       </div>`;
   }
@@ -638,8 +709,8 @@
   }
 
   function renderCompareView() {
-    const skeleton = state.loading;
-    const products = skeleton && !state.products.length
+    const specsLoading = state.loading && !state.specs.length;
+    const products = specsLoading && !state.products.length
       ? Array(Math.min(state.selected.length || 2, MAX)).fill(null).map((_, i) => ({
           id: i,
           name: '…',
@@ -648,12 +719,12 @@
           url: '#',
         }))
       : state.products;
-    const specs = skeleton ? [] : filteredSpecs();
+    const specs = specsLoading ? [] : filteredSpecs();
     const emptySlots = MAX - products.length;
 
-    const phoneHeaders = products.map((p) => renderHeroPhone(p, skeleton)).join('');
-    const addCol = !skeleton && emptySlots > 0 ? renderHeroAddSlot() : '';
-    const specRows = renderSpecRows(specs, emptySlots, skeleton);
+    const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image)).join('');
+    const addCol = !specsLoading && emptySlots > 0 ? renderHeroAddSlot() : '';
+    const specRows = renderSpecRows(specs, emptySlots, specsLoading);
     const colCount = products.length + (addCol ? 1 : 0);
     const title = compareTitle(products);
 
@@ -665,57 +736,151 @@
             <h1 class="mc-compare-title">${escapeHtml(title)}</h1>
           </div>
           <div class="mc-compare-top-actions">
-            <button type="button" class="mc-link-btn mc-share-btn" ${skeleton ? 'disabled' : ''}>
-              ${escapeHtml(t('share'))} <span aria-hidden="true">⎘</span>
-            </button>
-            <button type="button" class="mc-link-btn mc-clear-btn" ${skeleton ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
+            <button type="button" class="mc-link-btn mc-clear-btn" ${specsLoading ? 'disabled' : ''}>${escapeHtml(t('clearAll'))}</button>
             <button type="button" class="mc-link-btn mc-back-select">← ${escapeHtml(t('backToSelection'))}</button>
           </div>
         </header>
 
-        <div class="mc-compare-hero" data-mc-hero>
-          <div class="mc-hero-grid" style="--mc-cols: ${colCount}">
-            ${phoneHeaders}
-            ${addCol}
+        <div class="mc-compare-sync" data-mc-hscroll>
+          <div class="mc-compare-sync-inner">
+            <div class="mc-compare-sticky-anchor" data-mc-sticky-anchor aria-hidden="true"></div>
+            <div class="mc-compare-sticky" data-mc-sticky>
+              <div class="mc-compare-hero">
+                <div class="mc-hero-grid">
+                  <div class="mc-hero-label-spacer" aria-hidden="true"></div>
+                  ${phoneHeaders}
+                  ${addCol}
+                </div>
+              </div>
+              ${renderToolbarBar(specsLoading)}
+            </div>
+            <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
+
+            <div class="mc-compare-table-wrap">
+              <table class="mc-compare-table" style="--mc-cols: ${colCount}">
+                <colgroup>
+                  <col class="mc-col-label" />
+                  ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
+                </colgroup>
+                <tbody>${specRows}</tbody>
+              </table>
+            </div>
           </div>
-        </div>
-
-        ${renderStickyMini(products, emptySlots, skeleton)}
-
-        ${renderToolbarBar(skeleton)}
-
-        <div class="mc-compare-table-wrap">
-          <table class="mc-compare-table" style="--mc-cols: ${colCount}">
-            <colgroup>
-              <col class="mc-col-label" />
-              ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
-            </colgroup>
-            <tbody>${specRows}</tbody>
-          </table>
         </div>
       </div>
       ${state.toast ? `<div class="mc-toast" role="status">${escapeHtml(state.toast)}</div>` : ''}`;
   }
 
-  function bindStickyMini() {
-    const hero = app.querySelector('[data-mc-hero]');
-    const mini = app.querySelector('.mc-sticky-mini');
-    if (!hero || !mini) return;
+  function bindHeroSticky() {
+    const sticky = app.querySelector('[data-mc-sticky]');
+    const anchor = app.querySelector('[data-mc-sticky-anchor]');
+    const spacer = app.querySelector('[data-mc-sticky-spacer]');
+    const page = app.querySelector('.mc-page.mc-compare');
+    if (!sticky || !anchor || !page) return;
 
     if (state._stickyObserver) {
       state._stickyObserver.disconnect();
+      state._stickyObserver = null;
+    }
+    if (state._onStickyResize) {
+      window.removeEventListener('resize', state._onStickyResize);
+    }
+    if (state._onStickyScroll) {
+      window.removeEventListener('scroll', state._onStickyScroll);
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const visible = !entry.isIntersecting;
-        mini.classList.toggle('mc-is-visible', visible);
-        mini.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      },
-      { threshold: 0, rootMargin: '-1px 0px 0px 0px' }
-    );
-    observer.observe(hero);
-    state._stickyObserver = observer;
+    const getStickyTop = () => {
+      const adminBar = document.getElementById('wpadminbar');
+      return adminBar ? adminBar.offsetHeight : 0;
+    };
+
+    const syncPinnedLayout = () => {
+      const top = getStickyTop();
+      document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+
+      if (!sticky.classList.contains('is-pinned')) {
+        sticky.style.left = '';
+        sticky.style.width = '';
+        return;
+      }
+
+      if (window.innerWidth < 768) {
+        sticky.style.left = '0';
+        sticky.style.width = '100%';
+        return;
+      }
+
+      const rect = page.getBoundingClientRect();
+      sticky.style.left = `${rect.left}px`;
+      sticky.style.width = `${rect.width}px`;
+    };
+
+    const setPinned = (pinned) => {
+      const isMobile = window.innerWidth < 768;
+
+      /* Mobile: CSS sticky inside single h-scroll — no fixed pin */
+      if (isMobile) {
+        sticky.classList.remove('is-pinned', 'is-pinned-mobile');
+        if (spacer) spacer.style.height = '0px';
+        sticky.style.left = '';
+        sticky.style.width = '';
+        return;
+      }
+
+      sticky.classList.toggle('is-pinned', pinned);
+      sticky.classList.remove('is-pinned-mobile');
+
+      if (spacer) {
+        requestAnimationFrame(() => {
+          spacer.style.height = pinned ? `${sticky.offsetHeight}px` : '0px';
+        });
+      }
+
+      if (pinned) {
+        const rect = page.getBoundingClientRect();
+        sticky.style.left = `${rect.left}px`;
+        sticky.style.width = `${rect.width}px`;
+      } else {
+        sticky.style.left = '';
+        sticky.style.width = '';
+      }
+    };
+
+    const setupObserver = () => {
+      if (state._stickyObserver) {
+        state._stickyObserver.disconnect();
+      }
+      state._stickyObserver = new IntersectionObserver(
+        ([entry]) => setPinned(!entry.isIntersecting),
+        {
+          root: null,
+          rootMargin: `-${getStickyTop()}px 0px 0px 0px`,
+          threshold: 0,
+        }
+      );
+    state._stickyObserver.observe(anchor);
+  }
+
+  function bindMobileScrollSync() {
+    if (state._mobileScrollCleanup) {
+      state._mobileScrollCleanup();
+      state._mobileScrollCleanup = null;
+    }
+  };
+
+    const applyStickyOffset = () => {
+      syncPinnedLayout();
+      if (spacer && sticky.classList.contains('is-pinned')) {
+        spacer.style.height = `${sticky.offsetHeight}px`;
+      }
+      setupObserver();
+    };
+
+    state._onStickyResize = applyStickyOffset;
+    state._onStickyScroll = syncPinnedLayout;
+    applyStickyOffset();
+    window.addEventListener('resize', applyStickyOffset, { passive: true });
+    window.addEventListener('scroll', syncPinnedLayout, { passive: true });
   }
 
   function render() {
@@ -726,7 +891,8 @@
 
     if (state.view === 'compare' && (state.products.length || state.loading)) {
       app.innerHTML = renderCompareView();
-      bindStickyMini();
+      bindHeroSticky();
+      bindMobileScrollSync();
     } else {
       app.innerHTML = renderSelectView();
     }
@@ -734,7 +900,7 @@
   }
 
   function bindEvents() {
-    const compareBtn = app.querySelector('.mc-btn-compare');
+    const compareBtn = app.querySelector('.mc-btn-compare-91');
     if (compareBtn) {
       compareBtn.addEventListener('mouseenter', () => {
         if (state.selected.length >= 2) {
@@ -749,63 +915,47 @@
       });
     }
 
-    app.querySelectorAll('.mc-slot-remove').forEach((btn) => {
-      btn.addEventListener('click', () => removeProduct(parseInt(btn.dataset.id, 10)));
+    app.querySelectorAll('.mc-slot-91-remove').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeProduct(parseInt(btn.dataset.id, 10));
+      });
     });
 
-    app.querySelectorAll('.mc-slot-open').forEach((btn) => {
+    app.querySelectorAll('.mc-slot-91.mc-slot-empty').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         activateSlot(parseInt(btn.dataset.slot, 10));
-        setTimeout(() => {
-          const input = app.querySelector(`.mc-search-input[data-slot="${btn.dataset.slot}"]`);
-          input?.focus();
-        }, 0);
+        requestAnimationFrame(() => {
+          const input = app.querySelector('.mc-slot-wrap.is-open .mc-picker-search');
+          if (input) {
+            input.focus();
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+          }
+        });
       });
     });
 
-    app.querySelectorAll('.mc-search-input').forEach((input) => {
-      input.addEventListener('focus', () => {
-        const slot = parseInt(input.dataset.slot, 10);
-        if (state.activeSlot !== slot) activateSlot(slot);
-      });
-      input.addEventListener('input', (e) => {
-        state.activeSlot = parseInt(input.dataset.slot, 10);
-        searchProducts(e.target.value);
-      });
-    });
+    const pickerSearch = app.querySelector('.mc-picker-search');
+    if (pickerSearch) {
+      pickerSearch.addEventListener('input', (e) => searchProducts(e.target.value));
+    }
 
-    app.querySelectorAll('.mc-search-dropdown li').forEach((li) => {
-      li.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const slot = li.dataset.slot != null ? parseInt(li.dataset.slot, 10) : state.activeSlot;
-        addProduct({
-          id: parseInt(li.dataset.id, 10),
-          name: li.dataset.name,
-          slug: li.dataset.slug,
-          image: li.dataset.image,
-          price: li.dataset.price,
-          url: li.dataset.url,
-        }, slot);
-        state.searchQuery = '';
-        state.searchResults = [];
-        state.searching = false;
-        state.activeSlot = null;
-        render();
-      });
-    });
+    const dropdown = app.querySelector('.mc-slot-dropdown');
+    if (dropdown) bindDropdownItems(dropdown);
 
     if (!state._outsideClick) {
       state._outsideClick = true;
       document.addEventListener('click', (e) => {
         if (state.view !== 'select' || state.activeSlot === null) return;
-        if (e.target.closest('.mc-slot-empty') || e.target.closest('.mc-search-dropdown')) return;
+        if (e.target.closest('.mc-slot-wrap.is-open') || e.target.closest('.mc-slot-91.mc-slot-empty')) return;
         state.activeSlot = null;
         render();
       });
     }
 
-    app.querySelectorAll('.mc-add-btn:not(:disabled)').forEach((btn) => {
+    app.querySelectorAll('.mc-suggest-add:not(:disabled)').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.suggestId, 10);
         const p = state.suggested.find((x) => x.id === id);
@@ -851,8 +1001,6 @@
       render();
       loadSelectData();
     });
-
-    app.querySelector('.mc-share-btn')?.addEventListener('click', shareCompare);
 
     app.querySelector('.mc-toggle-diff')?.addEventListener('change', (e) => {
       state.showDiffOnly = e.target.checked;
