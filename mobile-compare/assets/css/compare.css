@@ -1262,16 +1262,29 @@ body.admin-bar .mobile-compare-root {
 }
 
 @media screen and (max-width: 767px) {
-  .mc-compare-sticky.is-pinned {
+  .mc-compare-sticky {
     position: relative;
-    top: auto;
-    left: auto !important;
-    width: auto !important;
-    box-shadow: none;
-    animation: none;
+    z-index: 20;
+    background: #fff;
+    transition: box-shadow 0.2s ease;
   }
 
-  /* No horizontal scroll — phones fill screen; overflow breaks position:sticky */
+  .mc-compare-sticky.is-pinned {
+    position: fixed;
+    top: var(--mc-sticky-top, 0px);
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 99;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    animation: mc-sticky-slide 0.28s ease forwards;
+    will-change: transform;
+  }
+
+  .mc-compare-sticky.is-pinned-mobile {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  /* No horizontal scroll — phones fill screen */
   .mc-compare-sync {
     overflow: visible;
     margin: 0;
@@ -1284,16 +1297,8 @@ body.admin-bar .mobile-compare-root {
     min-width: 0;
   }
 
-  .mc-compare-sticky {
-    position: sticky;
-    top: var(--mc-sticky-top, 0px);
-    z-index: 20;
-    background: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-
-  .mc-compare-sticky.is-pinned-mobile {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  .mc-compare-sticky-spacer {
+    transition: height 0.2s ease;
   }
 
   .mc-compare-sticky .mc-compare-hero,
@@ -1312,30 +1317,50 @@ body.admin-bar .mobile-compare-root {
     padding: 10px 6px 8px;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-hero-phone {
-    min-height: 108px;
-    padding: 6px 4px 4px;
+  /* Compact horizontal row when pinned (like desktop) */
+  .mc-compare-sticky.is-pinned .mc-hero-phone {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    grid-template-rows: auto auto;
+    gap: 0 6px;
+    align-items: center;
+    min-height: 64px;
+    padding: 6px 20px 6px 6px;
+    text-align: left;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-hero-img {
-    height: 56px;
-    max-width: 48px;
+  .mc-compare-sticky.is-pinned .mc-hero-img-link {
+    grid-row: 1 / 3;
+    grid-column: 1;
+    margin: 0;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-hero-name {
-    font-size: 0.65rem;
+  .mc-compare-sticky.is-pinned .mc-hero-img {
+    height: 44px;
+    max-width: 44px;
+    margin: 0;
+  }
+
+  .mc-compare-sticky.is-pinned .mc-hero-name {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.62rem;
+    margin: 0;
     -webkit-line-clamp: 2;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-hero-price {
-    font-size: 0.68rem;
+  .mc-compare-sticky.is-pinned .mc-hero-price {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 0.65rem;
+    margin: 0;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-hero-store-link {
+  .mc-compare-sticky.is-pinned .mc-hero-store-link {
     display: none;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-hero-close {
+  .mc-compare-sticky.is-pinned .mc-hero-close {
     top: 2px;
     right: 2px;
     width: 18px;
@@ -1343,8 +1368,33 @@ body.admin-bar .mobile-compare-root {
     font-size: 0.75rem;
   }
 
-  .mc-compare-sticky.is-pinned-mobile .mc-filter-bar {
+  .mc-compare-sticky.is-pinned .mc-hero-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+    padding: 6px;
+  }
+
+  .mc-compare-sticky.is-pinned .mc-btn-add-compare {
+    padding: 6px 10px;
+    font-size: 0.62rem;
+    border-radius: 16px;
+    gap: 3px;
+    box-shadow: none;
+  }
+
+  .mc-compare-sticky.is-pinned .mc-btn-add-icon {
+    font-size: 0.8rem;
+  }
+
+  .mc-compare-sticky.is-pinned .mc-filter-bar {
     padding: 4px 8px;
+  }
+
+  .mc-compare-sticky.is-pinned .mc-toggle-compact {
+    font-size: 0.65rem;
+    gap: 4px;
   }
 
   .mc-compare-sticky .mc-hero-img-link {
@@ -1713,6 +1763,11 @@ body.admin-bar .mobile-compare-root {
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.mobile-compare-active {
+    -webkit-overflow-scrolling: touch;
   }
 
   .mobile-compare-blank-main {
@@ -1800,6 +1855,23 @@ body.admin-bar .mobile-compare-root {
 
   .mc-hero-store-link {
     font-size: 0.72rem;
+  }
+
+  .mc-hero-add {
+    min-height: auto;
+    padding: 8px 4px;
+  }
+
+  .mc-btn-add-compare {
+    padding: 8px 14px;
+    font-size: 0.72rem;
+    border-radius: 20px;
+    gap: 4px;
+    box-shadow: 0 1px 5px rgba(255, 101, 54, 0.28);
+  }
+
+  .mc-btn-add-icon {
+    font-size: 0.9rem;
   }
 
   .mc-compare-table-wrap {

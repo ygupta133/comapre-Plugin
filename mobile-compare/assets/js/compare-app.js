@@ -818,13 +818,24 @@
     const setPinned = (pinned) => {
       const isMobile = window.innerWidth < 768;
 
-      /* Mobile: CSS sticky + compact class when scrolled (no fixed pin) */
+      /* Mobile: fixed pin + slide-down bar like desktop */
       if (isMobile) {
-        sticky.classList.remove('is-pinned');
+        sticky.classList.toggle('is-pinned', pinned);
         sticky.classList.toggle('is-pinned-mobile', pinned);
-        if (spacer) spacer.style.height = '0px';
-        sticky.style.left = '';
-        sticky.style.width = '';
+
+        if (spacer) {
+          requestAnimationFrame(() => {
+            spacer.style.height = pinned ? `${sticky.offsetHeight}px` : '0px';
+          });
+        }
+
+        if (pinned) {
+          sticky.style.left = '0';
+          sticky.style.width = '100%';
+        } else {
+          sticky.style.left = '';
+          sticky.style.width = '';
+        }
         return;
       }
 
