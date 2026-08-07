@@ -115,29 +115,85 @@ class Mobile_Compare_Data {
 	 * @param array<int> $ids Product IDs.
 	 */
 	public static function get_products_for_compare( array $ids ): array {
-		$products = array();
+		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		$by_id   = array();
+		$missing = array();
+
 		foreach ( $ids as $id ) {
-			$id = absint( $id );
 			if ( $id <= 0 ) {
 				continue;
 			}
 			$cached = wp_cache_get( 'product_' . $id, self::CACHE_GROUP );
 			if ( false !== $cached ) {
-				$products[] = $cached;
-				continue;
+				$by_id[ $id ] = $cached;
+			} else {
+				$missing[] = $id;
 			}
-
-			$product = wc_get_product( $id );
-			if ( ! $product || 'publish' !== $product->get_status() ) {
-				continue;
-			}
-
-			$data = self::format_product_compare( $product );
-			wp_cache_set( 'product_' . $id, $data, self::CACHE_GROUP, self::CACHE_TTL );
-			$products[] = $data;
 		}
 
-		return $products;
+		if ( ! empty( $missing ) ) {
+			$wc_products = wc_get_products(
+				array(
+					'include' => $missing,
+					'limit'   => count( $missing ),
+					'status'  => 'publish',
+				)
+			);
+
+			foreach ( $wc_products as $product ) {
+				$id   = $product->get_id();
+				$data = self::format_product_compare( $product );
+				wp_cache_set( 'product_' . $id, $data, self::CACHE_GROUP, self::CACHE_TTL );
+				$by_id[ $id ] = $data;
+			}
+		}
+
+		$ordered = array();
+		foreach ( $ids as $id ) {
+			if ( isset( $by_id[ $id ] ) ) {
+				$ordered[] = $by_id[ $id ];
+			}
+		}
+
+		return $ordered;
+	}
+
+	/**
+	 * Full compare API payload with response cache.
+	 *
+	 * @param array<int> $ids Product IDs.
+	 */
+	public static function get_compare_bundle( array $ids ): array {
+		$ids = array_slice( array_values( array_filter( array_map( 'absint', $ids ) ) ), 0, 3 );
+		if ( empty( $ids ) ) {
+			return array(
+				'products' => array(),
+				'specs'    => array(),
+				'url'      => home_url( '/compare/' ),
+			);
+		}
+
+		sort( $ids );
+		$cache_key = 'bundle_' . implode( '_', $ids );
+		$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+		if ( false !== $cached && is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$products = self::get_products_for_compare( $ids );
+		$bundle   = array(
+			'products' => $products,
+			'specs'    => self::build_spec_rows( $products ),
+			'url'      => self::build_compare_url( $ids ),
+			'ids'      => $ids,
+		);
+
+		wp_cache_set( $cache_key, $bundle, self::CACHE_GROUP, self::CACHE_TTL );
+		return $bundle;
 	}
 
 	/**
@@ -298,6 +354,7 @@ class Mobile_Compare_Data {
 	 */
 	public static function invalidate_product_cache( int $product_id ): void {
 		wp_cache_delete( 'product_' . $product_id, self::CACHE_GROUP );
+		delete_transient( 'mobile_compare_popular_v1' );
 	}
 
 	/**

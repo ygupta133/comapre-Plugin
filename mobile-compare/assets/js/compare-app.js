@@ -64,11 +64,11 @@
       return inflightRequests.get(key);
     }
 
-    const maxRetries = typeof retries === 'number' ? retries : 2;
+    const maxRetries = typeof retries === 'number' ? retries : 1;
 
     const attempt = (left) => api('products', { ids: ids.join(',') }).catch((err) => {
       if (left > 0) {
-        return new Promise((resolve) => setTimeout(resolve, 400)).then(() => attempt(left - 1));
+        return new Promise((resolve) => setTimeout(resolve, 200)).then(() => attempt(left - 1));
       }
       throw err;
     });
@@ -98,11 +98,11 @@
       return inflightRequests.get(key);
     }
 
-    const maxRetries = typeof retries === 'number' ? retries : 2;
+    const maxRetries = typeof retries === 'number' ? retries : 1;
 
     const attempt = (left) => api('products-by-slugs', { path: slugPath }).catch((err) => {
       if (left > 0) {
-        return new Promise((resolve) => setTimeout(resolve, 400)).then(() => attempt(left - 1));
+        return new Promise((resolve) => setTimeout(resolve, 200)).then(() => attempt(left - 1));
       }
       throw err;
     });
@@ -326,9 +326,21 @@
       });
   }
 
+  let selectDataTimer = null;
+
   function loadSelectData() {
-    api('popular').then((d) => { state.popular = d.pairs || []; render(); });
-    api('suggested', { exclude: idsParam() }).then((d) => { state.suggested = d.items || []; render(); });
+    if (selectDataTimer) clearTimeout(selectDataTimer);
+    selectDataTimer = setTimeout(() => {
+      selectDataTimer = null;
+      Promise.all([
+        api('popular'),
+        api('suggested', { exclude: idsParam() }),
+      ]).then(([popularRes, suggestedRes]) => {
+        state.popular = popularRes.pairs || [];
+        state.suggested = suggestedRes.items || [];
+        render();
+      }).catch(() => {});
+    }, 50);
   }
 
   function addProduct(product, slotIndex) {
@@ -1257,8 +1269,7 @@
 
   /* ─── Init ─── */
 
-  api('config').then((config) => {
-    state.config = config;
+  function bootApp() {
     state.booting = false;
     const route = parseRoute();
     if (route.view === 'compare' && route.slugPath) {
@@ -1268,12 +1279,24 @@
       render();
       loadSelectData();
     }
-  }).catch(() => {
-    state.booting = false;
-    state.view = 'select';
-    render();
-    loadSelectData();
-  });
+  }
+
+  function loadClientConfig() {
+    if (cfg.config && cfg.config.i18n) {
+      state.config = cfg.config;
+      bootApp();
+      return;
+    }
+    api('config').then((config) => {
+      state.config = config;
+      bootApp();
+    }).catch(() => {
+      state.config = { i18n: {} };
+      bootApp();
+    });
+  }
+
+  loadClientConfig();
 
   window.addEventListener('popstate', () => {
     const route = parseRoute();
