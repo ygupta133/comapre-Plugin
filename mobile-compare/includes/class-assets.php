@@ -61,6 +61,7 @@ class Mobile_Compare_Assets {
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'homeUrl'   => esc_url_raw( home_url( '/' ) ),
 				'compareUrl'=> esc_url_raw( home_url( '/compare/' ) ),
+				'config'    => Mobile_Compare_REST_API::get_client_config(),
 			)
 		);
 

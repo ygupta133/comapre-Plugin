@@ -138,17 +138,7 @@ class Mobile_Compare_REST_API {
 			return new WP_REST_Response( array( 'message' => 'No valid product IDs.' ), 400 );
 		}
 
-		$products = Mobile_Compare_Data::get_products_for_compare( $ids );
-		$rows     = Mobile_Compare_Data::build_spec_rows( $products );
-
-		return new WP_REST_Response(
-			array(
-				'products' => $products,
-				'specs'    => $rows,
-				'url'      => Mobile_Compare_Data::build_compare_url( $ids ),
-			),
-			200
-		);
+		return new WP_REST_Response( Mobile_Compare_Data::get_compare_bundle( $ids ), 200 );
 	}
 
 	/**
@@ -162,18 +152,7 @@ class Mobile_Compare_REST_API {
 			return new WP_REST_Response( array( 'message' => 'No products found for slugs.' ), 404 );
 		}
 
-		$products = Mobile_Compare_Data::get_products_for_compare( $ids );
-		$rows     = Mobile_Compare_Data::build_spec_rows( $products );
-
-		return new WP_REST_Response(
-			array(
-				'products' => $products,
-				'specs'    => $rows,
-				'ids'      => $ids,
-				'url'      => Mobile_Compare_Data::build_compare_url( $ids ),
-			),
-			200
-		);
+		return new WP_REST_Response( Mobile_Compare_Data::get_compare_bundle( $ids ), 200 );
 	}
 
 	/**
@@ -189,44 +168,60 @@ class Mobile_Compare_REST_API {
 	}
 
 	public static function popular(): WP_REST_Response {
-		return new WP_REST_Response( array( 'pairs' => Mobile_Compare_Data::get_popular_comparisons() ), 200 );
+		$cached = get_transient( 'mobile_compare_popular_v1' );
+		if ( false !== $cached && is_array( $cached ) ) {
+			return new WP_REST_Response( $cached, 200 );
+		}
+
+		$data = array( 'pairs' => Mobile_Compare_Data::get_popular_comparisons() );
+		set_transient( 'mobile_compare_popular_v1', $data, HOUR_IN_SECONDS );
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * SPA bootstrap config — also inlined in wp_localize_script for zero-latency boot.
+	 */
+	public static function get_client_config(): array {
+		return array(
+			'maxProducts'    => 3,
+			'compareBaseUrl' => home_url( '/compare/' ),
+			'attributeMap'   => Mobile_Compare_Data::get_attribute_map(),
+			'i18n'           => array(
+				'title'              => __( 'Compare Mobiles', 'mobile-compare' ),
+				'subtitle'           => __( 'Compare up to 3 smartphones and find the best one for you.', 'mobile-compare' ),
+				'selectProduct'      => __( 'Select a product', 'mobile-compare' ),
+				'selectLabel'        => __( 'Select Mobiles to Compare', 'mobile-compare' ),
+				'searchOrPick'       => __( 'Search or pick a phone', 'mobile-compare' ),
+				'compareNow'         => __( 'Compare Now!', 'mobile-compare' ),
+				'addToCompare'       => __( 'Add to Compare', 'mobile-compare' ),
+				'addedToCompare'     => __( 'Added to Compare', 'mobile-compare' ),
+				'popularTitle'       => __( 'Popular Comparisons', 'mobile-compare' ),
+				'suggestedTitle'     => __( 'Compare Suggested Mobiles', 'mobile-compare' ),
+				'showDifferences'    => __( 'Show only differences', 'mobile-compare' ),
+				'highlightBetter'    => __( 'Highlight better specs', 'mobile-compare' ),
+				'clearAll'           => __( 'Clear All', 'mobile-compare' ),
+				'share'              => __( 'Share', 'mobile-compare' ),
+				'backToSelection'    => __( 'Back to selection', 'mobile-compare' ),
+				'fabCompare'         => __( 'Compare', 'mobile-compare' ),
+				'addAnotherPhone'    => __( 'Add Another Phone', 'mobile-compare' ),
+				'viewDetails'        => __( 'View Details', 'mobile-compare' ),
+				'buyNow'             => __( 'Buy Now', 'mobile-compare' ),
+				'addPhone'           => __( 'Add Phone', 'mobile-compare' ),
+				'startingAt'         => __( 'Starting at', 'mobile-compare' ),
+				'loadingCompare'     => __( 'Loading comparison…', 'mobile-compare' ),
+				'loadingSearch'      => __( 'Searching…', 'mobile-compare' ),
+				'noResults'          => __( 'No phones found', 'mobile-compare' ),
+				'available'          => __( 'Available', 'mobile-compare' ),
+				'outOfStock'         => __( 'Out of Stock', 'mobile-compare' ),
+				'loadError'          => __( 'Could not load comparison. Please try again.', 'mobile-compare' ),
+				'linkCopied'         => __( 'Link copied!', 'mobile-compare' ),
+			),
+		);
 	}
 
 	public static function config(): WP_REST_Response {
-		return new WP_REST_Response(
-			array(
-				'maxProducts'    => 3,
-				'compareBaseUrl' => home_url( '/compare/' ),
-				'attributeMap'   => Mobile_Compare_Data::get_attribute_map(),
-				'i18n'           => array(
-					'title'              => __( 'Compare Mobiles', 'mobile-compare' ),
-					'subtitle'           => __( 'Compare up to 3 smartphones and find the best one for you.', 'mobile-compare' ),
-					'selectProduct'      => __( 'Select a product', 'mobile-compare' ),
-					'selectLabel'        => __( 'Select Mobiles to Compare', 'mobile-compare' ),
-					'searchOrPick'       => __( 'Search or pick a phone', 'mobile-compare' ),
-					'compareNow'         => __( 'Compare Now!', 'mobile-compare' ),
-					'addToCompare'       => __( 'Add to Compare', 'mobile-compare' ),
-					'addedToCompare'     => __( 'Added to Compare', 'mobile-compare' ),
-					'popularTitle'       => __( 'Popular Comparisons', 'mobile-compare' ),
-					'suggestedTitle'     => __( 'Compare Suggested Mobiles', 'mobile-compare' ),
-					'showDifferences'    => __( 'Show only differences', 'mobile-compare' ),
-					'highlightBetter'    => __( 'Highlight better specs', 'mobile-compare' ),
-					'clearAll'           => __( 'Clear All', 'mobile-compare' ),
-					'share'              => __( 'Share', 'mobile-compare' ),
-					'backToSelection'    => __( 'Back to selection', 'mobile-compare' ),
-					'addAnotherPhone'    => __( 'Add Another Phone', 'mobile-compare' ),
-					'viewDetails'        => __( 'View Details', 'mobile-compare' ),
-					'buyNow'             => __( 'Buy Now', 'mobile-compare' ),
-					'addPhone'           => __( 'Add Phone', 'mobile-compare' ),
-					'startingAt'         => __( 'Starting at', 'mobile-compare' ),
-					'loadingCompare'     => __( 'Loading comparison…', 'mobile-compare' ),
-					'loadingSearch'      => __( 'Searching…', 'mobile-compare' ),
-					'loadError'          => __( 'Could not load comparison. Please try again.', 'mobile-compare' ),
-					'linkCopied'         => __( 'Link copied!', 'mobile-compare' ),
-				),
-			),
-			200
-		);
+		return new WP_REST_Response( self::get_client_config(), 200 );
 	}
 
 	/**
