@@ -1,0 +1,63 @@
+/* Site-wide floating Compare link — lightweight, mobile-first */
+
+.mc-site-fab-compare {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: fixed;
+  right: 14px;
+  bottom: 18px;
+  z-index: 99990;
+  padding: 10px 18px;
+  background: #ff6536;
+  color: #fff;
+  border: none;
+  border-radius: 28px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255, 101, 54, 0.45);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mc-site-fab-compare:hover,
+.mc-site-fab-compare:focus {
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 101, 54, 0.5);
+}
+
+.mc-site-fab-compare .mc-site-fab-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  font-weight: 400;
+}
+
+@media (max-width: 767px) {
+  .mc-site-fab-compare {
+    display: flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .mc-site-fab-compare {
+    display: flex;
+    bottom: 22px;
+    right: 22px;
+  }
+}
+
+body.admin-bar .mc-site-fab-compare {
+  bottom: 32px;
+}
+
+@media screen and (max-width: 782px) {
+  body.admin-bar .mc-site-fab-compare {
+    bottom: 46px;
+  }
+}

@@ -250,10 +250,11 @@ class Mobile_Compare_Data {
 		}
 
 		if ( empty( $slugs ) ) {
-			return home_url( '/compare/' );
+			return Mobile_Compare_Settings::get_page_url();
 		}
 
-		return home_url( '/compare/' . implode( '/vs/', $slugs ) . '/' );
+		$base = untrailingslashit( Mobile_Compare_Settings::get_page_url() );
+		return $base . '/' . implode( '/vs/', $slugs ) . '/';
 	}
 
 	/**

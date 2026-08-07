@@ -25,6 +25,18 @@ class Mobile_Compare_Admin {
 	public static function register_settings(): void {
 		register_setting(
 			'mobile_compare_settings',
+			'mobile_compare_fab_sitewide',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => static function ( $value ) {
+					return ! empty( $value );
+				},
+				'default'           => true,
+			)
+		);
+
+		register_setting(
+			'mobile_compare_settings',
 			'mobile_compare_page_id',
 			array(
 				'type'              => 'integer',
@@ -79,6 +91,7 @@ class Mobile_Compare_Admin {
 		$popular_raw = get_option( 'mobile_compare_popular_pairs', array() );
 		$compare_page_id = (int) get_option( 'mobile_compare_page_id', 0 );
 		$resolved_page_id = Mobile_Compare_Settings::get_page_id();
+		$fab_sitewide = Mobile_Compare_Settings::is_fab_sitewide_enabled();
 		$pages = get_pages(
 			array(
 				'sort_column' => 'post_title',
@@ -122,6 +135,17 @@ class Mobile_Compare_Admin {
 							<?php if ( $resolved_page_id ) : ?>
 								<p><a href="<?php echo esc_url( get_permalink( $resolved_page_id ) ); ?>" class="button" target="_blank" rel="noopener"><?php esc_html_e( 'Open Compare Page', 'mobile-compare' ); ?></a></p>
 							<?php endif; ?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Floating button', 'mobile-compare' ); ?></th>
+						<td>
+							<input type="hidden" name="mobile_compare_fab_sitewide" value="0" />
+							<label>
+								<input type="checkbox" name="mobile_compare_fab_sitewide" value="1" <?php checked( $fab_sitewide ); ?> />
+								<?php esc_html_e( 'Show floating Compare button on all pages (links to compare page only)', 'mobile-compare' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Lightweight orange FAB — hidden on the compare page itself. Full compare UI stays on compare page only.', 'mobile-compare' ); ?></p>
 						</td>
 					</tr>
 				</table>

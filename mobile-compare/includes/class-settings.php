@@ -8,9 +8,14 @@ defined( 'ABSPATH' ) || exit;
 class Mobile_Compare_Settings {
 
 	const OPTION_PAGE_ID = 'mobile_compare_page_id';
+	const OPTION_FAB_SITEWIDE = 'mobile_compare_fab_sitewide';
 
 	public static function init(): void {
 		// Reserved for future hooks.
+	}
+
+	public static function is_fab_sitewide_enabled(): bool {
+		return '0' !== (string) get_option( self::OPTION_FAB_SITEWIDE, '1' );
 	}
 
 	/**
