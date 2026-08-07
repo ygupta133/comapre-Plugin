@@ -35,6 +35,8 @@
 
   let searchTimer = null;
   const dataCache = new Map();
+  const inflightRequests = new Map();
+  let compareRequestId = 0;
 
   const app = document.getElementById('mobile-compare-app');
   if (!app) return;
@@ -51,6 +53,90 @@
       if (!r.ok) throw new Error('API error');
       return r.json();
     }).finally(() => clearTimeout(timer));
+  }
+
+  function fetchCompareProducts(ids, retries) {
+    const key = cacheKey(ids);
+    if (dataCache.has(key)) {
+      return Promise.resolve(dataCache.get(key));
+    }
+    if (inflightRequests.has(key)) {
+      return inflightRequests.get(key);
+    }
+
+    const maxRetries = typeof retries === 'number' ? retries : 2;
+
+    const attempt = (left) => api('products', { ids: ids.join(',') }).catch((err) => {
+      if (left > 0) {
+        return new Promise((resolve) => setTimeout(resolve, 400)).then(() => attempt(left - 1));
+      }
+      throw err;
+    });
+
+    const promise = attempt(maxRetries)
+      .then((data) => {
+        if (!data || !Array.isArray(data.products) || !data.products.length) {
+          throw new Error('empty');
+        }
+        dataCache.set(key, data);
+        return data;
+      })
+      .finally(() => {
+        inflightRequests.delete(key);
+      });
+
+    inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  function fetchCompareBySlugs(slugPath, retries) {
+    const key = `slug:${slugPath}`;
+    if (dataCache.has(key)) {
+      return Promise.resolve(dataCache.get(key));
+    }
+    if (inflightRequests.has(key)) {
+      return inflightRequests.get(key);
+    }
+
+    const maxRetries = typeof retries === 'number' ? retries : 2;
+
+    const attempt = (left) => api('products-by-slugs', { path: slugPath }).catch((err) => {
+      if (left > 0) {
+        return new Promise((resolve) => setTimeout(resolve, 400)).then(() => attempt(left - 1));
+      }
+      throw err;
+    });
+
+    const promise = attempt(maxRetries)
+      .then((data) => {
+        if (!data || !Array.isArray(data.products) || !data.products.length) {
+          throw new Error('empty');
+        }
+        if (data.products.length) {
+          dataCache.set(cacheKey(data.products.map((p) => p.id)), data);
+        }
+        dataCache.set(key, data);
+        return data;
+      })
+      .finally(() => {
+        inflightRequests.delete(key);
+      });
+
+    inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  function failCompareLoad(reqId) {
+    if (reqId !== compareRequestId) return;
+    state.loading = false;
+    state.comparing = false;
+    state.error = t('loadError');
+    state.view = 'select';
+    state.products = [];
+    state.specs = [];
+    render();
+    loadSelectData();
+    showToast(t('loadError'));
   }
 
   function t(key) {
@@ -98,11 +184,8 @@
   }
 
   function prefetchCompare(ids) {
-    const key = cacheKey(ids);
-    if (!ids.length || dataCache.has(key)) return;
-    api('products', { ids: ids.join(',') })
-      .then((data) => dataCache.set(key, data))
-      .catch(() => {});
+    if (!ids.length) return;
+    fetchCompareProducts(ids, 1).catch(() => {});
   }
 
   function navigateCompare(ids) {
@@ -161,6 +244,7 @@
 
     const key = cacheKey(ids);
     const cached = dataCache.get(key);
+    const reqId = ++compareRequestId;
 
     state.loading = true;
     state.comparing = true;
@@ -178,28 +262,33 @@
       return;
     }
 
-    api('products', { ids: ids.join(',') })
+    fetchCompareProducts(ids)
       .then((data) => {
-        dataCache.set(key, data);
+        if (reqId !== compareRequestId) return;
         applyCompareData(data);
         state.loading = false;
         state.comparing = false;
         render();
       })
       .catch(() => {
-        state.loading = false;
-        state.comparing = false;
-        state.error = t('loadError');
-        state.view = 'select';
-        state.products = [];
-        state.specs = [];
-        render();
-        loadSelectData();
-        showToast(t('loadError'));
+        const keyAfter = cacheKey(ids);
+        if (dataCache.has(keyAfter)) {
+          if (reqId !== compareRequestId) return;
+          applyCompareData(dataCache.get(keyAfter));
+          state.loading = false;
+          state.comparing = false;
+          render();
+          return;
+        }
+        failCompareLoad(reqId);
       });
   }
 
   function loadCompareBySlugs(slugPath) {
+    const reqId = ++compareRequestId;
+    const slugKey = `slug:${slugPath}`;
+    const cached = dataCache.get(slugKey);
+
     state.loading = true;
     state.comparing = true;
     state.error = null;
@@ -208,26 +297,32 @@
     state.specs = [];
     render();
 
-    api('products-by-slugs', { path: slugPath })
+    if (cached) {
+      applyCompareData(cached);
+      state.loading = false;
+      state.comparing = false;
+      render();
+      return;
+    }
+
+    fetchCompareBySlugs(slugPath)
       .then((data) => {
+        if (reqId !== compareRequestId) return;
         applyCompareData(data);
-        if (state.products.length) {
-          dataCache.set(cacheKey(state.products.map((p) => p.id)), data);
-        }
         state.loading = false;
         state.comparing = false;
         render();
       })
       .catch(() => {
-        state.loading = false;
-        state.comparing = false;
-        state.error = t('loadError');
-        state.view = 'select';
-        state.products = [];
-        state.specs = [];
-        render();
-        loadSelectData();
-        showToast(t('loadError'));
+        if (dataCache.has(slugKey)) {
+          if (reqId !== compareRequestId) return;
+          applyCompareData(dataCache.get(slugKey));
+          state.loading = false;
+          state.comparing = false;
+          render();
+          return;
+        }
+        failCompareLoad(reqId);
       });
   }
 
@@ -1004,7 +1099,8 @@
   function bindMobileUnifiedSticky(page) {
     const thead = page.querySelector('thead[data-mc-sticky]');
     const anchor = page.querySelector('[data-mc-sticky-anchor]');
-    if (!thead || !anchor) return;
+    const table = page.querySelector('.mc-compare-unified');
+    if (!thead || !anchor || !table) return;
 
     if (state._stickyObserver) {
       state._stickyObserver.disconnect();
@@ -1020,24 +1116,10 @@
     const syncTop = () => {
       const top = getSiteHeaderOffset();
       document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
-      const heroRow = page.querySelector('.mc-hero-row');
-      if (heroRow) {
-        document.documentElement.style.setProperty('--mc-mobile-hero-h', `${heroRow.offsetHeight}px`);
-      }
     };
 
     const setCompact = (compact) => {
       thead.classList.toggle('is-compact', compact);
-      requestAnimationFrame(() => {
-        const heroRow = page.querySelector('.mc-hero-row');
-        if (heroRow) {
-          const h = heroRow.offsetHeight;
-          document.documentElement.style.setProperty(
-            compact ? '--mc-mobile-hero-h-compact' : '--mc-mobile-hero-h',
-            `${h}px`
-          );
-        }
-      });
     };
 
     const setupObserver = () => {
@@ -1076,6 +1158,8 @@
   }
 
   function render() {
+    document.body.classList.toggle('mc-view-compare', state.view === 'compare' && !state.booting);
+
     if (state.booting) {
       app.innerHTML = renderBootView();
       return;
@@ -1099,6 +1183,11 @@
           prefetchCompare(state.selected.map((p) => p.id));
         }
       });
+      compareBtn.addEventListener('touchstart', () => {
+        if (state.selected.length >= 2) {
+          prefetchCompare(state.selected.map((p) => p.id));
+        }
+      }, { passive: true });
       compareBtn.addEventListener('click', () => {
         if (state.selected.length >= 2 && !state.comparing) {
           state.error = null;

@@ -1776,6 +1776,13 @@ body.admin-bar .mobile-compare-root {
     margin-right: 0 !important;
   }
 
+  body.mobile-compare-active.mc-view-compare .mobile-compare-root,
+  body.mobile-compare-active.mc-view-compare .entry-content,
+  body.mobile-compare-active.mc-view-compare .site-main,
+  body.mobile-compare-active.mc-view-compare .content-area {
+    overflow: visible !important;
+  }
+
   .mobile-compare-root {
     width: 100%;
     max-width: 100vw;
@@ -2160,31 +2167,27 @@ body.admin-bar .mobile-compare-root {
   .mc-compare--mobile-unified .mc-compare-unified {
     width: 100%;
     table-layout: fixed;
-    border-collapse: collapse;
+    border-collapse: separate;
     border-spacing: 0;
     font-size: 0.8rem;
   }
 
-  .mc-compare--mobile-unified .mc-hero-row th {
+  .mc-compare--mobile-unified thead {
+    position: -webkit-sticky;
     position: sticky;
     top: var(--mc-sticky-top, 0px);
-    z-index: 102;
+    z-index: 100;
     background: #fff;
   }
 
+  .mc-compare--mobile-unified thead.is-compact {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  }
+
+  .mc-compare--mobile-unified .mc-hero-row th,
   .mc-compare--mobile-unified .mc-filter-row th {
-    position: sticky;
-    top: calc(var(--mc-sticky-top, 0px) + var(--mc-mobile-hero-h, 168px));
-    z-index: 101;
-    background: #fafafa;
-  }
-
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-row th {
-    top: var(--mc-sticky-top, 0px);
-  }
-
-  .mc-compare--mobile-unified thead.is-compact .mc-filter-row th {
-    top: calc(var(--mc-sticky-top, 0px) + var(--mc-mobile-hero-h-compact, 64px));
+    position: static;
+    top: auto;
   }
 
   .mc-compare--mobile-unified th.mc-hero-label-spacer {
@@ -2194,12 +2197,10 @@ body.admin-bar .mobile-compare-root {
     border-bottom: 1px solid #e8e8e8;
     padding: 0;
     font-weight: 400;
-    position: sticky;
   }
 
   .mc-compare--mobile-unified th.mc-filter-cell {
     display: table-cell !important;
-    position: sticky;
   }
 
   .mc-compare--mobile-unified th.mc-hero-phone {
@@ -2211,7 +2212,6 @@ body.admin-bar .mobile-compare-root {
     border-bottom: 1px solid #e8e8e8;
     background: #fff;
     font-weight: 400;
-    position: sticky;
   }
 
   .mc-compare--mobile-unified .mc-hero-phone-inner {
