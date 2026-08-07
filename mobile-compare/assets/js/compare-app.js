@@ -630,26 +630,33 @@
   }
 
   function renderHeroPhone(p, skeleton, asCell) {
-    const tag = asCell ? 'th' : 'div';
-    const scope = asCell ? ' scope="col"' : '';
+    let inner;
     if (skeleton && !p.image) {
-      return `
-        <${tag} class="mc-hero-phone mc-hero-skeleton"${scope}>
+      inner = `
           <div class="mc-skeleton mc-skeleton-hero-img"></div>
-          <div class="mc-skeleton mc-skeleton-text"></div>
-        </${tag}>`;
-    }
-    const price = formatPrice(p.price, p.price_plain);
-    return `
-      <${tag} class="mc-hero-phone"${scope}>
+          <div class="mc-skeleton mc-skeleton-text"></div>`;
+    } else {
+      const price = formatPrice(p.price, p.price_plain);
+      inner = `
         <button type="button" class="mc-hero-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
         <a href="${escapeHtml(p.url)}" class="mc-hero-img-link">
           <img src="${escapeHtml(p.image)}" alt="" class="mc-hero-img" />
         </a>
         <h2 class="mc-hero-name">${escapeHtml(p.name)}</h2>
         ${price ? `<p class="mc-hero-price">${escapeHtml(price)}</p>` : ''}
-        ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}
-      </${tag}>`;
+        ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}`;
+    }
+
+    if (asCell) {
+      const cellClass = skeleton && !p.image ? 'mc-hero-phone mc-hero-skeleton' : 'mc-hero-phone';
+      return `
+        <th class="${cellClass}" scope="col">
+          <div class="mc-hero-phone-inner">${inner}</div>
+        </th>`;
+    }
+
+    const outerClass = skeleton && !p.image ? 'mc-hero-phone mc-hero-skeleton' : 'mc-hero-phone';
+    return `<div class="${outerClass}">${inner}</div>`;
   }
 
   function renderHeroAddSlot() {
@@ -781,7 +788,7 @@
     const addCol = showHeroAdd ? renderHeroAddSlot() : '';
     const specRows = renderSpecRows(specs, emptySlots, specsLoading, phoneCount + 1);
     const title = compareTitle(products);
-    const fabBtn = showAddSlot && isMobileView
+    const fabBtn = isMobileView
       ? `<button type="button" class="mc-fab-compare mc-back-select" aria-label="${escapeHtml(t('fabCompare'))}">
           <span class="mc-fab-icon">+</span>
           <span class="mc-fab-label">${escapeHtml(t('fabCompare'))}</span>
@@ -1013,10 +1020,24 @@
     const syncTop = () => {
       const top = getSiteHeaderOffset();
       document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
+      const heroRow = page.querySelector('.mc-hero-row');
+      if (heroRow) {
+        document.documentElement.style.setProperty('--mc-mobile-hero-h', `${heroRow.offsetHeight}px`);
+      }
     };
 
     const setCompact = (compact) => {
       thead.classList.toggle('is-compact', compact);
+      requestAnimationFrame(() => {
+        const heroRow = page.querySelector('.mc-hero-row');
+        if (heroRow) {
+          const h = heroRow.offsetHeight;
+          document.documentElement.style.setProperty(
+            compact ? '--mc-mobile-hero-h-compact' : '--mc-mobile-hero-h',
+            `${h}px`
+          );
+        }
+      });
     };
 
     const setupObserver = () => {

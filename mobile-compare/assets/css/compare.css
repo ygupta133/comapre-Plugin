@@ -2140,6 +2140,10 @@ body.admin-bar .mobile-compare-root {
 
 /* Mobile: single table — hero phones + specs share exact same columns */
 @media (max-width: 767px) {
+  .mc-compare--mobile-unified {
+    padding-bottom: 72px;
+  }
+
   .mc-compare--mobile-unified .mc-compare-sync {
     overflow: visible;
     width: 100%;
@@ -2161,34 +2165,63 @@ body.admin-bar .mobile-compare-root {
     font-size: 0.8rem;
   }
 
-  .mc-compare--mobile-unified thead {
+  .mc-compare--mobile-unified .mc-hero-row th {
     position: sticky;
     top: var(--mc-sticky-top, 0px);
-    z-index: 100;
+    z-index: 102;
     background: #fff;
   }
 
-  .mc-compare--mobile-unified thead.is-compact {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  .mc-compare--mobile-unified .mc-filter-row th {
+    position: sticky;
+    top: calc(var(--mc-sticky-top, 0px) + var(--mc-mobile-hero-h, 168px));
+    z-index: 101;
+    background: #fafafa;
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-row th {
+    top: var(--mc-sticky-top, 0px);
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-filter-row th {
+    top: calc(var(--mc-sticky-top, 0px) + var(--mc-mobile-hero-h-compact, 64px));
   }
 
   .mc-compare--mobile-unified th.mc-hero-label-spacer {
+    display: table-cell !important;
     background: #fafafa;
     border-right: 1px solid #e8e8e8;
     border-bottom: 1px solid #e8e8e8;
     padding: 0;
     font-weight: 400;
+    position: sticky;
+  }
+
+  .mc-compare--mobile-unified th.mc-filter-cell {
+    display: table-cell !important;
+    position: sticky;
   }
 
   .mc-compare--mobile-unified th.mc-hero-phone {
+    display: table-cell !important;
     vertical-align: top;
     text-align: center;
-    padding: 12px 6px 10px;
+    padding: 0;
     border-right: 1px solid #e8e8e8;
     border-bottom: 1px solid #e8e8e8;
     background: #fff;
     font-weight: 400;
+    position: sticky;
+  }
+
+  .mc-compare--mobile-unified .mc-hero-phone-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     position: relative;
+    padding: 12px 6px 10px;
+    min-height: 168px;
+    box-sizing: border-box;
   }
 
   .mc-compare--mobile-unified th.mc-hero-phone:last-child {
@@ -2251,9 +2284,13 @@ body.admin-bar .mobile-compare-root {
     border-right: none;
   }
 
-  .mc-compare--mobile-unified thead.is-compact th.mc-hero-phone {
+  .mc-compare--mobile-unified thead.is-compact {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  .mc-compare--mobile-unified thead.is-compact .mc-hero-phone-inner {
     display: grid;
-    grid-template-columns: 40px 1fr;
+    grid-template-columns: 36px 1fr;
     grid-template-rows: auto auto;
     gap: 0 6px;
     align-items: center;
@@ -2269,15 +2306,15 @@ body.admin-bar .mobile-compare-root {
   }
 
   .mc-compare--mobile-unified thead.is-compact .mc-hero-img {
-    height: 40px;
-    max-width: 40px;
+    height: 36px;
+    max-width: 36px;
     margin: 0;
   }
 
   .mc-compare--mobile-unified thead.is-compact .mc-hero-name {
     grid-column: 2;
     grid-row: 1;
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -2288,7 +2325,7 @@ body.admin-bar .mobile-compare-root {
   .mc-compare--mobile-unified thead.is-compact .mc-hero-price {
     grid-column: 2;
     grid-row: 2;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     margin: 0;
   }
 
@@ -2306,5 +2343,9 @@ body.admin-bar .mobile-compare-root {
 
   .mc-compare--mobile-unified thead.is-compact .mc-filter-bar {
     padding: 4px 8px;
+  }
+
+  .mc-compare--mobile-unified .mc-fab-compare {
+    display: flex !important;
   }
 }

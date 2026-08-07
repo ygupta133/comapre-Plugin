@@ -213,6 +213,7 @@ class Mobile_Compare_REST_API {
 					'highlightBetter'    => __( 'Highlight better specs', 'mobile-compare' ),
 					'clearAll'           => __( 'Clear All', 'mobile-compare' ),
 					'share'              => __( 'Share', 'mobile-compare' ),
+					'backToSelection'    => __( 'Back to selection', 'mobile-compare' ),
 					'fabCompare'         => __( 'Compare', 'mobile-compare' ),
 					'addAnotherPhone'    => __( 'Add Another Phone', 'mobile-compare' ),
 					'viewDetails'        => __( 'View Details', 'mobile-compare' ),
