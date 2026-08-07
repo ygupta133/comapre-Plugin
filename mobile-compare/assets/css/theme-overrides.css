@@ -1,0 +1,34 @@
+/**
+ * ReHub / WooCommerce theme overrides loaded after the theme stylesheet.
+ */
+
+/* Hide wishlist (heart) button on single product pages */
+body.single-product #woo-button-area .button_action > .rh-sq-icon-btn-big,
+body.single-product #woo-button-area .button_action > .floatleft.def_btn.rh-sq-icon-btn-big,
+body.single-product .summary .woo-button-area .button_action > .rh-sq-icon-btn-big,
+body.single-product .summary .woo-button-area .button_action > .floatleft.def_btn.rh-sq-icon-btn-big,
+body.single-product #woo-button-area .button_action .heart_thumb_wrap,
+body.single-product .summary .woo-button-area .button_action .heart_thumb_wrap,
+body.single-product #woo-button-area .button_action .cell_wishlist,
+body.single-product .summary .woo-button-area .button_action .cell_wishlist,
+body.single-product #woo-button-area .button_action [id^="wishcount"],
+body.single-product .summary .woo-button-area .button_action [id^="wishcount"] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Collapse wrapper when wishlist was the only action */
+body.single-product #woo-button-area .button_action:has(.heart_thumb_wrap):not(:has(a, button, .add_to_cart_button)),
+body.single-product .summary .woo-button-area .button_action:has(.heart_thumb_wrap):not(:has(a, button, .add_to_cart_button)) {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+}
