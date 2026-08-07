@@ -727,6 +727,60 @@
       </tr>`).join('');
   }
 
+  function renderSkeletonSpecRowsMobile(phoneCount) {
+    return Array(SKELETON_SPEC_ROWS).fill(0).map(() => `
+      <tr class="mc-spec-row mc-spec-skeleton">
+        ${Array(phoneCount).fill('<td class="mc-spec-val mc-phone-col"><span class="mc-skeleton mc-skeleton-val"></span></td>').join('')}
+      </tr>`).join('');
+  }
+
+  function specLabelMatchesGroup(row) {
+    if (!row.group || !row.label) return false;
+    return row.label.trim().toLowerCase() === row.group.trim().toLowerCase();
+  }
+
+  function renderMobileSpecCell(val, row, isWinner) {
+    const showMiniLabel = !specLabelMatchesGroup(row);
+    const value = escapeHtml(String(val));
+    if (showMiniLabel) {
+      return `
+        <div class="mc-spec-cell">
+          <span class="mc-spec-mini-label">${escapeHtml(row.label)}</span>
+          <span class="mc-spec-val-text">${value}</span>
+        </div>`;
+    }
+    return `<span class="mc-spec-val-text">${value}</span>`;
+  }
+
+  function renderSpecRowsMobile(specs, emptySlots, skeleton, phoneCount) {
+    if (skeleton) {
+      return renderSkeletonSpecRowsMobile(phoneCount);
+    }
+
+    let lastGroup = '';
+    let html = '';
+
+    specs.forEach((row) => {
+      if (row.group && row.group !== lastGroup) {
+        lastGroup = row.group;
+        html += `
+          <tr class="mc-spec-group-row">
+            <th class="mc-spec-group" colspan="${phoneCount}">${escapeHtml(row.group)}</th>
+          </tr>`;
+      }
+
+      const winners = state.highlightBetter ? getWinners(row) : row.values.map(() => false);
+      html += `
+        <tr class="mc-spec-row">
+          ${row.values.map((val, idx) => `
+            <td class="mc-spec-val mc-phone-col ${winners[idx] ? 'mc-better' : ''}">${renderMobileSpecCell(val, row, winners[idx])}</td>`).join('')}
+          ${Array(emptySlots).fill('<td class="mc-spec-val mc-phone-col">-</td>').join('')}
+        </tr>`;
+    });
+
+    return html;
+  }
+
   function formatPrice(price, plain) {
     const text = formatDisplayPrice({ price, price_plain: plain });
     return text;
@@ -826,12 +880,9 @@
   }
 
   function renderCompareViewMobile(products, specsLoading, specs, emptySlots, phoneCount, showAddSlot, title, specRows, fabBtn) {
-    const labelPct = 24;
-    const phonePct = ((100 - labelPct) / phoneCount).toFixed(4);
+    const phonePct = (100 / phoneCount).toFixed(4);
     const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image, true)).join('');
-    const cols = `
-      <col class="mc-col-label" style="width:${labelPct}%" />
-      ${Array(phoneCount).fill(`<col class="mc-col-phone" style="width:${phonePct}%" />`).join('')}`;
+    const cols = Array(phoneCount).fill(`<col class="mc-col-phone" style="width:${phonePct}%" />`).join('');
 
     return `
       <div class="mc-page mc-compare mc-compare--mobile-unified" data-phone-cols="${phoneCount}" style="--mc-phone-cols:${phoneCount}">
@@ -854,11 +905,10 @@
                 <colgroup>${cols}</colgroup>
                 <thead>
                   <tr class="mc-hero-row">
-                    <th class="mc-hero-label-spacer" aria-hidden="true"></th>
                     ${phoneHeaders}
                   </tr>
                   <tr class="mc-filter-row">
-                    <th class="mc-filter-cell" colspan="${phoneCount + 1}">
+                    <th class="mc-filter-cell" colspan="${phoneCount}">
                       ${renderToolbarBar(specsLoading)}
                     </th>
                   </tr>
@@ -901,7 +951,9 @@
 
     const phoneHeaders = products.map((p) => renderHeroPhone(p, specsLoading && !p.image)).join('');
     const addCol = showHeroAdd ? renderHeroAddSlot() : '';
-    const specRows = renderSpecRows(specs, emptySlots, specsLoading, phoneCount + 1);
+    const specRows = isMobileView
+      ? renderSpecRowsMobile(specs, emptySlots, specsLoading, phoneCount)
+      : renderSpecRows(specs, emptySlots, specsLoading, phoneCount + 1);
     const title = compareTitle(products);
     const fabBtn = isMobileView
       ? `<button type="button" class="mc-fab-compare mc-back-select" aria-label="${escapeHtml(t('fabCompare'))}">

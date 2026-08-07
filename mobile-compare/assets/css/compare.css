@@ -2200,24 +2200,10 @@ body.admin-bar .mobile-compare-root {
     background: #fff;
   }
 
-  .mc-compare--mobile-unified .mc-compare-table-wrap {
-    border: none;
-    background: transparent;
-  }
-
   .mc-compare--mobile-unified .mc-hero-row th,
   .mc-compare--mobile-unified .mc-filter-row th {
     position: static;
     top: auto;
-  }
-
-  .mc-compare--mobile-unified th.mc-hero-label-spacer {
-    display: table-cell !important;
-    background: #fafafa;
-    border-right: 1px solid #e8e8e8;
-    border-bottom: 1px solid #e8e8e8;
-    padding: 0;
-    font-weight: 400;
   }
 
   .mc-compare--mobile-unified th.mc-filter-cell {
@@ -2277,21 +2263,35 @@ body.admin-bar .mobile-compare-root {
     padding: 8px 10px;
   }
 
-  .mc-compare--mobile-unified .mc-spec-label {
-    position: static;
-    left: auto;
-    box-shadow: none;
-    width: auto;
-    min-width: 0;
-    max-width: none;
-    padding: 10px 6px;
+  .mc-compare--mobile-unified .mc-spec-group {
+    text-align: center;
+    padding: 8px 10px;
     font-size: 0.72rem;
-    border-right: 1px solid #e8e8e8;
-    background: #fff;
   }
 
-  .mc-compare--mobile-unified .mc-spec-row:nth-child(even) .mc-spec-label {
-    background: #fafafa;
+  .mc-compare--mobile-unified .mc-spec-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+  }
+
+  .mc-compare--mobile-unified .mc-spec-mini-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #888;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .mc-compare--mobile-unified .mc-spec-val-text {
+    display: block;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    word-break: break-word;
   }
 
   .mc-compare--mobile-unified .mc-phone-col {
@@ -2299,6 +2299,12 @@ body.admin-bar .mobile-compare-root {
     font-size: 0.72rem;
     word-break: break-word;
     border-right: 1px solid #e8e8e8;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .mc-compare--mobile-unified .mc-spec-row:nth-child(even) .mc-phone-col {
+    background: #fafafa;
   }
 
   .mc-compare--mobile-unified tr.mc-spec-row td.mc-phone-col:last-child {
