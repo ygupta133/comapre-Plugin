@@ -836,20 +836,28 @@
 
         <div class="mc-compare-sync">
           <div class="mc-compare-sticky-anchor" data-mc-sticky-anchor aria-hidden="true"></div>
-          <div class="mc-compare-table-wrap">
+          <div class="mc-compare-sticky mc-mobile-sticky-bar" data-mc-sticky>
+            <div class="mc-compare-table-wrap mc-compare-head-wrap">
+              <table class="mc-compare-table mc-compare-unified">
+                <colgroup>${cols}</colgroup>
+                <thead>
+                  <tr class="mc-hero-row">
+                    <th class="mc-hero-label-spacer" aria-hidden="true"></th>
+                    ${phoneHeaders}
+                  </tr>
+                  <tr class="mc-filter-row">
+                    <th class="mc-filter-cell" colspan="${phoneCount + 1}">
+                      ${renderToolbarBar(specsLoading)}
+                    </th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
+          </div>
+          <div class="mc-compare-sticky-spacer" data-mc-sticky-spacer aria-hidden="true"></div>
+          <div class="mc-compare-table-wrap mc-compare-body-wrap">
             <table class="mc-compare-table mc-compare-unified">
               <colgroup>${cols}</colgroup>
-              <thead data-mc-sticky>
-                <tr class="mc-hero-row">
-                  <th class="mc-hero-label-spacer" aria-hidden="true"></th>
-                  ${phoneHeaders}
-                </tr>
-                <tr class="mc-filter-row">
-                  <th class="mc-filter-cell" colspan="${phoneCount + 1}">
-                    ${renderToolbarBar(specsLoading)}
-                  </th>
-                </tr>
-              </thead>
               <tbody>${specRows}</tbody>
             </table>
           </div>
@@ -939,12 +947,6 @@
   }
 
   function bindHeroSticky() {
-    const mobileUnified = app.querySelector('.mc-compare--mobile-unified');
-    if (mobileUnified) {
-      bindMobileUnifiedSticky(mobileUnified);
-      return;
-    }
-
     const sticky = app.querySelector('[data-mc-sticky]');
     const anchor = app.querySelector('[data-mc-sticky-anchor]');
     const spacer = app.querySelector('[data-mc-sticky-spacer]');
@@ -996,6 +998,7 @@
       if (isMobile) {
         sticky.classList.toggle('is-pinned', pinned);
         sticky.classList.toggle('is-pinned-mobile', pinned);
+        sticky.classList.toggle('is-compact', pinned);
 
         if (spacer) {
           requestAnimationFrame(() => {
@@ -1004,9 +1007,11 @@
         }
 
         if (pinned) {
+          sticky.style.top = `${getStickyTop()}px`;
           sticky.style.left = '0';
           sticky.style.width = '100%';
         } else {
+          sticky.style.top = '';
           sticky.style.left = '';
           sticky.style.width = '';
         }
@@ -1094,59 +1099,6 @@
     }
 
     return top;
-  }
-
-  function bindMobileUnifiedSticky(page) {
-    const thead = page.querySelector('thead[data-mc-sticky]');
-    const anchor = page.querySelector('[data-mc-sticky-anchor]');
-    const table = page.querySelector('.mc-compare-unified');
-    if (!thead || !anchor || !table) return;
-
-    if (state._stickyObserver) {
-      state._stickyObserver.disconnect();
-      state._stickyObserver = null;
-    }
-    if (state._onStickyResize) {
-      window.removeEventListener('resize', state._onStickyResize);
-    }
-    if (state._onStickyScroll) {
-      window.removeEventListener('scroll', state._onStickyScroll);
-    }
-
-    const syncTop = () => {
-      const top = getSiteHeaderOffset();
-      document.documentElement.style.setProperty('--mc-sticky-top', `${top}px`);
-    };
-
-    const setCompact = (compact) => {
-      thead.classList.toggle('is-compact', compact);
-    };
-
-    const setupObserver = () => {
-      if (state._stickyObserver) {
-        state._stickyObserver.disconnect();
-      }
-      const top = getSiteHeaderOffset();
-      state._stickyObserver = new IntersectionObserver(
-        ([entry]) => setCompact(!entry.isIntersecting),
-        {
-          root: null,
-          rootMargin: `-${top}px 0px 0px 0px`,
-          threshold: 0,
-        }
-      );
-      state._stickyObserver.observe(anchor);
-    };
-
-    state._onStickyResize = () => {
-      syncTop();
-      setupObserver();
-    };
-    state._onStickyScroll = syncTop;
-    syncTop();
-    setupObserver();
-    window.addEventListener('resize', state._onStickyResize, { passive: true });
-    window.addEventListener('scroll', state._onStickyScroll, { passive: true });
   }
 
   function bindMobileScrollSync() {

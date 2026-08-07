@@ -2159,8 +2159,8 @@ body.admin-bar .mobile-compare-root {
   }
 
   .mc-compare--mobile-unified .mc-compare-table-wrap {
-    border: 1px solid #e8e8e8;
-    background: #fff;
+    border: none;
+    background: transparent;
     overflow: visible;
   }
 
@@ -2172,16 +2172,37 @@ body.admin-bar .mobile-compare-root {
     font-size: 0.8rem;
   }
 
-  .mc-compare--mobile-unified thead {
-    position: -webkit-sticky;
-    position: sticky;
-    top: var(--mc-sticky-top, 0px);
+  .mc-compare--mobile-unified .mc-compare-sticky {
+    position: relative;
     z-index: 100;
     background: #fff;
   }
 
-  .mc-compare--mobile-unified thead.is-compact {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-pinned {
+    position: fixed;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 110;
+    background: #fff;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    animation: mc-sticky-slide 0.28s ease forwards;
+  }
+
+  .mc-compare--mobile-unified .mc-compare-head-wrap {
+    border: 1px solid #e8e8e8;
+    border-bottom: none;
+    background: #fff;
+  }
+
+  .mc-compare--mobile-unified .mc-compare-body-wrap {
+    border: 1px solid #e8e8e8;
+    border-top: none;
+    background: #fff;
+  }
+
+  .mc-compare--mobile-unified .mc-compare-table-wrap {
+    border: none;
+    background: transparent;
   }
 
   .mc-compare--mobile-unified .mc-hero-row th,
@@ -2284,11 +2305,12 @@ body.admin-bar .mobile-compare-root {
     border-right: none;
   }
 
-  .mc-compare--mobile-unified thead.is-compact {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  .mc-compare--mobile-unified thead.is-compact .mc-filter-bar,
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-filter-bar {
+    padding: 4px 8px;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-phone-inner {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-phone-inner {
     display: grid;
     grid-template-columns: 36px 1fr;
     grid-template-rows: auto auto;
@@ -2299,19 +2321,19 @@ body.admin-bar .mobile-compare-root {
     text-align: left;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-img-link {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-img-link {
     grid-row: 1 / 3;
     grid-column: 1;
     margin: 0;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-img {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-img {
     height: 36px;
     max-width: 36px;
     margin: 0;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-name {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-name {
     grid-column: 2;
     grid-row: 1;
     font-size: 0.6rem;
@@ -2322,27 +2344,23 @@ body.admin-bar .mobile-compare-root {
     overflow: hidden;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-price {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-price {
     grid-column: 2;
     grid-row: 2;
     font-size: 0.62rem;
     margin: 0;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-store-link {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-store-link {
     display: none;
   }
 
-  .mc-compare--mobile-unified thead.is-compact .mc-hero-close {
+  .mc-compare--mobile-unified .mc-compare-sticky.is-compact .mc-hero-close {
     top: 2px;
     right: 2px;
     width: 18px;
     height: 18px;
     font-size: 0.75rem;
-  }
-
-  .mc-compare--mobile-unified thead.is-compact .mc-filter-bar {
-    padding: 4px 8px;
   }
 
   .mc-compare--mobile-unified .mc-fab-compare {
