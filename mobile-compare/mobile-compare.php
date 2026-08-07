@@ -3,7 +3,7 @@
  * Plugin Name: Mobile Compare
  * Plugin URI:  https://github.com/yogesh/comapre-Plugin
  * Description: Fast 91mobiles-style product comparison for WooCommerce. Independent SPA, optimized for ReHub and large catalogs.
- * Version:     1.4.0
+ * Version:     2.2.4
  * Author:      Yogesh
  * Text Domain: mobile-compare
  * Requires at least: 6.0
@@ -13,12 +13,13 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MOBILE_COMPARE_VERSION', '1.4.0' );
+define( 'MOBILE_COMPARE_VERSION', '2.2.4' );
 define( 'MOBILE_COMPARE_FILE', __FILE__ );
 define( 'MOBILE_COMPARE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MOBILE_COMPARE_URL', plugin_dir_url( __FILE__ ) );
 
 require_once MOBILE_COMPARE_PATH . 'includes/class-compare-data.php';
+require_once MOBILE_COMPARE_PATH . 'includes/class-settings.php';
 require_once MOBILE_COMPARE_PATH . 'includes/class-rewrites.php';
 require_once MOBILE_COMPARE_PATH . 'includes/class-rest-api.php';
 require_once MOBILE_COMPARE_PATH . 'includes/class-admin.php';
@@ -56,7 +57,7 @@ function mobile_compare_activate() {
 
 	$existing = get_page_by_path( 'compare' );
 	if ( ! $existing ) {
-		wp_insert_post(
+		$page_id = wp_insert_post(
 			array(
 				'post_title'   => 'Compare Mobiles',
 				'post_name'    => 'compare',
@@ -65,6 +66,11 @@ function mobile_compare_activate() {
 				'post_content' => '[mobile_compare]',
 			)
 		);
+		if ( ! is_wp_error( $page_id ) && $page_id ) {
+			update_option( 'mobile_compare_page_id', (int) $page_id );
+		}
+	} else {
+		update_option( 'mobile_compare_page_id', (int) $existing->ID );
 	}
 }
 register_activation_hook( __FILE__, 'mobile_compare_activate' );
