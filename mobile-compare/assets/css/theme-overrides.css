@@ -1,0 +1,23 @@
+/**
+ * ReHub / WooCommerce theme overrides loaded after the theme stylesheet.
+ */
+
+/* Hide entire wishlist action row on product pages */
+body.single-product #woo-button-area .button_action,
+body.single-product .summary .woo-button-area .button_action,
+.single-product #woo-button-area .button_action,
+.single-product .woo-button-area .button_action,
+#woo-button-area .button_action .rh-sq-icon-btn-big,
+#woo-button-area .button_action .heart_thumb_wrap,
+#woo-button-area .button_action .cell_wishlist,
+#woo-button-area .button_action [id^="wishcount"] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

@@ -22,6 +22,7 @@ final class Mobile_Compare_Plugin {
 		Mobile_Compare_REST_API::init();
 		Mobile_Compare_Admin::init();
 		Mobile_Compare_Assets::init();
+		Mobile_Compare_Theme_Tweaks::init();
 
 		add_shortcode( 'mobile_compare', array( $this, 'render_shortcode' ) );
 		add_filter( 'template_include', array( $this, 'maybe_use_compare_template' ) );
