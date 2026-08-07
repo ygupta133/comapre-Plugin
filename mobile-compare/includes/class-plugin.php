@@ -18,6 +18,7 @@ final class Mobile_Compare_Plugin {
 	}
 
 	private function __construct() {
+		Mobile_Compare_Settings::init();
 		Mobile_Compare_Rewrites::init();
 		Mobile_Compare_REST_API::init();
 		Mobile_Compare_Admin::init();
@@ -32,6 +33,10 @@ final class Mobile_Compare_Plugin {
 	 * Shortcode output — SPA mount point.
 	 */
 	public function render_shortcode(): string {
+		if ( ! Mobile_Compare_Settings::is_shortcode_allowed() ) {
+			return '';
+		}
+
 		if ( ! Mobile_Compare_Assets::is_compare_context() ) {
 			Mobile_Compare_Assets::enqueue();
 		}

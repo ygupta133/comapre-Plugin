@@ -14,18 +14,13 @@ class Mobile_Compare_Assets {
 	}
 
 	public static function maybe_enqueue(): void {
-		if ( self::is_compare_context() ) {
+		if ( Mobile_Compare_Settings::is_compare_context() ) {
 			self::enqueue();
 		}
 	}
 
 	public static function is_compare_context(): bool {
-		if ( is_page( 'compare' ) ) {
-			return true;
-		}
-
-		$slugs = get_query_var( 'mobile_compare_slugs' );
-		return ! empty( $slugs );
+		return Mobile_Compare_Settings::is_compare_context();
 	}
 
 	public static function enqueue(): void {
@@ -60,7 +55,7 @@ class Mobile_Compare_Assets {
 				'restUrl'   => esc_url_raw( rest_url( Mobile_Compare_REST_API::NAMESPACE ) ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'homeUrl'   => esc_url_raw( home_url( '/' ) ),
-				'compareUrl'=> esc_url_raw( home_url( '/compare/' ) ),
+				'compareUrl'=> esc_url_raw( Mobile_Compare_Settings::get_page_url() ),
 				'config'    => Mobile_Compare_REST_API::get_client_config(),
 			)
 		);

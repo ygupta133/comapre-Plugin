@@ -185,7 +185,7 @@ class Mobile_Compare_REST_API {
 	public static function get_client_config(): array {
 		return array(
 			'maxProducts'    => 3,
-			'compareBaseUrl' => home_url( '/compare/' ),
+			'compareBaseUrl' => Mobile_Compare_Settings::get_page_url(),
 			'attributeMap'   => Mobile_Compare_Data::get_attribute_map(),
 			'i18n'           => array(
 				'title'              => __( 'Compare Mobiles', 'mobile-compare' ),

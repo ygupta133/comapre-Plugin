@@ -173,7 +173,7 @@ class Mobile_Compare_Data {
 			return array(
 				'products' => array(),
 				'specs'    => array(),
-				'url'      => home_url( '/compare/' ),
+				'url'      => Mobile_Compare_Settings::get_page_url(),
 			);
 		}
 

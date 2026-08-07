@@ -25,6 +25,16 @@ class Mobile_Compare_Admin {
 	public static function register_settings(): void {
 		register_setting(
 			'mobile_compare_settings',
+			'mobile_compare_page_id',
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+				'default'           => 0,
+			)
+		);
+
+		register_setting(
+			'mobile_compare_settings',
 			'mobile_compare_popular_pairs',
 			array(
 				'type'              => 'array',
@@ -67,6 +77,14 @@ class Mobile_Compare_Admin {
 		}
 
 		$popular_raw = get_option( 'mobile_compare_popular_pairs', array() );
+		$compare_page_id = (int) get_option( 'mobile_compare_page_id', 0 );
+		$resolved_page_id = Mobile_Compare_Settings::get_page_id();
+		$pages = get_pages(
+			array(
+				'sort_column' => 'post_title',
+				'sort_order'  => 'ASC',
+			)
+		);
 		$popular_text = '';
 		if ( is_array( $popular_raw ) ) {
 			foreach ( $popular_raw as $pair ) {
@@ -83,12 +101,32 @@ class Mobile_Compare_Admin {
 
 			<p><?php esc_html_e( 'Fast compare SPA independent of ReHub. Disable ReHub compare in Theme Options for best performance.', 'mobile-compare' ); ?></p>
 
-			<h2><?php esc_html_e( 'Compare Page', 'mobile-compare' ); ?></h2>
-			<p>
-				<a href="<?php echo esc_url( home_url( '/compare/' ) ); ?>" class="button" target="_blank" rel="noopener">
-					<?php esc_html_e( 'Open Compare Page', 'mobile-compare' ); ?>
-				</a>
-			</p>
+			<p><?php esc_html_e( 'Compare loads only on the selected page and /compare/phone-vs-phone URLs — not site-wide.', 'mobile-compare' ); ?></p>
+
+			<form method="post" action="options.php" style="margin-top:16px;">
+				<?php settings_fields( 'mobile_compare_settings' ); ?>
+				<h2><?php esc_html_e( 'Compare Page', 'mobile-compare' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Put shortcode [mobile_compare] only on this page. Other pages will not show compare.', 'mobile-compare' ); ?></p>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="mobile_compare_page_id"><?php esc_html_e( 'Compare page', 'mobile-compare' ); ?></label></th>
+						<td>
+							<select name="mobile_compare_page_id" id="mobile_compare_page_id">
+								<option value="0"><?php esc_html_e( '— Auto (slug: compare) —', 'mobile-compare' ); ?></option>
+								<?php foreach ( $pages as $page ) : ?>
+									<option value="<?php echo esc_attr( (string) $page->ID ); ?>" <?php selected( $compare_page_id, (int) $page->ID ); ?>>
+										<?php echo esc_html( $page->post_title . ' (/' . $page->post_name . '/)' ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<?php if ( $resolved_page_id ) : ?>
+								<p><a href="<?php echo esc_url( get_permalink( $resolved_page_id ) ); ?>" class="button" target="_blank" rel="noopener"><?php esc_html_e( 'Open Compare Page', 'mobile-compare' ); ?></a></p>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</table>
+				<?php submit_button( __( 'Save Compare Page', 'mobile-compare' ) ); ?>
+			</form>
 
 			<h2><?php esc_html_e( 'Mapped Attributes', 'mobile-compare' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Default mapping is used. Contact your developer to customize attribute slugs to match your WooCommerce attributes.', 'mobile-compare' ); ?></p>
