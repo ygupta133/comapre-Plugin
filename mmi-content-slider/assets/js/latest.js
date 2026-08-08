@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', function () {
 	function equalizeColumns(grid) {
 		if (window.innerWidth < 992) {
 			grid.style.minHeight = '';
+			var featured = grid.querySelector('.mmi-latest-featured');
+			var right = grid.querySelector('.mmi-latest-right');
+			if (featured) {
+				featured.style.height = '';
+			}
+			if (right) {
+				right.style.height = '';
+			}
 			return;
 		}
 
@@ -19,13 +27,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		left.style.height = 'auto';
 		right.style.height = 'auto';
+		grid.style.minHeight = '';
 
-		var maxHeight = Math.max(left.offsetHeight, right.offsetHeight);
+		var rightHeight = right.offsetHeight;
 
-		if (maxHeight > 0) {
-			grid.style.minHeight = maxHeight + 'px';
-			left.style.height = maxHeight + 'px';
-			right.style.height = maxHeight + 'px';
+		if (rightHeight > 0) {
+			left.style.height = rightHeight + 'px';
+			right.style.height = rightHeight + 'px';
 		}
 	}
 
@@ -68,7 +76,24 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 
 		if (grid) {
+			var images = grid.querySelectorAll('img');
+			var pendingImages = 0;
+
+			images.forEach(function (img) {
+				if (!img.complete) {
+					pendingImages += 1;
+					img.addEventListener('load', function onImageLoad() {
+						img.removeEventListener('load', onImageLoad);
+						pendingImages -= 1;
+						if (pendingImages <= 0) {
+							equalizeColumns(grid);
+						}
+					});
+				}
+			});
+
 			equalizeColumns(grid);
+
 			window.addEventListener('resize', function () {
 				equalizeColumns(grid);
 			});
@@ -77,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				var observer = new ResizeObserver(function () {
 					equalizeColumns(grid);
 				});
-				observer.observe(grid);
+				observer.observe(wrapper);
 			}
 		}
 	});
