@@ -4,34 +4,21 @@ document.addEventListener('DOMContentLoaded', function () {
 		return;
 	}
 
-	document.querySelectorAll('.mmi-latest-desktop .mmi-latest-grid').forEach(function (slider) {
-		var nav = slider.querySelector('.mmi-latest-navigation');
+	document.querySelectorAll('.mmi-latest-right').forEach(function (wrapper) {
+		var slider = wrapper.querySelector('.mmi-latest-slider');
+		if (!slider) {
+			return;
+		}
+
+		var nav = wrapper.querySelector('.mmi-latest-navigation');
+		var slideCount = slider.querySelectorAll('.swiper-slide').length;
 
 		new Swiper(slider, {
 			slidesPerView: 1,
 			spaceBetween: 0,
-			loop: slider.querySelectorAll('.swiper-slide').length > 1,
+			loop: slideCount > 1,
 			speed: 600,
-			autoHeight: true,
-			navigation: nav ? {
-				nextEl: nav.querySelector('.swiper-button-next'),
-				prevEl: nav.querySelector('.swiper-button-prev')
-			} : false
-		});
-	});
-
-	document.querySelectorAll('.mmi-latest-mobile').forEach(function (slider) {
-		var nav = slider.querySelector('.mmi-latest-mobile-nav');
-
-		new Swiper(slider, {
-			slidesPerView: 1,
-			spaceBetween: 12,
-			loop: slider.querySelectorAll('.swiper-slide').length > 1,
-			speed: 500,
-			autoplay: {
-				delay: 4500,
-				disableOnInteraction: false
-			},
+			autoHeight: false,
 			navigation: nav ? {
 				nextEl: nav.querySelector('.swiper-button-next'),
 				prevEl: nav.querySelector('.swiper-button-prev')

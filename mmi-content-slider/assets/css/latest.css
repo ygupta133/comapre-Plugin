@@ -1,55 +1,37 @@
 /* ==========================================
-   MMI Latest News
+   MMI Latest News — 91mobiles desktop layout
 ========================================== */
 
 .mmi-latest-news {
 	position: relative;
-	margin: 0 0 24px;
-	padding-bottom: 8px;
+	margin: 0 0 28px;
 }
 
 .mmi-latest-heading {
-	margin: 0 0 24px;
-	font-size: 34px;
+	margin: 0 0 20px;
+	font-size: 32px;
 	font-weight: 700;
 	line-height: 1.2;
 	color: #111;
 }
 
-.mmi-latest-desktop {
-	display: block;
-}
-
-.mmi-latest-mobile {
-	display: none;
-}
-
-/* ==========================================
-   Desktop slider shell
-========================================== */
-
+/* Main grid: left static, right slides */
 .mmi-latest-grid {
-	position: relative;
-	overflow: hidden;
-	border-top: 1px solid #ececec;
-	border-bottom: 1px solid #ececec;
-	padding: 24px 0 56px;
-}
-
-.mmi-latest-slide {
 	display: grid;
-	grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
-	gap: 28px;
-	align-items: start;
+	grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
+	gap: 0;
+	align-items: stretch;
+	border-top: 1px solid #e8e8e8;
+	border-bottom: 1px solid #e8e8e8;
+	padding: 20px 0;
 }
 
 /* ==========================================
-   Featured
+   LEFT — static featured
 ========================================== */
 
 .mmi-latest-featured {
-	background: #fff;
-	overflow: hidden;
+	padding-right: 28px;
 }
 
 .mmi-latest-featured a {
@@ -62,12 +44,13 @@
 	display: block;
 	width: 100%;
 	aspect-ratio: 16 / 10;
-	background: #f5f5f5;
 	object-fit: cover;
+	background: #f3f3f3;
+	border-radius: 2px;
 }
 
 .mmi-latest-featured-content {
-	padding: 14px 0 0;
+	padding: 12px 0 0;
 }
 
 .mmi-latest-featured .mmi-latest-time {
@@ -75,59 +58,75 @@
 	margin-bottom: 8px;
 	color: #888;
 	font-size: 13px;
-	line-height: 1.2;
+	line-height: 1;
 }
 
 .mmi-latest-title {
 	margin: 0;
-	font-size: 24px;
+	font-size: 22px;
 	font-weight: 700;
 	line-height: 1.35;
 	color: #111;
 }
 
 /* ==========================================
-   Right list
+   RIGHT — slider only
 ========================================== */
 
 .mmi-latest-right {
-	position: relative;
-	border-left: 1px solid #ececec;
-	padding-left: 24px;
+	display: flex;
+	flex-direction: column;
+	border-left: 1px solid #e8e8e8;
+	padding-left: 28px;
 	min-width: 0;
+	min-height: 100%;
+}
+
+.mmi-latest-slider {
+	flex: 1;
+	overflow: hidden;
+	width: 100%;
+}
+
+.mmi-latest-slider .swiper-slide {
+	height: auto;
 }
 
 .mmi-latest-list {
 	display: flex;
 	flex-direction: column;
+	justify-content: flex-start;
+	min-height: 280px;
 }
 
 .mmi-latest-item {
 	display: grid;
-	grid-template-columns: 112px minmax(0, 1fr);
+	grid-template-columns: 108px minmax(0, 1fr);
 	gap: 12px;
 	align-items: start;
 	text-decoration: none;
 	color: #111;
-	padding: 12px 0;
+	padding: 0 0 16px;
+	margin-bottom: 16px;
 	border-bottom: 1px solid #ececec;
 }
 
 .mmi-latest-item:last-child {
-	border-bottom: 0;
+	margin-bottom: 0;
 	padding-bottom: 0;
+	border-bottom: 0;
 }
 
 .mmi-latest-item img {
-	width: 112px;
-	height: 76px;
+	width: 108px;
+	height: 72px;
 	object-fit: cover;
 	border-radius: 2px;
+	background: #f3f3f3;
 }
 
 .mmi-latest-content {
 	min-width: 0;
-	padding-top: 2px;
 }
 
 .mmi-latest-content .mmi-latest-time {
@@ -135,34 +134,29 @@
 	margin-bottom: 6px;
 	color: #888;
 	font-size: 12px;
-	line-height: 1.2;
+	line-height: 1;
 }
 
 .mmi-latest-content h4 {
 	margin: 0;
-	color: #111;
-	font-size: 16px;
+	font-size: 15px;
 	line-height: 1.4;
 	font-weight: 600;
+	color: #111;
 	display: -webkit-box;
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
 
-/* ==========================================
-   Desktop navigation
-========================================== */
-
+/* Navigation — bottom right of right column */
 .mmi-latest-navigation {
-	position: absolute;
-	right: 0;
-	bottom: 12px;
 	display: flex !important;
 	justify-content: flex-end;
 	align-items: center;
 	gap: 8px;
-	z-index: 2;
+	margin-top: auto;
+	padding-top: 14px;
 }
 
 .mmi-latest-navigation .swiper-button-prev,
@@ -177,13 +171,13 @@
 	border-radius: 50%;
 	background: #efefef !important;
 	color: #555 !important;
-	border: 1px solid #e5e5e5 !important;
-	transition: all 0.25s ease;
+	border: 1px solid #e0e0e0 !important;
+	transition: background 0.2s ease, color 0.2s ease;
 }
 
 .mmi-latest-navigation .swiper-button-prev:hover,
 .mmi-latest-navigation .swiper-button-next:hover {
-	background: #222 !important;
+	background: #333 !important;
 	color: #fff !important;
 }
 
@@ -198,122 +192,44 @@
 	pointer-events: none;
 }
 
-/* ==========================================
-   Mobile carousel
-========================================== */
-
-.mmi-latest-mobile-card {
-	display: block;
-	text-decoration: none;
-	color: #111;
-	border: 1px solid #ececec;
-	border-radius: 4px;
-	overflow: hidden;
-	background: #fff;
-}
-
-.mmi-latest-mobile-card img {
-	display: block;
-	width: 100%;
-	aspect-ratio: 16 / 10;
-	object-fit: cover;
-	background: #f5f5f5;
-}
-
-.mmi-latest-mobile-content {
-	padding: 12px 14px 16px;
-}
-
-.mmi-latest-mobile-content .mmi-latest-time {
-	display: block;
-	margin-bottom: 6px;
-	color: #888;
-	font-size: 12px;
-}
-
-.mmi-latest-mobile-content .mmi-latest-title {
-	font-size: 18px;
-	line-height: 1.35;
-}
-
-.mmi-latest-mobile-nav {
-	display: flex !important;
-	justify-content: flex-end;
-	gap: 8px;
-	margin-top: 12px;
-}
-
-.mmi-latest-mobile-nav .swiper-button-prev,
-.mmi-latest-mobile-nav .swiper-button-next {
-	position: static;
-	width: 34px;
-	height: 34px;
-	margin: 0;
-	display: flex !important;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	background: #efefef !important;
-	color: #555 !important;
-	border: 1px solid #e5e5e5 !important;
-}
-
-.mmi-latest-mobile-nav .swiper-button-prev:hover,
-.mmi-latest-mobile-nav .swiper-button-next:hover {
-	background: #222 !important;
-	color: #fff !important;
-}
-
-.mmi-latest-mobile-nav .swiper-button-prev::after,
-.mmi-latest-mobile-nav .swiper-button-next::after {
-	font-size: 13px;
-	font-weight: 700;
-}
-
-/* ==========================================
-   Tablet
-========================================== */
-
+/* Tablet */
 @media (max-width: 991px) {
-	.mmi-latest-slide {
+	.mmi-latest-grid {
 		grid-template-columns: 1fr;
-		gap: 20px;
+		gap: 0;
+		padding: 16px 0;
+	}
+
+	.mmi-latest-featured {
+		padding-right: 0;
+		padding-bottom: 16px;
 	}
 
 	.mmi-latest-right {
 		border-left: 0;
-		border-top: 1px solid #ececec;
+		border-top: 1px solid #e8e8e8;
 		padding-left: 0;
 		padding-top: 16px;
 	}
-
-	.mmi-latest-title {
-		font-size: 22px;
-	}
 }
 
-/* ==========================================
-   Mobile
-========================================== */
-
+/* Mobile — left on top, right carousel below (basic) */
 @media (max-width: 767px) {
-	.mmi-latest-news {
-		margin: 12px 0;
-		padding-bottom: 0;
+	.mmi-latest-title {
+		font-size: 18px;
 	}
 
-	.mmi-latest-heading {
-		font-size: 28px;
-		margin-bottom: 16px;
+	.mmi-latest-item {
+		grid-template-columns: 95px minmax(0, 1fr);
 	}
 
-	.mmi-latest-desktop {
-		display: none;
+	.mmi-latest-item img {
+		width: 95px;
+		height: 64px;
 	}
 
-	.mmi-latest-mobile {
-		display: block;
-		position: relative;
-		overflow: hidden;
+	.mmi-latest-content h4 {
+		font-size: 14px;
+		-webkit-line-clamp: 2;
 	}
 }
