@@ -1,5 +1,5 @@
 /* ==========================================
-   MMI Latest — 91mobiles desktop layout
+   MMI Latest — 91mobiles layout (user-tuned)
 ========================================== */
 
 .mmi-latest-news {
@@ -18,7 +18,7 @@
 
 .mmi-latest-grid {
 	display: grid;
-	grid-template-columns: minmax(0, 1.58fr) minmax(320px, 1fr);
+	grid-template-columns: minmax(0, 1fr) minmax(500px, 560px);
 	align-items: stretch;
 	border-top: 1px solid #e6e6e6;
 	border-bottom: 1px solid #e6e6e6;
@@ -32,7 +32,7 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	padding-right: 24px;
+	padding-right: 20px;
 	box-sizing: border-box;
 }
 
@@ -59,7 +59,6 @@
 	display: block;
 	width: 100%;
 	height: 100%;
-	min-height: 240px;
 	object-fit: cover;
 	object-position: center center;
 }
@@ -92,43 +91,37 @@
 	flex-direction: column;
 	height: 100%;
 	min-height: 100%;
+	width: 100%;
+	max-width: 560px;
 	border-left: 1px solid #e6e6e6;
-	padding-left: 24px;
+	padding-left: 20px;
 	min-width: 0;
 	box-sizing: border-box;
 }
 
 .mmi-latest-slider {
 	flex: 1 1 auto;
-	display: flex;
-	flex-direction: column;
 	overflow: hidden;
 	width: 100%;
-	min-height: 0;
 }
 
-.mmi-latest-slider .swiper-wrapper,
 .mmi-latest-slider .swiper-slide {
-	height: 100%;
+	height: auto;
 }
 
 .mmi-latest-list {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
-	flex: 1;
-	height: 100%;
-	min-height: 100%;
 }
 
 .mmi-latest-item {
 	display: flex;
 	align-items: flex-start;
-	gap: 16px;
-	flex: 1;
+	gap: 14px;
 	text-decoration: none;
 	color: #111;
-	padding: 12px 0;
+	padding: 0 0 18px;
+	margin: 0 0 18px;
 	border-bottom: 1px solid #e6e6e6;
 	box-sizing: border-box;
 }
@@ -138,14 +131,15 @@
 }
 
 .mmi-latest-item:last-child {
-	border-bottom: 0;
+	margin-bottom: 0;
 	padding-bottom: 0;
+	border-bottom: 0;
 }
 
 .mmi-latest-thumb {
-	flex: 0 0 148px;
-	width: 148px;
-	height: 99px;
+	flex: 0 0 265px;
+	width: 265px;
+	height: 152px;
 	overflow: hidden;
 	background: #f2f2f2;
 	border-radius: 4px;
@@ -154,8 +148,8 @@
 
 .mmi-latest-thumb img {
 	display: block;
-	width: 148px;
-	height: 99px;
+	width: 265px;
+	height: 152px;
 	object-fit: cover;
 	object-position: center center;
 }
@@ -163,6 +157,7 @@
 .mmi-latest-content {
 	flex: 1;
 	min-width: 0;
+	padding-top: 2px;
 }
 
 .mmi-latest-content .mmi-latest-time {
@@ -193,7 +188,7 @@
 	align-items: center;
 	gap: 8px;
 	margin-top: auto;
-	padding-top: 12px;
+	padding-top: 14px;
 }
 
 .mmi-latest-arrow {
@@ -227,16 +222,38 @@
 	display: none !important;
 }
 
+/* Desktop — equal column heights */
 @media (min-width: 992px) {
+	.mmi-latest-item {
+		min-height: 152px;
+		align-items: center;
+	}
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
 	.mmi-latest-grid {
-		min-height: 460px;
+		grid-template-columns: minmax(0, 1fr) minmax(420px, 500px);
+	}
+
+	.mmi-latest-right {
+		max-width: 500px;
+	}
+
+	.mmi-latest-thumb,
+	.mmi-latest-thumb img {
+		flex-basis: 220px;
+		width: 220px;
+		height: 126px;
+	}
+
+	.mmi-latest-item {
+		min-height: 126px;
 	}
 }
 
 @media (max-width: 991px) {
 	.mmi-latest-grid {
 		grid-template-columns: 1fr;
-		min-height: 0;
 		padding: 14px 0;
 	}
 
@@ -252,25 +269,20 @@
 
 	.mmi-latest-featured-media img {
 		height: auto;
-		min-height: 0;
 		aspect-ratio: 16 / 10;
 	}
 
 	.mmi-latest-right {
 		height: auto;
+		max-width: none;
 		border-left: 0;
 		border-top: 1px solid #e6e6e6;
 		padding-left: 0;
 		padding-top: 14px;
 	}
 
-	.mmi-latest-list {
-		justify-content: flex-start;
-		min-height: 0;
-	}
-
 	.mmi-latest-item {
-		flex: none;
+		min-height: 0;
 	}
 }
 
@@ -281,9 +293,9 @@
 
 	.mmi-latest-thumb,
 	.mmi-latest-thumb img {
+		flex-basis: 110px;
 		width: 110px;
 		height: 74px;
-		flex-basis: 110px;
 	}
 
 	.mmi-latest-item-title {
