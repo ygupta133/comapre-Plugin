@@ -215,10 +215,12 @@ class MMI_CS_API {
 
 		$time = '';
 		if ( ! empty( $post['date'] ) ) {
-			$time = human_time_diff(
-				strtotime( $post['date'] ),
-				current_time( 'timestamp' )
-			) . ' ago';
+			$time = ucwords(
+				human_time_diff(
+					strtotime( $post['date'] ),
+					current_time( 'timestamp' )
+				)
+			) . ' Ago';
 		}
 
 		return array(

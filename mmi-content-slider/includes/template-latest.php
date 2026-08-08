@@ -1,6 +1,6 @@
 <?php
 /**
- * Latest News Template
+ * Latest News Template — 91mobiles-style layout
  *
  * @package MMI_Content_Builder
  */
@@ -27,18 +27,17 @@ foreach ( array_chunk( $right_posts, 3 ) as $chunk ) {
 <div class="mmi-latest-news">
 
 	<?php if ( ! empty( $heading ) ) : ?>
-		<h2 class="mmi-latest-heading">
-			<?php echo esc_html( $heading ); ?>
-		</h2>
+		<h2 class="mmi-latest-heading"><?php echo esc_html( $heading ); ?></h2>
 	<?php endif; ?>
 
 	<div class="mmi-latest-grid">
 
-		<!-- LEFT: static featured — does not slide -->
 		<div class="mmi-latest-featured">
-			<a href="<?php echo esc_url( $featured['link'] ); ?>">
+			<a class="mmi-latest-featured-link" href="<?php echo esc_url( $featured['link'] ); ?>">
 				<?php if ( $featured['image'] ) : ?>
-					<img src="<?php echo esc_url( $featured['image'] ); ?>" alt="<?php echo esc_attr( $featured['title'] ); ?>" loading="lazy">
+					<div class="mmi-latest-featured-media">
+						<img src="<?php echo esc_url( $featured['image'] ); ?>" alt="<?php echo esc_attr( $featured['title'] ); ?>" loading="lazy">
+					</div>
 				<?php endif; ?>
 
 				<div class="mmi-latest-featured-content">
@@ -50,7 +49,6 @@ foreach ( array_chunk( $right_posts, 3 ) as $chunk ) {
 			</a>
 		</div>
 
-		<!-- RIGHT: only this part slides -->
 		<div class="mmi-latest-right">
 			<?php if ( ! empty( $slides ) ) : ?>
 				<div class="mmi-latest-slider swiper">
@@ -61,15 +59,16 @@ foreach ( array_chunk( $right_posts, 3 ) as $chunk ) {
 									<?php foreach ( $group as $item ) : ?>
 										<a class="mmi-latest-item" href="<?php echo esc_url( $item['link'] ); ?>">
 											<?php if ( $item['image'] ) : ?>
-												<img src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>" loading="lazy">
+												<span class="mmi-latest-thumb">
+													<img src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>" loading="lazy">
+												</span>
 											<?php endif; ?>
-
-											<div class="mmi-latest-content">
+											<span class="mmi-latest-content">
 												<?php if ( $item['time'] ) : ?>
 													<span class="mmi-latest-time"><?php echo esc_html( $item['time'] ); ?></span>
 												<?php endif; ?>
-												<h4><?php echo esc_html( $item['title'] ); ?></h4>
-											</div>
+												<span class="mmi-latest-item-title"><?php echo esc_html( $item['title'] ); ?></span>
+											</span>
 										</a>
 									<?php endforeach; ?>
 								</div>
@@ -80,8 +79,12 @@ foreach ( array_chunk( $right_posts, 3 ) as $chunk ) {
 
 				<?php if ( count( $slides ) > 1 ) : ?>
 					<div class="mmi-latest-navigation">
-						<div class="swiper-button-prev" aria-label="<?php esc_attr_e( 'Previous', 'mmi-content-slider' ); ?>"></div>
-						<div class="swiper-button-next" aria-label="<?php esc_attr_e( 'Next', 'mmi-content-slider' ); ?>"></div>
+						<button type="button" class="mmi-latest-arrow mmi-latest-arrow-prev" aria-label="<?php esc_attr_e( 'Previous', 'mmi-content-slider' ); ?>">
+							<svg width="8" height="14" viewBox="0 0 8 14" aria-hidden="true"><path d="M7 1L1 7l6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						</button>
+						<button type="button" class="mmi-latest-arrow mmi-latest-arrow-next" aria-label="<?php esc_attr_e( 'Next', 'mmi-content-slider' ); ?>">
+							<svg width="8" height="14" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+						</button>
 					</div>
 				<?php endif; ?>
 			<?php endif; ?>
