@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			loop: slideCount > 1,
 			speed: 600,
 			autoHeight: false,
+			observer: true,
+			observeParents: true,
 			navigation: nav ? {
 				nextEl: nav.querySelector('.swiper-button-next'),
 				prevEl: nav.querySelector('.swiper-button-prev')
