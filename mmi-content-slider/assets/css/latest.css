@@ -1,15 +1,15 @@
 /* ==========================================
-   MMI Latest — 91mobiles layout (user-tuned)
+   MMI Latest — compact 91mobiles layout
 ========================================== */
 
 .mmi-latest-news {
 	position: relative;
-	margin: 0 0 30px;
+	margin: 0 0 28px;
 	font-family: inherit;
 }
 
 .mmi-latest-heading {
-	margin: 0 0 18px;
+	margin: 0 0 16px;
 	font-size: 30px;
 	font-weight: 700;
 	line-height: 1.2;
@@ -18,28 +18,27 @@
 
 .mmi-latest-grid {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(500px, 560px);
+	grid-template-columns: minmax(0, 1fr) 560px;
 	align-items: stretch;
 	border-top: 1px solid #e6e6e6;
 	border-bottom: 1px solid #e6e6e6;
-	padding: 16px 0 14px;
+	padding: 14px 0 12px;
 	box-sizing: border-box;
 }
 
-/* ========== LEFT (static) ========== */
+/* ========== LEFT ========== */
 
 .mmi-latest-featured {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	padding-right: 20px;
+	padding-right: 18px;
 	box-sizing: border-box;
 }
 
 .mmi-latest-featured-link {
 	display: flex;
 	flex-direction: column;
-	flex: 1;
 	height: 100%;
 	min-height: 0;
 	color: #111;
@@ -48,29 +47,34 @@
 
 .mmi-latest-featured-media {
 	flex: 1 1 auto;
-	min-height: 0;
+	min-height: 280px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	overflow: hidden;
-	line-height: 0;
 	background: #f2f2f2;
 	border-radius: 4px;
+	line-height: 0;
 }
 
 .mmi-latest-featured-media img {
 	display: block;
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
 	object-position: center center;
 }
 
 .mmi-latest-featured-content {
 	flex: 0 0 auto;
-	padding: 12px 0 0;
+	padding: 10px 0 0;
 }
 
 .mmi-latest-featured .mmi-latest-time {
 	display: block;
-	margin: 0 0 8px;
+	margin: 0 0 6px;
 	color: #9a9a9a;
 	font-size: 13px;
 	line-height: 1;
@@ -78,50 +82,55 @@
 
 .mmi-latest-title {
 	margin: 0;
-	font-size: 21px;
+	font-size: 20px;
 	font-weight: 700;
 	line-height: 1.35;
 	color: #111;
 }
 
-/* ========== RIGHT (slider) ========== */
+/* ========== RIGHT ========== */
 
 .mmi-latest-right {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	min-height: 100%;
-	width: 100%;
-	max-width: 560px;
 	border-left: 1px solid #e6e6e6;
-	padding-left: 20px;
-	min-width: 0;
+	padding-left: 18px;
 	box-sizing: border-box;
 }
 
 .mmi-latest-slider {
 	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
 	overflow: hidden;
 	width: 100%;
+	min-height: 0;
 }
 
+.mmi-latest-slider .swiper-wrapper,
 .mmi-latest-slider .swiper-slide {
-	height: auto;
+	height: 100%;
 }
 
 .mmi-latest-list {
 	display: flex;
 	flex-direction: column;
+	justify-content: space-between;
+	flex: 1;
+	height: 100%;
+	min-height: 100%;
 }
 
 .mmi-latest-item {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 14px;
+	flex: 1;
+	min-height: 0;
 	text-decoration: none;
 	color: #111;
-	padding: 0 0 18px;
-	margin: 0 0 18px;
+	padding: 10px 0;
 	border-bottom: 1px solid #e6e6e6;
 	box-sizing: border-box;
 }
@@ -131,15 +140,14 @@
 }
 
 .mmi-latest-item:last-child {
-	margin-bottom: 0;
-	padding-bottom: 0;
 	border-bottom: 0;
+	padding-bottom: 0;
 }
 
 .mmi-latest-thumb {
 	flex: 0 0 265px;
 	width: 265px;
-	height: 152px;
+	height: 168px;
 	overflow: hidden;
 	background: #f2f2f2;
 	border-radius: 4px;
@@ -148,8 +156,8 @@
 
 .mmi-latest-thumb img {
 	display: block;
-	width: 265px;
-	height: 152px;
+	width: 100%;
+	height: 100%;
 	object-fit: cover;
 	object-position: center center;
 }
@@ -157,12 +165,11 @@
 .mmi-latest-content {
 	flex: 1;
 	min-width: 0;
-	padding-top: 2px;
 }
 
 .mmi-latest-content .mmi-latest-time {
 	display: block;
-	margin: 0 0 8px;
+	margin: 0 0 7px;
 	color: #9a9a9a;
 	font-size: 12px;
 	line-height: 1;
@@ -171,8 +178,8 @@
 .mmi-latest-item-title {
 	display: block;
 	margin: 0;
-	font-size: 15px;
-	line-height: 1.45;
+	font-size: 16px;
+	line-height: 1.4;
 	font-weight: 600;
 	color: #111;
 	display: -webkit-box;
@@ -187,8 +194,7 @@
 	justify-content: flex-end;
 	align-items: center;
 	gap: 8px;
-	margin-top: auto;
-	padding-top: 14px;
+	padding-top: 10px;
 }
 
 .mmi-latest-arrow {
@@ -203,7 +209,6 @@
 	background: #ececec;
 	color: #666;
 	cursor: pointer;
-	transition: background 0.2s ease, color 0.2s ease;
 }
 
 .mmi-latest-arrow:hover {
@@ -213,7 +218,6 @@
 
 .mmi-latest-arrow.swiper-button-disabled {
 	opacity: 0.35;
-	cursor: default;
 	pointer-events: none;
 }
 
@@ -222,67 +226,56 @@
 	display: none !important;
 }
 
-/* Desktop — equal column heights */
-@media (min-width: 992px) {
-	.mmi-latest-item {
-		min-height: 152px;
-		align-items: center;
-	}
-}
-
 @media (max-width: 1199px) and (min-width: 992px) {
 	.mmi-latest-grid {
-		grid-template-columns: minmax(0, 1fr) minmax(420px, 500px);
+		grid-template-columns: minmax(0, 1fr) 500px;
 	}
 
-	.mmi-latest-right {
-		max-width: 500px;
-	}
-
-	.mmi-latest-thumb,
-	.mmi-latest-thumb img {
+	.mmi-latest-thumb {
 		flex-basis: 220px;
 		width: 220px;
-		height: 126px;
-	}
-
-	.mmi-latest-item {
-		min-height: 126px;
+		height: 140px;
 	}
 }
 
 @media (max-width: 991px) {
 	.mmi-latest-grid {
 		grid-template-columns: 1fr;
-		padding: 14px 0;
+		padding: 12px 0;
 	}
 
 	.mmi-latest-featured {
 		height: auto;
 		padding-right: 0;
-		padding-bottom: 14px;
+		padding-bottom: 12px;
 	}
 
 	.mmi-latest-featured-media {
 		flex: none;
+		min-height: 0;
+		aspect-ratio: 16 / 10;
 	}
 
 	.mmi-latest-featured-media img {
-		height: auto;
-		aspect-ratio: 16 / 10;
+		object-fit: cover;
 	}
 
 	.mmi-latest-right {
 		height: auto;
-		max-width: none;
 		border-left: 0;
 		border-top: 1px solid #e6e6e6;
 		padding-left: 0;
-		padding-top: 14px;
+		padding-top: 12px;
+	}
+
+	.mmi-latest-list {
+		justify-content: flex-start;
+		min-height: 0;
 	}
 
 	.mmi-latest-item {
-		min-height: 0;
+		flex: none;
+		align-items: flex-start;
 	}
 }
 
@@ -291,8 +284,7 @@
 		font-size: 18px;
 	}
 
-	.mmi-latest-thumb,
-	.mmi-latest-thumb img {
+	.mmi-latest-thumb {
 		flex-basis: 110px;
 		width: 110px;
 		height: 74px;

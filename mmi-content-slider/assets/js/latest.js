@@ -4,28 +4,28 @@ document.addEventListener('DOMContentLoaded', function () {
 		return;
 	}
 
-	function syncColumnHeights(grid) {
+	function equalizeColumns(grid) {
 		if (window.innerWidth < 992) {
-			var media = grid.querySelector('.mmi-latest-featured-media');
-			if (media) {
-				media.style.minHeight = '';
-			}
+			grid.style.minHeight = '';
 			return;
 		}
 
+		var left = grid.querySelector('.mmi-latest-featured');
 		var right = grid.querySelector('.mmi-latest-right');
-		var media = grid.querySelector('.mmi-latest-featured-media');
-		var content = grid.querySelector('.mmi-latest-featured-content');
 
-		if (!right || !media) {
+		if (!left || !right) {
 			return;
 		}
 
-		var textHeight = content ? content.offsetHeight : 0;
-		var imageHeight = right.offsetHeight - textHeight - 12;
+		left.style.height = 'auto';
+		right.style.height = 'auto';
 
-		if (imageHeight > 160) {
-			media.style.minHeight = imageHeight + 'px';
+		var maxHeight = Math.max(left.offsetHeight, right.offsetHeight);
+
+		if (maxHeight > 0) {
+			grid.style.minHeight = maxHeight + 'px';
+			left.style.height = maxHeight + 'px';
+			right.style.height = maxHeight + 'px';
 		}
 	}
 
@@ -54,13 +54,13 @@ document.addEventListener('DOMContentLoaded', function () {
 			on: {
 				init: function () {
 					if (grid) {
-						syncColumnHeights(grid);
+						equalizeColumns(grid);
 					}
 				},
 				slideChange: function () {
 					if (grid) {
 						window.requestAnimationFrame(function () {
-							syncColumnHeights(grid);
+							equalizeColumns(grid);
 						});
 					}
 				}
@@ -68,13 +68,18 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 
 		if (grid) {
-			syncColumnHeights(grid);
+			equalizeColumns(grid);
 			window.addEventListener('resize', function () {
-				syncColumnHeights(grid);
+				equalizeColumns(grid);
 			});
-		}
 
-		return swiper;
+			if (typeof ResizeObserver !== 'undefined') {
+				var observer = new ResizeObserver(function () {
+					equalizeColumns(grid);
+				});
+				observer.observe(grid);
+			}
+		}
 	});
 
 });
