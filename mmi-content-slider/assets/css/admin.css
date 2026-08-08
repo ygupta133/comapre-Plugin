@@ -1,0 +1,14 @@
+.mmi-field{
+    margin-bottom:20px;
+}
+
+.mmi-field label{
+    display:block;
+    margin-bottom:8px;
+}
+
+.mmi-field input,
+.mmi-field select,
+.mmi-field textarea{
+    width:100%;
+}
