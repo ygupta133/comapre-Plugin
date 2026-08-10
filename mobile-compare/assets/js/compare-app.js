@@ -403,10 +403,7 @@
     if (!items.length) return '';
     return `
       <ul class="mc-search-dropdown">
-        ${items.map((p) => `
-          <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
-            <img src="${escapeHtml(p.image)}" alt="" /> ${escapeHtml(p.name)}
-          </li>`).join('')}
+        ${items.map((p) => renderSearchItem(p)).join('')}
       </ul>`;
   }
 
@@ -458,25 +455,18 @@
         ${!state.suggested.length && state.booting === false ? `
         <section class="mc-section">
           <h2>${escapeHtml(t('suggestedTitle'))}</h2>
-          <div class="mc-card-grid mc-skeleton-grid">
-            ${Array(4).fill('<article class="mc-product-card mc-skeleton-card"><div class="mc-skeleton mc-skeleton-img"></div><div class="mc-skeleton mc-skeleton-text"></div></article>').join('')}
+          <div class="mc-91-list mc-skeleton-grid">
+            ${Array(3).fill('<article class="mc-91-card mc-skeleton-card"><div class="mc-skeleton mc-skeleton-block" style="height:180px"></div></article>').join('')}
           </div>
         </section>` : ''}
 
         ${state.suggested.length ? `
         <section class="mc-section">
           <h2>${escapeHtml(t('suggestedTitle'))}</h2>
-          <div class="mc-card-grid">
+          <div class="mc-91-list">
             ${state.suggested.map((p) => {
               const added = state.selected.some((s) => s.id === p.id);
-              return `
-              <article class="mc-product-card">
-                <img src="${escapeHtml(p.image)}" alt="" />
-                <h3>${escapeHtml(p.name)}</h3>
-                <button type="button" class="mc-btn mc-btn-outline mc-add-btn ${added ? 'mc-added' : ''}" data-suggest-id="${p.id}" ${added ? 'disabled' : ''}>
-                  ${added ? '+ ' + escapeHtml(t('addedToCompare')) : '+ ' + escapeHtml(t('addToCompare'))}
-                </button>
-              </article>`;
+              return render91Card(p, { added });
             }).join('')}
           </div>
         </section>` : ''}
@@ -532,6 +522,71 @@
     d.innerHTML = String(price);
     const text = d.textContent.replace(/\s+/g, ' ').trim();
     return text || '—';
+  }
+
+  function specIconSvg(type) {
+    const icons = {
+      processor: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 2v3M12 2v3M15 2v3M9 19v3M12 19v3M15 19v3M2 9h3M2 12h3M2 15h3M19 9h3M19 12h3M19 15h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+      ram: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V5M10 7V5M13 7V5M16 7V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+      camera: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 8h4l2-2h4l2 2h4v10H4V8z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+      'front-camera': '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="1.5" fill="currentColor"/></svg>',
+      battery: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="2" y="7" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M22 11v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 11l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      display: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    };
+    return icons[type] || icons.processor;
+  }
+
+  function renderSearchItem(p) {
+    const price = formatPrice(p.price, p.price_plain);
+    return `
+      <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
+        <div class="mc-search-item-left">
+          <img src="${escapeHtml(p.image)}" alt="" />
+          <span class="mc-search-item-name">${escapeHtml(p.name)}</span>
+        </div>
+        <span class="mc-search-item-price">${escapeHtml(price)}</span>
+      </li>`;
+  }
+
+  function render91Card(p, options) {
+    const added = options && options.added;
+    const highlights = Array.isArray(p.highlights) ? p.highlights : [];
+    const photoCount = p.photo_count || 0;
+    const specScore = p.spec_score != null ? p.spec_score : null;
+
+    return `
+      <article class="mc-91-card">
+        <div class="mc-91-header">
+          <a href="${escapeHtml(p.url)}" class="mc-91-name">${escapeHtml(p.name)}</a>
+          <button type="button" class="mc-91-compare-btn ${added ? 'mc-added' : ''}" data-suggest-id="${p.id}" ${added ? 'disabled' : ''}>
+            + ${added ? escapeHtml(t('addedToCompare')) : escapeHtml(t('compare'))}
+          </button>
+        </div>
+        ${p.badge ? `<span class="mc-91-badge">${escapeHtml(p.badge)}</span>` : ''}
+        <div class="mc-91-body">
+          <div class="mc-91-media">
+            ${specScore != null ? `
+              <div class="mc-91-score">
+                <span class="mc-91-score-val">${specScore}%</span>
+                <span class="mc-91-score-label">${escapeHtml(t('specScore'))}</span>
+              </div>` : ''}
+            <a href="${escapeHtml(p.url)}" class="mc-91-img-link">
+              <img src="${escapeHtml(p.image)}" alt="" class="mc-91-img" />
+            </a>
+            ${photoCount > 0 ? `<a href="${escapeHtml(p.url)}" class="mc-91-photos">${escapeHtml(t('viewPhotos'))} (${photoCount})</a>` : ''}
+          </div>
+          <div class="mc-91-specs">
+            <ul class="mc-91-spec-list">
+              ${highlights.map((h) => `
+                <li class="mc-91-spec-item">
+                  <span class="mc-91-spec-icon">${specIconSvg(h.icon)}</span>
+                  <span class="mc-91-spec-text">${escapeHtml(h.text)}</span>
+                </li>`).join('')}
+            </ul>
+            <a href="${escapeHtml(p.url)}" class="mc-91-all-specs">${escapeHtml(t('viewAllSpecs'))}</a>
+          </div>
+        </div>
+      </article>`;
   }
 
   function compareTitle(products) {
@@ -805,7 +860,7 @@
       });
     }
 
-    app.querySelectorAll('.mc-add-btn:not(:disabled)').forEach((btn) => {
+    app.querySelectorAll('.mc-add-btn:not(:disabled), .mc-91-compare-btn:not(:disabled)').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.suggestId, 10);
         const p = state.suggested.find((x) => x.id === id);
