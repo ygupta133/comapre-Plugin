@@ -271,6 +271,16 @@ class Mobile_Compare_Data {
 		$image_id = $product->get_image_id();
 		$image    = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
 
+		$gallery_ids = $product->get_gallery_image_ids();
+		$photo_count = count( $gallery_ids ) + ( $image_id ? 1 : 0 );
+
+		$spec_score = $product->get_meta( 'spec_score', true );
+		if ( '' === $spec_score || false === $spec_score ) {
+			$spec_score = null;
+		} else {
+			$spec_score = (int) $spec_score;
+		}
+
 		return array(
 			'id'          => $product->get_id(),
 			'name'        => $product->get_name(),
@@ -279,7 +289,86 @@ class Mobile_Compare_Data {
 			'price'       => $product->get_price_html(),
 			'price_plain' => wp_strip_all_tags( $product->get_price_html() ),
 			'url'         => $product->get_permalink(),
+			'spec_score'  => $spec_score,
+			'photo_count' => $photo_count,
+			'badge'       => self::get_product_badge( $product ),
+			'highlights'  => self::get_product_highlights( $product ),
 		);
+	}
+
+	/**
+	 * Status badge for listing cards (e.g. Upcoming).
+	 *
+	 * @param WC_Product $product Product.
+	 */
+	private static function get_product_badge( WC_Product $product ): string {
+		$custom = $product->get_meta( 'product_badge', true );
+		if ( is_string( $custom ) && '' !== trim( $custom ) ) {
+			return trim( $custom );
+		}
+
+		if ( $product->is_on_backorder() ) {
+			return __( 'Upcoming', 'mobile-compare' );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Key spec lines for 91mobiles-style product cards.
+	 *
+	 * @param WC_Product $product Product.
+	 * @return array<int, array{icon: string, text: string}>
+	 */
+	private static function get_product_highlights( WC_Product $product ): array {
+		$processor = self::get_attribute_value( $product, 'pa_processor' );
+		$ram       = self::get_attribute_value( $product, 'pa_ram' );
+		$storage   = self::get_attribute_value( $product, 'pa_storage' );
+		$rear      = self::get_attribute_value( $product, 'pa_rear-camera' );
+		$front     = self::get_attribute_value( $product, 'pa_front-camera' );
+		$battery   = self::get_attribute_value( $product, 'pa_battery' );
+		$charging  = self::get_attribute_value( $product, 'pa_charging' );
+		$display   = self::get_attribute_value( $product, 'pa_display' );
+
+		$highlights = array();
+
+		if ( '-' !== $processor ) {
+			$highlights[] = array( 'icon' => 'processor', 'text' => $processor );
+		}
+
+		$memory_parts = array_filter(
+			array( '-' !== $ram ? $ram : '', '-' !== $storage ? $storage : '' ),
+			static function ( $part ) {
+				return '' !== $part;
+			}
+		);
+		if ( ! empty( $memory_parts ) ) {
+			$highlights[] = array( 'icon' => 'ram', 'text' => implode( ' | ', $memory_parts ) );
+		}
+
+		if ( '-' !== $rear ) {
+			$highlights[] = array( 'icon' => 'camera', 'text' => $rear . ' ' . __( 'Rear Camera', 'mobile-compare' ) );
+		}
+
+		if ( '-' !== $front ) {
+			$highlights[] = array( 'icon' => 'front-camera', 'text' => $front . ' ' . __( 'Front Camera', 'mobile-compare' ) );
+		}
+
+		$power_parts = array_filter(
+			array( '-' !== $battery ? $battery : '', '-' !== $charging ? $charging : '' ),
+			static function ( $part ) {
+				return '' !== $part;
+			}
+		);
+		if ( ! empty( $power_parts ) ) {
+			$highlights[] = array( 'icon' => 'battery', 'text' => implode( ' | ', $power_parts ) );
+		}
+
+		if ( '-' !== $display ) {
+			$highlights[] = array( 'icon' => 'display', 'text' => $display );
+		}
+
+		return $highlights;
 	}
 
 	/**

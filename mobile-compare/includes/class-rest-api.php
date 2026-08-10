@@ -223,6 +223,10 @@ class Mobile_Compare_REST_API {
 					'loadingSearch'      => __( 'Searching…', 'mobile-compare' ),
 					'loadError'          => __( 'Could not load comparison. Please try again.', 'mobile-compare' ),
 					'linkCopied'         => __( 'Link copied!', 'mobile-compare' ),
+					'compare'            => __( 'Compare', 'mobile-compare' ),
+					'specScore'          => __( 'Spec Score', 'mobile-compare' ),
+					'viewPhotos'         => __( 'View Photos', 'mobile-compare' ),
+					'viewAllSpecs'       => __( 'View All Specs', 'mobile-compare' ),
 				),
 			),
 			200
