@@ -66,7 +66,7 @@ Yogesh
 
 Sync **WooCommerce** product prices from **Amazon India** via **RapidAPI** — one ASIN per product, live price on the storefront.
 
-## Features (v1.0.0)
+## Features (v1.0.1)
 
 - **Amazon ASIN field** on WooCommerce product edit screen (Product Data → Amazon Price tab)
 - **Fetch Price** button — pulls live price from RapidAPI for a single product

@@ -59,7 +59,7 @@ class MMI_APS_WC_Settings_Amazon_Price extends WC_Settings_Page {
 					'desc'     => __( 'x-rapidapi-host header value.', 'mmi-amazon-price-sync' ),
 					'id'       => MMI_APS_Settings::OPTION_API_HOST,
 					'type'     => 'text',
-					'default'  => 'real-time-e-commerce-data.p.rapidapi.com',
+					'default'  => MMI_APS_Settings::DEFAULT_HOST,
 					'desc_tip' => true,
 				),
 				array(
@@ -67,7 +67,7 @@ class MMI_APS_WC_Settings_Amazon_Price extends WC_Settings_Page {
 					'desc'     => __( 'Path appended to the host, e.g. /amazon/product-details', 'mmi-amazon-price-sync' ),
 					'id'       => MMI_APS_Settings::OPTION_API_ENDPOINT,
 					'type'     => 'text',
-					'default'  => '/amazon/product-details',
+					'default'  => MMI_APS_Settings::DEFAULT_ENDPOINT,
 					'desc_tip' => true,
 				),
 				array(

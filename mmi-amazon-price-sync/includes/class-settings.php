@@ -11,6 +11,10 @@ class MMI_APS_Settings {
 	public const OPTION_API_HOST     = 'mmi_aps_rapidapi_host';
 	public const OPTION_API_ENDPOINT = 'mmi_aps_api_endpoint';
 	public const OPTION_COUNTRY      = 'mmi_aps_country';
+	public const OPTION_LANGUAGE     = 'mmi_aps_language';
+
+	public const DEFAULT_HOST     = 'real-time-amazon-data.p.rapidapi.com';
+	public const DEFAULT_ENDPOINT = '/product-details';
 
 	public static function init(): void {
 		add_filter( 'woocommerce_get_settings_pages', array( __CLASS__, 'add_settings_page' ) );
@@ -52,24 +56,29 @@ class MMI_APS_Settings {
 	 */
 	public static function get_api_key(): string {
 		if ( defined( 'MMI_APS_RAPIDAPI_KEY' ) && MMI_APS_RAPIDAPI_KEY ) {
-			return (string) MMI_APS_RAPIDAPI_KEY;
+			return trim( (string) MMI_APS_RAPIDAPI_KEY );
 		}
 
-		return (string) get_option( self::OPTION_API_KEY, '' );
+		return trim( (string) get_option( self::OPTION_API_KEY, '' ) );
 	}
 
 	public static function get_api_host(): string {
-		$host = (string) get_option( self::OPTION_API_HOST, 'real-time-e-commerce-data.p.rapidapi.com' );
-		return $host ?: 'real-time-e-commerce-data.p.rapidapi.com';
+		$host = trim( (string) get_option( self::OPTION_API_HOST, self::DEFAULT_HOST ) );
+		return $host ?: self::DEFAULT_HOST;
 	}
 
 	public static function get_api_endpoint(): string {
-		$endpoint = (string) get_option( self::OPTION_API_ENDPOINT, '/amazon/product-details' );
-		return $endpoint ?: '/amazon/product-details';
+		$endpoint = trim( (string) get_option( self::OPTION_API_ENDPOINT, self::DEFAULT_ENDPOINT ) );
+		return $endpoint ?: self::DEFAULT_ENDPOINT;
 	}
 
 	public static function get_country(): string {
-		$country = (string) get_option( self::OPTION_COUNTRY, 'IN' );
+		$country = trim( (string) get_option( self::OPTION_COUNTRY, 'IN' ) );
 		return $country ?: 'IN';
+	}
+
+	public static function get_language(): string {
+		$language = trim( (string) get_option( self::OPTION_LANGUAGE, 'en_IN' ) );
+		return $language ?: 'en_IN';
 	}
 }

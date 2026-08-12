@@ -34,13 +34,19 @@ class MMI_APS_API_Client {
 		$host     = MMI_APS_Settings::get_api_host();
 		$endpoint = MMI_APS_Settings::get_api_endpoint();
 		$country  = MMI_APS_Settings::get_country();
+		$language = MMI_APS_Settings::get_language();
+
+		$endpoint = '/' . ltrim( $endpoint, '/' );
+		$base_url = 'https://' . untrailingslashit( $host ) . $endpoint;
 
 		$url = add_query_arg(
 			array(
-				'asin'    => $asin,
-				'country' => $country,
+				'asin'               => $asin,
+				'country'            => $country,
+				'autoselect_variant' => 'true',
+				'language'           => $language,
 			),
-			'https://' . $host . $endpoint
+			$base_url
 		);
 
 		$response = wp_remote_get(
@@ -48,6 +54,7 @@ class MMI_APS_API_Client {
 			array(
 				'timeout' => 30,
 				'headers' => array(
+					'Content-Type'    => 'application/json',
 					'x-rapidapi-key'  => $api_key,
 					'x-rapidapi-host' => $host,
 					'Accept'          => 'application/json',
@@ -112,7 +119,7 @@ class MMI_APS_API_Client {
 		$original_price_raw = self::find_value( $data, array( 'product_original_price', 'original_price', 'list_price', 'product_list_price', 'was_price' ) );
 		$title              = (string) self::find_value( $data, array( 'product_title', 'title', 'name' ), '' );
 		$currency           = (string) self::find_value( $data, array( 'currency', 'product_currency' ), 'INR' );
-		$delivery           = (string) self::find_value( $data, array( 'delivery', 'delivery_info', 'shipping' ), '' );
+		$delivery           = (string) self::find_value( $data, array( 'delivery_price', 'delivery', 'delivery_info', 'shipping' ), '' );
 		$asin               = (string) self::find_value( $data, array( 'asin', 'product_asin' ), '' );
 
 		$price          = self::parse_price( $price_raw );
@@ -204,6 +211,10 @@ class MMI_APS_API_Client {
 					);
 				}
 			}
+		}
+
+		if ( 403 === $code ) {
+			return __( 'API error (403): Not subscribed to this API. Use host real-time-amazon-data.p.rapidapi.com and endpoint /product-details, then subscribe on RapidAPI.', 'mmi-amazon-price-sync' );
 		}
 
 		return sprintf(

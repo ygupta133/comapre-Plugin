@@ -58,6 +58,15 @@ class MMI_APS_Admin {
 				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_LANGUAGE,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+		add_action( 'wp_ajax_mmi_aps_test_api', array( __CLASS__, 'ajax_test_api' ) );
 	}
 
 	public static function render_settings_page(): void {
@@ -70,10 +79,19 @@ class MMI_APS_Admin {
 		$api_host       = MMI_APS_Settings::get_api_host();
 		$api_endpoint   = MMI_APS_Settings::get_api_endpoint();
 		$country        = MMI_APS_Settings::get_country();
+		$language       = MMI_APS_Settings::get_language();
+		$sample_url     = 'https://' . $api_host . '/' . ltrim( $api_endpoint, '/' ) . '?asin=B0H8STM6G2&country=IN&autoselect_variant=true&language=' . rawurlencode( $language );
+		$wrong_host     = false !== strpos( $api_host, 'real-time-e-commerce-data' );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Amazon Price Sync', 'mmi-amazon-price-sync' ); ?></h1>
 			<p><?php esc_html_e( 'Connect WooCommerce products to Amazon India prices via RapidAPI. Add an ASIN on each product, then click Fetch Price.', 'mmi-amazon-price-sync' ); ?></p>
+
+			<?php if ( $wrong_host ) : ?>
+				<div class="notice notice-error"><p>
+					<?php esc_html_e( 'Wrong API host detected. Change Host to real-time-amazon-data.p.rapidapi.com and Endpoint to /product-details, then Save.', 'mmi-amazon-price-sync' ); ?>
+				</p></div>
+			<?php endif; ?>
 
 			<form method="post" action="options.php">
 				<?php settings_fields( 'mmi_aps_settings' ); ?>
@@ -99,7 +117,14 @@ class MMI_APS_Admin {
 						<th scope="row"><?php esc_html_e( 'API Endpoint Path', 'mmi-amazon-price-sync' ); ?></th>
 						<td>
 							<input type="text" class="regular-text" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_API_ENDPOINT ); ?>" value="<?php echo esc_attr( $api_endpoint ); ?>" />
-							<p class="description"><?php esc_html_e( 'Example: /amazon/product-details', 'mmi-amazon-price-sync' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Use /product-details for Real-Time Amazon Data API.', 'mmi-amazon-price-sync' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Language', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="text" class="small-text" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_LANGUAGE ); ?>" value="<?php echo esc_attr( $language ); ?>" />
+							<p class="description"><?php esc_html_e( 'Use en_IN for Amazon India.', 'mmi-amazon-price-sync' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -113,6 +138,41 @@ class MMI_APS_Admin {
 				<?php submit_button(); ?>
 			</form>
 
+			<p><strong><?php esc_html_e( 'Request URL preview:', 'mmi-amazon-price-sync' ); ?></strong><br><code><?php echo esc_html( $sample_url ); ?></code></p>
+			<p>
+				<button type="button" class="button" id="mmi-aps-test-api"><?php esc_html_e( 'Test API (B0H8STM6G2)', 'mmi-amazon-price-sync' ); ?></button>
+				<span class="spinner" id="mmi-aps-test-spinner" style="float:none;"></span>
+			</p>
+			<div id="mmi-aps-test-result"></div>
+
+			<script>
+			jQuery(function($) {
+				$('#mmi-aps-test-api').on('click', function() {
+					var $btn = $(this);
+					var $spinner = $('#mmi-aps-test-spinner');
+					var $result = $('#mmi-aps-test-result');
+					$btn.prop('disabled', true);
+					$spinner.addClass('is-active');
+					$result.html('');
+					$.post(ajaxurl, {
+						action: 'mmi_aps_test_api',
+						nonce: '<?php echo esc_js( wp_create_nonce( 'mmi_aps_test_api' ) ); ?>'
+					}).done(function(response) {
+						if (response.success) {
+							$result.html('<div class="notice notice-success"><p>' + response.data.message + '</p></div>');
+						} else {
+							$result.html('<div class="notice notice-error"><p>' + (response.data && response.data.message ? response.data.message : 'Test failed') + '</p></div>');
+						}
+					}).fail(function() {
+						$result.html('<div class="notice notice-error"><p>Test failed</p></div>');
+					}).always(function() {
+						$btn.prop('disabled', false);
+						$spinner.removeClass('is-active');
+					});
+				});
+			});
+			</script>
+
 			<hr />
 			<h2><?php esc_html_e( 'How to use', 'mmi-amazon-price-sync' ); ?></h2>
 			<ol>
@@ -123,6 +183,32 @@ class MMI_APS_Admin {
 			</ol>
 		</div>
 		<?php
+	}
+
+	public static function ajax_test_api(): void {
+		check_ajax_referer( 'mmi_aps_test_api', 'nonce' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'mmi-amazon-price-sync' ) ) );
+		}
+
+		$result = MMI_APS_API_Client::fetch_product( 'B0H8STM6G2' );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		$data = $result['data'];
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: 1: formatted price, 2: product title */
+					__( 'Success! Price: %1$s — %2$s', 'mmi-amazon-price-sync' ),
+					MMI_APS_Product_Meta::format_inr( (float) $data['price'] ),
+					$data['title']
+				),
+			)
+		);
 	}
 
 	public static function register_product_meta_box(): void {
