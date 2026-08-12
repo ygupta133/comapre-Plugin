@@ -79,7 +79,7 @@ Sync **WooCommerce** product prices from **Amazon India** via **RapidAPI** — o
 
 ## Installation
 
-1. Copy the `mmi-amazon-price-sync` folder to `wp-content/plugins/` (or upload `mmi-amazon-price-sync-v1.0.1.zip`)
+1. Copy the `mmi-amazon-price-sync` folder to `wp-content/plugins/` (or upload `mmi-amazon-price-sync-v1.1.0.zip`)
 2. Activate **MMI Amazon Price Sync** in WordPress admin
 3. Ensure **WooCommerce** is active
 4. Go to **WooCommerce → Amazon Price Sync** and enter your RapidAPI key
