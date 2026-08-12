@@ -1,0 +1,35 @@
+:root{
+
+    /* Colors */
+
+    --primary:#8B1E3F;
+
+    --secondary:#111827;
+
+    --white:#ffffff;
+
+    --black:#000000;
+
+    --text:#333333;
+
+    --border:#e5e7eb;
+
+    --light:#f8f9fa;
+
+    --gold:#C9A227;
+
+    --transition:all .35s ease;
+
+    /* Fonts */
+
+    --heading:'Playfair Display', serif;
+
+    --body:'Inter', sans-serif;
+
+    /* Container */
+
+    --container:1320px;
+
+    --radius:8px;
+
+}
