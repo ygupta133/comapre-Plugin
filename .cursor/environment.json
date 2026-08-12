@@ -1,0 +1,16 @@
+{
+  "name": "Mobile Compare Plugin",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "user": "ubuntu",
+  "install": "./scripts/cloud-agent-install.sh",
+  "start": "./scripts/cloud-agent-start.sh",
+  "ports": [
+    {
+      "name": "wordpress",
+      "port": 8888
+    }
+  ]
+}
