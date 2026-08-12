@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+    <url>
+        <loc>https://www.santoshbhartiya.in/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/hero/santosh-bhartiya-with-former-prime-minister-v-p-singh.jpg</image:loc>
+            <image:title>Santosh Bhartiya Former MP and Journalist with V. P. Singh</image:title>
+            <image:caption>Portrait of Santosh Bhartiya, Former Member of Parliament and veteran Indian journalist</image:caption>
+        </image:image>
+    </url>
+
+    <url>
+        <loc>https://www.santoshbhartiya.in/about.html</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/about/santosh-bhartiya-with-former-prime-minister-v-p-singh.jpg</image:loc>
+            <image:title>Santosh Bhartiya Former MP Biography Photo</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/Santosh-Bhartiya-with-Dr.-Manmohan-Singh.jpg</image:loc>
+            <image:title>Santosh Bhartiya with Dr. Manmohan Singh</image:title>
+        </image:image>
+    </url>
+
+    <url>
+        <loc>https://www.santoshbhartiya.in/gallery.html</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/Santosh-Bhartiya-with-Dr.-Manmohan-Singh.jpg</image:loc>
+            <image:title>Santosh Bhartiya Former MP with Dr. Manmohan Singh</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-with-former-prime-minister-v-p-singh.jpg</image:loc>
+            <image:title>Santosh Bhartiya with V. P. Singh</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-ik-gujral.jpg</image:loc>
+            <image:title>Santosh Bhartiya with I. K. Gujral</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-ram-vilas-paswan.jpg</image:loc>
+            <image:title>Santosh Bhartiya with Ram Vilas Paswan</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-arun-jaitley.jpg</image:loc>
+            <image:title>Santosh Bhartiya with Arun Jaitley</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-devendra-fadnavis.jpg</image:loc>
+            <image:title>Santosh Bhartiya with Devendra Fadnavis</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-rajat-sharma.jpg</image:loc>
+            <image:title>Santosh Bhartiya with Rajat Sharma</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://www.santoshbhartiya.in/assets/images/historic/santosh-bhartiya-sanjay-raut.jpg</image:loc>
+            <image:title>Santosh Bhartiya with Sanjay Raut</image:title>
+        </image:image>
+    </url>
+
+    <url>
+        <loc>https://www.santoshbhartiya.in/contact.html</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+</urlset>

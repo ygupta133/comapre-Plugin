@@ -440,12 +440,21 @@ object-position:10% center;}
 }
 
 .load-more-btn{
+    display:inline-block;
     padding:14px 32px;
     border:1px solid #8b1e2d;
     background:#fff;
     color:#8b1e2d;
     border-radius:50px;
     cursor:pointer;
+    text-decoration:none;
+    font-weight:600;
+    transition:var(--transition);
+}
+
+.load-more-btn:hover{
+    background:#8b1e2d;
+    color:#fff;
 }
 .historic-description{
     margin-top:10px;

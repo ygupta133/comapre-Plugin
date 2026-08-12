@@ -2,28 +2,43 @@
    CONTACT PAGE
 ========================================== */
 
+.page-main {
+    padding-top: 0;
+}
+
 .contact-hero {
     position: relative;
-    min-height: 320px;
+    min-height: 460px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: #1a1a1a url("../images/hero/santosh-bhartiya-with-former-prime-minister-v-p-singh.jpg") center / cover no-repeat;
-    padding: 80px 20px;
+    padding: 150px 20px 100px;
+    margin-top: -80px;
+    overflow: hidden;
+    background: #111;
+}
+
+.contact-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: url("../images/hero/santosh-bhartiya-with-former-prime-minister-v-p-singh.jpg") center center / cover no-repeat;
+    transform: scale(1.06);
 }
 
 .contact-hero::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(17, 24, 39, 0.82);
+    z-index: 1;
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.88) 0%, rgba(139, 30, 63, 0.72) 100%);
 }
 
 .contact-hero-content {
     position: relative;
     z-index: 2;
-    max-width: 700px;
+    max-width: 720px;
+    padding: 0 10px;
 }
 
 .contact-hero-content h1 {
@@ -247,8 +262,8 @@
 
 @media (max-width: 767px) {
     .contact-hero {
-        min-height: 260px;
-        padding: 60px 20px;
+        min-height: 380px;
+        padding: 130px 20px 80px;
     }
 
     .contact-main {
