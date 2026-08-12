@@ -33,77 +33,91 @@ class MMI_APS_Product_Meta {
 
 	public static function render_product_panel(): void {
 		global $post;
-
-		$product_id      = $post ? (int) $post->ID : 0;
-		$asin            = get_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, true );
-		$price           = get_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, true );
-		$original_price  = get_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, true );
-		$last_updated    = get_post_meta( $product_id, MMI_APS_Plugin::META_LAST_UPDATED, true );
-		$title           = get_post_meta( $product_id, MMI_APS_Plugin::META_TITLE, true );
-		$delivery        = get_post_meta( $product_id, MMI_APS_Plugin::META_DELIVERY, true );
+		$product_id = $post ? (int) $post->ID : 0;
 		?>
 		<div id="mmi_amazon_price_product_data" class="panel woocommerce_options_panel hidden">
-			<div class="options_group">
-				<?php
-				woocommerce_wp_text_input(
-					array(
-						'id'          => 'mmi_amazon_asin',
-						'label'       => __( 'Amazon ASIN', 'mmi-amazon-price-sync' ),
-						'description' => __( '10-character Amazon product ID, e.g. B0H8STM6G2', 'mmi-amazon-price-sync' ),
-						'value'       => $asin,
-						'desc_tip'    => true,
-						'placeholder' => 'B0H8STM6G2',
-					)
-				);
-				?>
-				<p class="form-field">
-					<label>&nbsp;</label>
-					<button type="button" class="button button-primary" id="mmi-aps-fetch-price" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>">
-						<?php esc_html_e( 'Fetch Price from Amazon', 'mmi-amazon-price-sync' ); ?>
-					</button>
-					<span class="spinner" id="mmi-aps-fetch-spinner" style="float:none;margin:0 8px;"></span>
-					<span id="mmi-aps-fetch-message" class="mmi-aps-fetch-message"></span>
-				</p>
-			</div>
+			<?php self::render_fields( $product_id, 'panel' ); ?>
+		</div>
+		<?php
+	}
 
-			<div class="options_group mmi-aps-synced-data" id="mmi-aps-synced-data">
-				<p class="form-field">
-					<label><?php esc_html_e( 'Amazon Price', 'mmi-amazon-price-sync' ); ?></label>
-					<span class="mmi-aps-readonly" id="mmi-aps-display-price">
-						<?php echo $price ? esc_html( self::format_inr( (float) $price ) ) : '—'; ?>
-					</span>
-				</p>
-				<p class="form-field">
-					<label><?php esc_html_e( 'Amazon Original Price', 'mmi-amazon-price-sync' ); ?></label>
-					<span class="mmi-aps-readonly" id="mmi-aps-display-original-price">
-						<?php echo $original_price ? esc_html( self::format_inr( (float) $original_price ) ) : '—'; ?>
-					</span>
-				</p>
+	/**
+	 * Render ASIN + fetch UI for product edit screen.
+	 *
+	 * @param int    $product_id Product ID.
+	 * @param string $context    panel|meta-box
+	 */
+	public static function render_fields( int $product_id, string $context = 'panel' ): void {
+		$suffix           = 'meta-box' === $context ? '-box' : '';
+		$asin             = get_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, true );
+		$price            = get_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, true );
+		$original_price   = get_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, true );
+		$last_updated     = get_post_meta( $product_id, MMI_APS_Plugin::META_LAST_UPDATED, true );
+		$title            = get_post_meta( $product_id, MMI_APS_Plugin::META_TITLE, true );
+		$delivery         = get_post_meta( $product_id, MMI_APS_Plugin::META_DELIVERY, true );
+
+		if ( 'panel' === $context ) {
+			echo '<div class="options_group">';
+			woocommerce_wp_text_input(
+				array(
+					'id'          => 'mmi_amazon_asin',
+					'label'       => __( 'Amazon ASIN', 'mmi-amazon-price-sync' ),
+					'description' => __( '10-character Amazon product ID, e.g. B0H8STM6G2', 'mmi-amazon-price-sync' ),
+					'value'       => $asin,
+					'desc_tip'    => true,
+					'placeholder' => 'B0H8STM6G2',
+				)
+			);
+		} else {
+			?>
+			<p>
+				<label for="mmi_amazon_asin<?php echo esc_attr( $suffix ); ?>"><strong><?php esc_html_e( 'Amazon ASIN', 'mmi-amazon-price-sync' ); ?></strong></label>
+				<input type="text" class="widefat" id="mmi_amazon_asin<?php echo esc_attr( $suffix ); ?>" name="mmi_amazon_asin" value="<?php echo esc_attr( $asin ); ?>" placeholder="B0H8STM6G2" />
+			</p>
+			<?php
+		}
+		?>
+		<p class="form-field mmi-aps-actions">
+			<?php if ( 'panel' === $context ) : ?>
+				<label>&nbsp;</label>
+			<?php endif; ?>
+			<button type="button" class="button button-primary mmi-aps-fetch-price" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>" data-asin-input="mmi_amazon_asin<?php echo esc_attr( $suffix ); ?>">
+				<?php esc_html_e( 'Fetch Price from Amazon', 'mmi-amazon-price-sync' ); ?>
+			</button>
+			<span class="spinner mmi-aps-fetch-spinner" style="float:none;margin:0 8px;"></span>
+			<span class="mmi-aps-fetch-message"></span>
+		</p>
+
+		<div class="mmi-aps-synced-data" data-context="<?php echo esc_attr( $context ); ?>">
+			<p><strong><?php esc_html_e( 'Amazon Price:', 'mmi-amazon-price-sync' ); ?></strong> <span class="mmi-aps-display-price"><?php echo $price ? esc_html( self::format_inr( (float) $price ) ) : '—'; ?></span></p>
+			<p><strong><?php esc_html_e( 'Original Price:', 'mmi-amazon-price-sync' ); ?></strong> <span class="mmi-aps-display-original-price"><?php echo $original_price ? esc_html( self::format_inr( (float) $original_price ) ) : '—'; ?></span></p>
+			<?php if ( 'panel' === $context ) : ?>
 				<p class="form-field">
 					<label><?php esc_html_e( 'Product Title (Amazon)', 'mmi-amazon-price-sync' ); ?></label>
-					<span class="mmi-aps-readonly mmi-aps-readonly--wide" id="mmi-aps-display-title">
-						<?php echo $title ? esc_html( $title ) : '—'; ?>
-					</span>
+					<span class="mmi-aps-readonly mmi-aps-readonly--wide mmi-aps-display-title"><?php echo $title ? esc_html( $title ) : '—'; ?></span>
 				</p>
 				<p class="form-field">
 					<label><?php esc_html_e( 'Delivery', 'mmi-amazon-price-sync' ); ?></label>
-					<span class="mmi-aps-readonly" id="mmi-aps-display-delivery">
-						<?php echo $delivery ? esc_html( $delivery ) : '—'; ?>
-					</span>
+					<span class="mmi-aps-readonly mmi-aps-display-delivery"><?php echo $delivery ? esc_html( $delivery ) : '—'; ?></span>
 				</p>
+			<?php else : ?>
+				<p><strong><?php esc_html_e( 'Last Updated:', 'mmi-amazon-price-sync' ); ?></strong> <span class="mmi-aps-display-last-updated"><?php echo $last_updated ? esc_html( self::format_datetime( (int) $last_updated ) ) : '—'; ?></span></p>
+			<?php endif; ?>
+			<?php if ( 'panel' === $context ) : ?>
 				<p class="form-field">
 					<label><?php esc_html_e( 'Last Updated', 'mmi-amazon-price-sync' ); ?></label>
-					<span class="mmi-aps-readonly" id="mmi-aps-display-last-updated">
-						<?php echo $last_updated ? esc_html( self::format_datetime( (int) $last_updated ) ) : '—'; ?>
-					</span>
+					<span class="mmi-aps-readonly mmi-aps-display-last-updated"><?php echo $last_updated ? esc_html( self::format_datetime( (int) $last_updated ) ) : '—'; ?></span>
 				</p>
-			</div>
+			<?php endif; ?>
+		</div>
 
+		<?php if ( 'panel' === $context ) : ?>
 			<p class="mmi-aps-panel-note">
 				<?php esc_html_e( 'Amazon prices are stored as product meta. The storefront displays the Amazon price automatically without overwriting your WooCommerce regular price.', 'mmi-amazon-price-sync' ); ?>
 			</p>
-		</div>
-		<?php
+			<?php
+			echo '</div>';
+		endif;
 	}
 
 	/**

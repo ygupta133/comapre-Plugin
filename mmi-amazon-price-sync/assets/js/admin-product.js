@@ -1,42 +1,44 @@
 (function ($) {
 	'use strict';
 
-	var $btn = $('#mmi-aps-fetch-price');
-	if (!$btn.length) {
-		return;
-	}
-
-	var $asin = $('#mmi_amazon_asin');
-	var $spinner = $('#mmi-aps-fetch-spinner');
-	var $message = $('#mmi-aps-fetch-message');
-
-	function setMessage(text, type) {
-		$message
+	function setMessage($scope, text, type) {
+		$scope.find('.mmi-aps-fetch-message')
 			.removeClass('mmi-aps-fetch-message--success mmi-aps-fetch-message--error')
 			.addClass(type ? 'mmi-aps-fetch-message--' + type : '')
 			.text(text || '');
 	}
 
-	function updateDisplay(data) {
-		$('#mmi-aps-display-price').text(data.price_formatted || '—');
-		$('#mmi-aps-display-original-price').text(data.original_formatted || '—');
-		$('#mmi-aps-display-title').text(data.title || '—');
-		$('#mmi-aps-display-delivery').text(data.delivery || '—');
-		$('#mmi-aps-display-last-updated').text(data.last_updated || '—');
+	function updateDisplay($scope, data) {
+		$scope.find('.mmi-aps-display-price').text(data.price_formatted || '—');
+		$scope.find('.mmi-aps-display-original-price').text(data.original_formatted || '—');
+		$scope.find('.mmi-aps-display-title').text(data.title || '—');
+		$scope.find('.mmi-aps-display-delivery').text(data.delivery || '—');
+		$scope.find('.mmi-aps-display-last-updated').text(data.last_updated || '—');
 	}
 
-	$btn.on('click', function () {
-		var asin = ($asin.val() || '').trim().toUpperCase();
+	$(document).on('click', '.mmi-aps-fetch-price', function () {
+		var $btn = $(this);
+		var $scope = $btn.closest('.mmi-aps-synced-data').length
+			? $btn.closest('.options_group, #mmi-aps-product-box .inside, .postbox')
+			: $btn.closest('#mmi_amazon_price_product_data, #mmi-aps-product-box');
+
+		if (!$scope.length) {
+			$scope = $btn.parent();
+		}
+
+		var asinInputId = $btn.data('asin-input') || 'mmi_amazon_asin';
+		var asin = ($('#' + asinInputId).val() || $('#mmi_amazon_asin').val() || '').trim().toUpperCase();
 		var productId = $btn.data('product-id');
+		var $spinner = $btn.siblings('.mmi-aps-fetch-spinner');
 
 		if (!asin) {
-			setMessage(mmiApsAdmin.i18n.noAsin, 'error');
+			setMessage($scope, mmiApsAdmin.i18n.noAsin, 'error');
 			return;
 		}
 
 		$btn.prop('disabled', true);
 		$spinner.addClass('is-active');
-		setMessage(mmiApsAdmin.i18n.fetching, '');
+		setMessage($scope, mmiApsAdmin.i18n.fetching, '');
 
 		$.post(mmiApsAdmin.ajaxUrl, {
 			action: 'mmi_aps_fetch_price',
@@ -46,14 +48,17 @@
 		})
 			.done(function (response) {
 				if (response.success) {
-					updateDisplay(response.data);
-					setMessage(response.data.message || mmiApsAdmin.i18n.success, 'success');
+					$('.mmi-aps-synced-data').each(function () {
+						updateDisplay($(this).closest('.options_group, #mmi-aps-product-box .inside, .postbox, #mmi_amazon_price_product_data'), response.data);
+					});
+					updateDisplay($scope, response.data);
+					setMessage($scope, response.data.message || mmiApsAdmin.i18n.success, 'success');
 				} else {
-					setMessage((response.data && response.data.message) || mmiApsAdmin.i18n.error, 'error');
+					setMessage($scope, (response.data && response.data.message) || mmiApsAdmin.i18n.error, 'error');
 				}
 			})
 			.fail(function () {
-				setMessage(mmiApsAdmin.i18n.error, 'error');
+				setMessage($scope, mmiApsAdmin.i18n.error, 'error');
 			})
 			.always(function () {
 				$btn.prop('disabled', false);

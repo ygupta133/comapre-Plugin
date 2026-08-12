@@ -5,7 +5,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! class_exists( 'WC_Settings_Page', false ) ) {
+if ( ! class_exists( 'WC_Settings_Page' ) ) {
 	return;
 }
 
