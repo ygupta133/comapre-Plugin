@@ -7,6 +7,9 @@ APACHE_SITE="/etc/apache2/sites-available/mobile-compare.conf"
 
 sudo service mariadb start 2>/dev/null || sudo service mysql start 2>/dev/null || true
 
+sudo mkdir -p /run/lock/apache2
+sudo chmod 1777 /run/lock 2>/dev/null || true
+
 if [ ! -f "$APACHE_SITE" ]; then
 	sudo tee "$APACHE_SITE" >/dev/null <<EOF
 <VirtualHost *:8888>
