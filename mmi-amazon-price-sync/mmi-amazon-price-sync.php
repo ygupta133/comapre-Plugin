@@ -1,0 +1,57 @@
+<?php
+/**
+ * Plugin Name: MMI Amazon Price Sync
+ * Plugin URI:  https://github.com/yogesh/comapre-Plugin
+ * Description: Sync WooCommerce product prices from Amazon India via RapidAPI using ASIN.
+ * Version:     1.0.0
+ * Author:      Yogesh
+ * Text Domain: mmi-amazon-price-sync
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
+ * WC requires at least: 7.0
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+define( 'MMI_APS_VERSION', '1.0.0' );
+define( 'MMI_APS_FILE', __FILE__ );
+define( 'MMI_APS_PATH', plugin_dir_path( __FILE__ ) );
+define( 'MMI_APS_URL', plugin_dir_url( __FILE__ ) );
+
+require_once MMI_APS_PATH . 'includes/class-api-client.php';
+require_once MMI_APS_PATH . 'includes/class-settings.php';
+require_once MMI_APS_PATH . 'includes/class-product-meta.php';
+require_once MMI_APS_PATH . 'includes/class-frontend.php';
+require_once MMI_APS_PATH . 'includes/class-plugin.php';
+
+/**
+ * Bootstrap plugin after WooCommerce loads.
+ */
+function mmi_aps_init() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		add_action( 'admin_notices', 'mmi_aps_woocommerce_missing_notice' );
+		return;
+	}
+
+	MMI_APS_Plugin::instance();
+}
+add_action( 'plugins_loaded', 'mmi_aps_init' );
+
+/**
+ * Admin notice when WooCommerce is missing.
+ */
+function mmi_aps_woocommerce_missing_notice() {
+	echo '<div class="notice notice-error"><p>';
+	echo esc_html__( 'MMI Amazon Price Sync requires WooCommerce to be installed and active.', 'mmi-amazon-price-sync' );
+	echo '</p></div>';
+}
+
+/**
+ * Declare HPOS compatibility.
+ */
+function mmi_aps_declare_hpos_compatibility() {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', MMI_APS_FILE, true );
+	}
+}
+add_action( 'before_woocommerce_init', 'mmi_aps_declare_hpos_compatibility' );
