@@ -12,6 +12,10 @@ class MMI_APS_Settings {
 	public const OPTION_API_ENDPOINT = 'mmi_aps_api_endpoint';
 	public const OPTION_COUNTRY      = 'mmi_aps_country';
 	public const OPTION_LANGUAGE     = 'mmi_aps_language';
+	public const OPTION_AUTO_SYNC    = 'mmi_aps_auto_sync_enabled';
+	public const OPTION_SYNC_INTERVAL = 'mmi_aps_sync_interval';
+	public const OPTION_SYNC_DELAY   = 'mmi_aps_sync_delay';
+	public const OPTION_BATCH_SIZE   = 'mmi_aps_sync_batch_size';
 
 	public const DEFAULT_HOST     = 'real-time-amazon-data.p.rapidapi.com';
 	public const DEFAULT_ENDPOINT = '/product-details';
@@ -80,5 +84,25 @@ class MMI_APS_Settings {
 	public static function get_language(): string {
 		$language = trim( (string) get_option( self::OPTION_LANGUAGE, 'en_IN' ) );
 		return $language ?: 'en_IN';
+	}
+
+	public static function is_auto_sync_enabled(): bool {
+		return 'yes' === get_option( self::OPTION_AUTO_SYNC, 'yes' );
+	}
+
+	public static function get_sync_interval(): string {
+		$interval = (string) get_option( self::OPTION_SYNC_INTERVAL, 'mmi_aps_twelve_hours' );
+		$allowed  = array( 'hourly', 'mmi_aps_six_hours', 'mmi_aps_twelve_hours', 'daily' );
+		return in_array( $interval, $allowed, true ) ? $interval : 'mmi_aps_twelve_hours';
+	}
+
+	public static function get_sync_delay(): int {
+		$delay = (int) get_option( self::OPTION_SYNC_DELAY, 2 );
+		return max( 1, min( 10, $delay ) );
+	}
+
+	public static function get_batch_size(): int {
+		$size = (int) get_option( self::OPTION_BATCH_SIZE, 10 );
+		return max( 1, min( 50, $size ) );
 	}
 }

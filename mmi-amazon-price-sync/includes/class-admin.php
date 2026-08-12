@@ -66,7 +66,62 @@ class MMI_APS_Admin {
 				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_AUTO_SYNC,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
+				'default'           => 'yes',
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_SYNC_INTERVAL,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_SYNC_DELAY,
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_sync_delay' ),
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_BATCH_SIZE,
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_batch_size' ),
+			)
+		);
 		add_action( 'wp_ajax_mmi_aps_test_api', array( __CLASS__, 'ajax_test_api' ) );
+		add_action( 'wp_ajax_mmi_aps_sync_batch', array( __CLASS__, 'ajax_sync_batch' ) );
+	}
+
+	/**
+	 * @param mixed $value Raw value.
+	 */
+	public static function sanitize_yes_no( $value ): string {
+		return 'yes' === $value ? 'yes' : 'no';
+	}
+
+	/**
+	 * @param mixed $value Raw value.
+	 */
+	public static function sanitize_sync_delay( $value ): int {
+		return max( 1, min( 10, (int) $value ) );
+	}
+
+	/**
+	 * @param mixed $value Raw value.
+	 */
+	public static function sanitize_batch_size( $value ): int {
+		return max( 1, min( 50, (int) $value ) );
 	}
 
 	public static function render_settings_page(): void {
@@ -82,6 +137,14 @@ class MMI_APS_Admin {
 		$language       = MMI_APS_Settings::get_language();
 		$sample_url     = 'https://' . $api_host . '/' . ltrim( $api_endpoint, '/' ) . '?asin=B0H8STM6G2&country=IN&autoselect_variant=true&language=' . rawurlencode( $language );
 		$wrong_host     = false !== strpos( $api_host, 'real-time-e-commerce-data' );
+		$auto_sync      = MMI_APS_Settings::is_auto_sync_enabled();
+		$sync_interval  = MMI_APS_Settings::get_sync_interval();
+		$sync_delay     = MMI_APS_Settings::get_sync_delay();
+		$batch_size     = MMI_APS_Settings::get_batch_size();
+		$asin_count     = count( MMI_APS_Sync::get_product_ids_with_asin() );
+		$last_run       = MMI_APS_Sync::get_last_run();
+		$last_summary   = MMI_APS_Sync::get_last_summary();
+		$next_cron      = MMI_APS_Cron::get_next_run_label();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Amazon Price Sync', 'mmi-amazon-price-sync' ); ?></h1>
@@ -135,6 +198,56 @@ class MMI_APS_Admin {
 						</td>
 					</tr>
 				</table>
+
+				<h2><?php esc_html_e( 'Auto Sync', 'mmi-amazon-price-sync' ); ?></h2>
+				<p><?php esc_html_e( 'Automatically update prices for all products that have an Amazon ASIN.', 'mmi-amazon-price-sync' ); ?></p>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Enable Auto Sync', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="hidden" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AUTO_SYNC ); ?>" value="no" />
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AUTO_SYNC ); ?>" value="yes" <?php checked( $auto_sync ); ?> />
+								<?php esc_html_e( 'Run automatic price sync via WP-Cron', 'mmi-amazon-price-sync' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Sync Interval', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<select name="<?php echo esc_attr( MMI_APS_Settings::OPTION_SYNC_INTERVAL ); ?>">
+								<option value="hourly" <?php selected( $sync_interval, 'hourly' ); ?>><?php esc_html_e( 'Every hour', 'mmi-amazon-price-sync' ); ?></option>
+								<option value="mmi_aps_six_hours" <?php selected( $sync_interval, 'mmi_aps_six_hours' ); ?>><?php esc_html_e( 'Every 6 hours', 'mmi-amazon-price-sync' ); ?></option>
+								<option value="mmi_aps_twelve_hours" <?php selected( $sync_interval, 'mmi_aps_twelve_hours' ); ?>><?php esc_html_e( 'Every 12 hours', 'mmi-amazon-price-sync' ); ?></option>
+								<option value="daily" <?php selected( $sync_interval, 'daily' ); ?>><?php esc_html_e( 'Daily', 'mmi-amazon-price-sync' ); ?></option>
+							</select>
+							<p class="description">
+								<?php
+								printf(
+									/* translators: %s: next scheduled run datetime */
+									esc_html__( 'Next scheduled run: %s', 'mmi-amazon-price-sync' ),
+									esc_html( $next_cron )
+								);
+								?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Delay Between API Calls', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="number" class="small-text" min="1" max="10" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_SYNC_DELAY ); ?>" value="<?php echo esc_attr( (string) $sync_delay ); ?>" />
+							<?php esc_html_e( 'seconds', 'mmi-amazon-price-sync' ); ?>
+							<p class="description"><?php esc_html_e( 'Helps avoid RapidAPI rate limits. 250 products ≈ 8 minutes at 2 seconds.', 'mmi-amazon-price-sync' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Manual Sync Batch Size', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="number" class="small-text" min="1" max="50" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_BATCH_SIZE ); ?>" value="<?php echo esc_attr( (string) $batch_size ); ?>" />
+							<p class="description"><?php esc_html_e( 'Products per batch when clicking Sync All Now.', 'mmi-amazon-price-sync' ); ?></p>
+						</td>
+					</tr>
+				</table>
 				<?php submit_button(); ?>
 			</form>
 
@@ -144,6 +257,47 @@ class MMI_APS_Admin {
 				<span class="spinner" id="mmi-aps-test-spinner" style="float:none;"></span>
 			</p>
 			<div id="mmi-aps-test-result"></div>
+
+			<hr />
+			<h2><?php esc_html_e( 'Sync All Products', 'mmi-amazon-price-sync' ); ?></h2>
+			<p>
+				<?php
+				printf(
+					/* translators: %d: number of products with ASIN */
+					esc_html__( '%d products have an Amazon ASIN and will be synced.', 'mmi-amazon-price-sync' ),
+					(int) $asin_count
+				);
+				?>
+			</p>
+			<p>
+				<button type="button" class="button button-primary" id="mmi-aps-sync-all"><?php esc_html_e( 'Sync All Now', 'mmi-amazon-price-sync' ); ?></button>
+				<span class="spinner" id="mmi-aps-sync-spinner" style="float:none;"></span>
+			</p>
+			<div id="mmi-aps-sync-progress" style="max-width:480px;display:none;margin:12px 0;">
+				<div style="background:#f0f0f1;height:24px;border-radius:4px;overflow:hidden;">
+					<div id="mmi-aps-sync-bar" style="background:#2271b1;height:100%;width:0%;transition:width .3s;"></div>
+				</div>
+				<p id="mmi-aps-sync-status" style="margin:8px 0 0;"></p>
+			</div>
+			<div id="mmi-aps-sync-result"></div>
+
+			<?php if ( $last_run && $last_summary ) : ?>
+				<h3><?php esc_html_e( 'Last Sync', 'mmi-amazon-price-sync' ); ?></h3>
+				<ul>
+					<li><?php echo esc_html( MMI_APS_Product_Meta::format_datetime( (int) $last_run['time'] ) ); ?> (<?php echo esc_html( $last_run['source'] ); ?>)</li>
+					<li>
+						<?php
+						printf(
+							/* translators: 1: success count, 2: failed count, 3: total count */
+							esc_html__( 'Updated: %1$d | Failed: %2$d | Total: %3$d', 'mmi-amazon-price-sync' ),
+							(int) $last_summary['success'],
+							(int) $last_summary['failed'],
+							(int) $last_summary['total']
+						);
+						?>
+					</li>
+				</ul>
+			<?php endif; ?>
 
 			<script>
 			jQuery(function($) {
@@ -169,6 +323,68 @@ class MMI_APS_Admin {
 						$btn.prop('disabled', false);
 						$spinner.removeClass('is-active');
 					});
+				});
+
+				var syncing = false;
+				$('#mmi-aps-sync-all').on('click', function() {
+					if (syncing) return;
+					syncing = true;
+					var $btn = $(this);
+					var $spinner = $('#mmi-aps-sync-spinner');
+					var $progress = $('#mmi-aps-sync-progress');
+					var $bar = $('#mmi-aps-sync-bar');
+					var $status = $('#mmi-aps-sync-status');
+					var $result = $('#mmi-aps-sync-result');
+					var offset = 0;
+					var totalSuccess = 0;
+					var totalFailed = 0;
+					var totalProducts = 0;
+
+					$btn.prop('disabled', true);
+					$spinner.addClass('is-active');
+					$progress.show();
+					$result.html('');
+					$bar.css('width', '0%');
+					$status.text('<?php echo esc_js( __( 'Starting sync…', 'mmi-amazon-price-sync' ) ); ?>');
+
+					function runBatch() {
+						$.post(ajaxurl, {
+							action: 'mmi_aps_sync_batch',
+							nonce: '<?php echo esc_js( wp_create_nonce( 'mmi_aps_sync_batch' ) ); ?>',
+							offset: offset
+						}).done(function(response) {
+							if (!response.success) {
+								$result.html('<div class="notice notice-error"><p>' + (response.data && response.data.message ? response.data.message : 'Sync failed') + '</p></div>');
+								finish();
+								return;
+							}
+							var data = response.data;
+							totalSuccess += data.success;
+							totalFailed += data.failed;
+							totalProducts = data.total;
+							offset = data.next_offset;
+							var percent = totalProducts ? Math.round((offset / totalProducts) * 100) : 100;
+							$bar.css('width', percent + '%');
+							$status.text(offset + ' / ' + totalProducts + ' <?php echo esc_js( __( 'products processed', 'mmi-amazon-price-sync' ) ); ?>');
+							if (data.done) {
+								$result.html('<div class="notice notice-success"><p><?php echo esc_js( __( 'Sync complete!', 'mmi-amazon-price-sync' ) ); ?> ' + totalSuccess + ' <?php echo esc_js( __( 'updated', 'mmi-amazon-price-sync' ) ); ?>, ' + totalFailed + ' <?php echo esc_js( __( 'failed', 'mmi-amazon-price-sync' ) ); ?>.</p></div>');
+								finish();
+							} else {
+								runBatch();
+							}
+						}).fail(function() {
+							$result.html('<div class="notice notice-error"><p><?php echo esc_js( __( 'Sync failed. Please try again.', 'mmi-amazon-price-sync' ) ); ?></p></div>');
+							finish();
+						});
+					}
+
+					function finish() {
+						syncing = false;
+						$btn.prop('disabled', false);
+						$spinner.removeClass('is-active');
+					}
+
+					runBatch();
 				});
 			});
 			</script>
@@ -209,6 +425,24 @@ class MMI_APS_Admin {
 				),
 			)
 		);
+	}
+
+	public static function ajax_sync_batch(): void {
+		check_ajax_referer( 'mmi_aps_sync_batch', 'nonce' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'mmi-amazon-price-sync' ) ) );
+		}
+
+		if ( '' === MMI_APS_Settings::get_api_key() ) {
+			wp_send_json_error( array( 'message' => __( 'RapidAPI key is not configured.', 'mmi-amazon-price-sync' ) ) );
+		}
+
+		$offset = isset( $_POST['offset'] ) ? max( 0, (int) $_POST['offset'] ) : 0;
+		$limit  = MMI_APS_Settings::get_batch_size();
+		$result = MMI_APS_Sync::sync_batch( $offset, $limit );
+
+		wp_send_json_success( $result );
 	}
 
 	public static function register_product_meta_box(): void {

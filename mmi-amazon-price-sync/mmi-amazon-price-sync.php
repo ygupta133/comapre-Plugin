@@ -3,7 +3,7 @@
  * Plugin Name: MMI Amazon Price Sync
  * Plugin URI:  https://github.com/yogesh/comapre-Plugin
  * Description: Sync WooCommerce product prices from Amazon India via RapidAPI using ASIN.
- * Version:     1.0.2
+ * Version:     1.1.0
  * Author:      Yogesh
  * Text Domain: mmi-amazon-price-sync
  * Requires at least: 6.0
@@ -13,13 +13,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MMI_APS_VERSION', '1.0.2' );
+define( 'MMI_APS_VERSION', '1.1.0' );
 define( 'MMI_APS_FILE', __FILE__ );
 define( 'MMI_APS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MMI_APS_URL', plugin_dir_url( __FILE__ ) );
 
 require_once MMI_APS_PATH . 'includes/class-api-client.php';
 require_once MMI_APS_PATH . 'includes/class-settings.php';
+require_once MMI_APS_PATH . 'includes/class-sync.php';
+require_once MMI_APS_PATH . 'includes/class-cron.php';
 require_once MMI_APS_PATH . 'includes/class-admin.php';
 require_once MMI_APS_PATH . 'includes/class-product-meta.php';
 require_once MMI_APS_PATH . 'includes/class-frontend.php';
@@ -63,3 +65,19 @@ function mmi_aps_declare_hpos_compatibility() {
 	}
 }
 add_action( 'before_woocommerce_init', 'mmi_aps_declare_hpos_compatibility' );
+
+/**
+ * Activation: schedule cron.
+ */
+function mmi_aps_activate() {
+	MMI_APS_Cron::activate();
+}
+register_activation_hook( __FILE__, 'mmi_aps_activate' );
+
+/**
+ * Deactivation: clear cron.
+ */
+function mmi_aps_deactivate() {
+	MMI_APS_Cron::deactivate();
+}
+register_deactivation_hook( __FILE__, 'mmi_aps_deactivate' );

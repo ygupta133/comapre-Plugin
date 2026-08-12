@@ -27,6 +27,7 @@ final class MMI_APS_Plugin {
 
 	private function __construct() {
 		MMI_APS_Settings::init();
+		MMI_APS_Cron::init();
 		MMI_APS_Admin::init();
 		MMI_APS_Product_Meta::init();
 		MMI_APS_Frontend::init();

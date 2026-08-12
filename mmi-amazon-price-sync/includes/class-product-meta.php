@@ -192,21 +192,13 @@ class MMI_APS_Product_Meta {
 			wp_send_json_error( array( 'message' => __( 'ASIN is required.', 'mmi-amazon-price-sync' ) ) );
 		}
 
-		$result = MMI_APS_API_Client::fetch_product( $asin );
+		$result = MMI_APS_Sync::sync_product( $product_id, $asin );
 
 		if ( ! $result['success'] ) {
 			wp_send_json_error( array( 'message' => $result['message'] ) );
 		}
 
 		$data = $result['data'];
-
-		update_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, $asin );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, $data['price'] );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, $data['original_price'] ? $data['original_price'] : '' );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_TITLE, $data['title'] );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_CURRENCY, $data['currency'] );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_DELIVERY, $data['delivery'] );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_LAST_UPDATED, time() );
 
 		wp_send_json_success(
 			array(
@@ -221,6 +213,23 @@ class MMI_APS_Product_Meta {
 				'last_updated'   => self::format_datetime( time() ),
 			)
 		);
+	}
+
+	/**
+	 * Save Amazon API data to product meta.
+	 *
+	 * @param int                   $product_id Product ID.
+	 * @param string                $asin       Amazon ASIN.
+	 * @param array<string,mixed>   $data       Parsed API data.
+	 */
+	public static function save_amazon_data( int $product_id, string $asin, array $data ): void {
+		update_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, $asin );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, $data['price'] );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, ! empty( $data['original_price'] ) ? $data['original_price'] : '' );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_TITLE, $data['title'] ?? '' );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_CURRENCY, $data['currency'] ?? 'INR' );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_DELIVERY, $data['delivery'] ?? '' );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_LAST_UPDATED, time() );
 	}
 
 	/**
