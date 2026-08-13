@@ -26,7 +26,11 @@ class MMI_APS_Frontend {
 	 */
 	public static function filter_price( $price, $product ) {
 		$amazon_price = self::get_amazon_price_for_product( $product );
-		return null !== $amazon_price ? (string) $amazon_price : $price;
+		if ( null === $amazon_price ) {
+			return $price;
+		}
+
+		return (string) (int) round( $amazon_price );
 	}
 
 	/**

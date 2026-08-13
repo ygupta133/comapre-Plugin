@@ -1,12 +1,7 @@
-.mmi-aps-affiliate-wrap--price {
-	margin-top: 12px;
-}
-
-.mmi-aps-affiliate-wrap--price .mmi-aps-affiliate-btn {
-	display: block;
-	width: 100%;
-	max-width: 100%;
-	text-align: center;
+.mmi-aps-affiliate-wrap--price,
+.mmi-aps-affiliate-wrap--single,
+.mmi-aps-affiliate-wrap--inject {
+	margin: 12px 0 10px;
 }
 
 .mmi-aps-affiliate-wrap--loop {
@@ -16,14 +11,19 @@
 
 .mmi-aps-affiliate-btn {
 	display: inline-block !important;
+	width: auto !important;
+	max-width: 100%;
 	background: #ff9900 !important;
-	border-color: #e88b00 !important;
+	border: 1px solid #e88b00 !important;
 	color: #111 !important;
 	font-weight: 600 !important;
+	font-size: 14px !important;
 	text-decoration: none !important;
-	padding: 12px 24px !important;
-	border-radius: 4px !important;
-	line-height: 1.4 !important;
+	text-transform: none !important;
+	padding: 10px 22px !important;
+	border-radius: 6px !important;
+	line-height: 1.3 !important;
+	box-shadow: none !important;
 }
 
 .mmi-aps-affiliate-btn:hover,
@@ -39,8 +39,26 @@
 }
 
 .mmi-aps-affiliate-note {
-	margin: 8px 0 0 !important;
-	font-size: 12px;
+	margin: 6px 0 0 !important;
+	font-size: 11px;
 	line-height: 1.4;
-	color: #666;
+	color: #777;
+}
+
+/* ReHub single product: hide empty wishlist / coupon box above See Full Specs */
+body.single-product .re_wooinner_cta_wrapper #woo-button-area .heart_thumb_wrap,
+body.single-product .re_wooinner_cta_wrapper #woo-button-area .coupon_woo_rehub,
+body.single-product .re_wooinner_cta_wrapper #woo-button-area .compare_for_grid {
+	display: none !important;
+}
+
+body.single-product .re_wooinner_cta_wrapper #woo-button-area:empty {
+	display: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	min-height: 0 !important;
+}
+
+body.single-product .re_wooinner_cta_wrapper .see-full-spec-btn {
+	margin-top: 8px;
 }

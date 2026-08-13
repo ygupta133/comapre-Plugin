@@ -123,7 +123,7 @@ class MMI_APS_API_Client {
 			$data = $json['data'];
 		}
 
-		$price_raw          = self::find_value( $data, array( 'product_price', 'price', 'current_price', 'buybox_price' ) );
+		$price_raw          = self::extract_primary_price_raw( $data );
 		$original_price_raw = self::find_value( $data, array( 'product_original_price', 'original_price', 'list_price', 'product_list_price', 'was_price' ) );
 		$title              = (string) self::find_value( $data, array( 'product_title', 'title', 'name' ), '' );
 		$currency           = (string) self::find_value( $data, array( 'currency', 'product_currency' ), 'INR' );
@@ -198,6 +198,80 @@ class MMI_APS_API_Client {
 		}
 
 		return round( (float) $clean, 2 );
+	}
+
+	/**
+	 * Pick the best current price from API payload (buybox / offers aware).
+	 *
+	 * @param array<string,mixed> $data Product data node.
+	 */
+	private static function extract_primary_price_raw( $data ) {
+		if ( ! is_array( $data ) ) {
+			return null;
+		}
+
+		$candidates = array();
+
+		$direct_keys = array(
+			'product_price',
+			'buybox_price',
+			'product_buybox_price',
+			'current_price',
+			'deal_price',
+			'price',
+		);
+
+		foreach ( $direct_keys as $key ) {
+			if ( ! isset( $data[ $key ] ) || '' === $data[ $key ] ) {
+				continue;
+			}
+
+			$value = $data[ $key ];
+			if ( is_array( $value ) ) {
+				$value = self::find_value(
+					$value,
+					array( 'value', 'amount', 'current', 'price', 'display_price' )
+				);
+			}
+
+			$parsed = self::parse_price( $value );
+			if ( null !== $parsed ) {
+				$candidates[] = $parsed;
+			}
+		}
+
+		if ( ! empty( $data['product_offers'] ) && is_array( $data['product_offers'] ) ) {
+			foreach ( $data['product_offers'] as $index => $offer ) {
+				if ( ! is_array( $offer ) ) {
+					continue;
+				}
+
+				$offer_price = self::parse_price(
+					self::find_value(
+						$offer,
+						array( 'product_price', 'price', 'current_price', 'buybox_price' )
+					)
+				);
+
+				if ( null === $offer_price ) {
+					continue;
+				}
+
+				// First offer is the pinned buybox price on Amazon.
+				if ( 0 === $index ) {
+					return $offer_price;
+				}
+
+				$candidates[] = $offer_price;
+			}
+		}
+
+		if ( empty( $candidates ) ) {
+			return null;
+		}
+
+		// Prefer the lowest fresh offer when top-level price looks stale.
+		return min( $candidates );
 	}
 
 	/**

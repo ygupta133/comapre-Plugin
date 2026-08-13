@@ -19,46 +19,15 @@ class MMI_APS_Affiliate {
 			return;
 		}
 
-		add_filter( 'woocommerce_get_price_html', array( __CLASS__, 'append_button_to_price_html' ), 50, 2 );
 		add_action( 'woocommerce_single_product_summary', array( __CLASS__, 'render_single_product_button' ), 11 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_action( 'wp_footer', array( __CLASS__, 'maybe_inject_footer_button' ), 99 );
 		add_shortcode( 'mmi_amazon_buy_button', array( __CLASS__, 'render_shortcode' ) );
 
 		if ( MMI_APS_Settings::show_affiliate_on_shop() ) {
 			add_action( 'woocommerce_after_shop_loop_item', array( __CLASS__, 'render_loop_button' ), 15 );
 		}
-	}
-
-	/**
-	 * Append Go to Store button after WooCommerce price HTML (works with ReHub + most themes).
-	 *
-	 * @param string     $html    Price HTML.
-	 * @param WC_Product $product Product object.
-	 */
-	public static function append_button_to_price_html( string $html, $product ): string {
-		if ( is_admin() || is_cart() || is_checkout() ) {
-			return $html;
-		}
-
-		if ( ! $product instanceof WC_Product ) {
-			return $html;
-		}
-
-		$product_id = $product->get_id();
-		if ( isset( self::$rendered_products[ $product_id ] ) ) {
-			return $html;
-		}
-
-		$button = self::get_button_html( $product_id, 'price' );
-		if ( '' === $button ) {
-			return $html;
-		}
-
-		self::$rendered_products[ $product_id ] = true;
-		self::enqueue_styles_force();
-
-		return $html . $button;
 	}
 
 	public static function enqueue_styles(): void {
@@ -71,6 +40,20 @@ class MMI_APS_Affiliate {
 			MMI_APS_URL . 'assets/css/affiliate-button.css',
 			array(),
 			MMI_APS_VERSION
+		);
+	}
+
+	public static function enqueue_scripts(): void {
+		if ( is_cart() || is_checkout() || is_admin() || ! is_product() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'mmi-aps-affiliate-layout',
+			MMI_APS_URL . 'assets/js/affiliate-layout.js',
+			array(),
+			MMI_APS_VERSION,
+			true
 		);
 	}
 
@@ -172,6 +155,8 @@ class MMI_APS_Affiliate {
 			if (!target) {
 				return;
 			}
+			var specsBtn = document.querySelector('.re_wooinner_cta_wrapper .see-full-spec-btn');
+			var insertTarget = specsBtn || target;
 			var wrap = document.createElement('div');
 			wrap.className = 'mmi-aps-affiliate-wrap mmi-aps-affiliate-wrap--inject';
 			var link = document.createElement('a');
@@ -187,7 +172,7 @@ class MMI_APS_Affiliate {
 			note.textContent = <?php echo wp_json_encode( $note ); ?>;
 			wrap.appendChild(note);
 			<?php endif; ?>
-			target.insertAdjacentElement('afterend', wrap);
+			insertTarget.parentNode.insertBefore(wrap, insertTarget);
 		})();
 		</script>
 		<?php

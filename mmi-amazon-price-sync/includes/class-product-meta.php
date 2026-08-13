@@ -70,12 +70,17 @@ class MMI_APS_Product_Meta {
 			echo '<div class="options_group">';
 			woocommerce_wp_text_input(
 				array(
-					'id'          => 'mmi_amazon_asin',
-					'label'       => __( 'Amazon ASIN', 'mmi-amazon-price-sync' ),
-					'description' => __( '10-character Amazon product ID, e.g. B0H8STM6G2', 'mmi-amazon-price-sync' ),
-					'value'       => $asin,
-					'desc_tip'    => true,
-					'placeholder' => 'B0H8STM6G2',
+					'id'                => 'mmi_amazon_asin',
+					'label'             => __( 'Amazon ASIN', 'mmi-amazon-price-sync' ),
+					'description'       => __( '10-character Amazon product ID, e.g. B0H8STM6G2', 'mmi-amazon-price-sync' ),
+					'value'             => $asin,
+					'desc_tip'          => true,
+					'placeholder'       => 'B0H8STM6G2',
+					'custom_attributes' => array(
+						'class'        => 'mmi-aps-asin-input',
+						'maxlength'    => '10',
+						'autocomplete' => 'off',
+					),
 				)
 			);
 		} else {
@@ -285,9 +290,20 @@ class MMI_APS_Product_Meta {
 	 * @param array<string,mixed>   $data       Parsed API data.
 	 */
 	public static function save_amazon_data( int $product_id, string $asin, array $data ): void {
+		$currency = $data['currency'] ?? 'INR';
+		$price    = isset( $data['price'] ) ? (float) $data['price'] : 0;
+		$original = ! empty( $data['original_price'] ) ? (float) $data['original_price'] : '';
+
+		if ( 'INR' === strtoupper( (string) $currency ) ) {
+			$price = (float) round( $price );
+			if ( '' !== $original ) {
+				$original = (float) round( (float) $original );
+			}
+		}
+
 		update_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, $asin );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, $data['price'] );
-		update_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, ! empty( $data['original_price'] ) ? $data['original_price'] : '' );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, $price );
+		update_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, $original );
 		update_post_meta( $product_id, MMI_APS_Plugin::META_TITLE, $data['title'] ?? '' );
 		update_post_meta( $product_id, MMI_APS_Plugin::META_CURRENCY, $data['currency'] ?? 'INR' );
 		update_post_meta( $product_id, MMI_APS_Plugin::META_DELIVERY, $data['delivery'] ?? '' );
