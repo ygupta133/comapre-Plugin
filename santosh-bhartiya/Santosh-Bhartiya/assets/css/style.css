@@ -372,6 +372,11 @@ object-position:10% center;}
     font-family:'Playfair Display',serif;
 }
 
+.historic-moments .section-heading h2{
+    white-space:nowrap;
+    font-size:clamp(28px,3.5vw,48px);
+}
+
 .section-heading p{
     color:#666;
     line-height:1.8;

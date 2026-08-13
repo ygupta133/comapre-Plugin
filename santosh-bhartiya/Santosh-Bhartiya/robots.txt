@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /assets/images/
 
 Sitemap: https://www.santoshbhartiya.in/sitemap.xml
+Sitemap: https://www.santoshbhartiya.in/image-sitemap.xml
