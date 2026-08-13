@@ -36,7 +36,14 @@ class MMI_APS_API_Client {
 		$country  = MMI_APS_Settings::get_country();
 		$language = MMI_APS_Settings::get_language();
 
-		$endpoint = '/' . ltrim( $endpoint, '/' );
+		if ( ! self::is_allowed_host( $host ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Invalid API host. Only RapidAPI domains are allowed.', 'mmi-amazon-price-sync' ),
+			);
+		}
+
+		$endpoint = '/' . ltrim( preg_replace( '/[^a-zA-Z0-9\/_-]/', '', $endpoint ), '/' );
 		$base_url = 'https://' . untrailingslashit( $host ) . $endpoint;
 
 		$url = add_query_arg(
@@ -52,8 +59,9 @@ class MMI_APS_API_Client {
 		$response = wp_remote_get(
 			$url,
 			array(
-				'timeout' => 30,
-				'headers' => array(
+				'timeout'   => 20,
+				'sslverify' => true,
+				'headers'   => array(
 					'Content-Type'    => 'application/json',
 					'x-rapidapi-key'  => $api_key,
 					'x-rapidapi-host' => $host,
@@ -190,6 +198,14 @@ class MMI_APS_API_Client {
 		}
 
 		return round( (float) $clean, 2 );
+	}
+
+	/**
+	 * Allow only RapidAPI hosts to prevent SSRF.
+	 */
+	private static function is_allowed_host( string $host ): bool {
+		$host = strtolower( trim( $host ) );
+		return (bool) preg_match( '/^[a-z0-9.-]+\.rapidapi\.com$/', $host );
 	}
 
 	/**

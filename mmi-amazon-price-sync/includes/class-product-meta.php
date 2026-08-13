@@ -7,6 +7,15 @@ defined( 'ABSPATH' ) || exit;
 
 class MMI_APS_Product_Meta {
 
+	/** @var array<int,string> */
+	private static $asin_cache = array();
+
+	/** @var array<int,?float> */
+	private static $price_cache = array();
+
+	/** @var array<int,?float> */
+	private static $original_price_cache = array();
+
 	public static function init(): void {
 		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'add_product_tab' ) );
 		add_action( 'woocommerce_product_data_panels', array( __CLASS__, 'render_product_panel' ) );
@@ -133,7 +142,12 @@ class MMI_APS_Product_Meta {
 		}
 
 		$asin = strtoupper( sanitize_text_field( wp_unslash( $_POST['mmi_amazon_asin'] ) ) );
+		if ( '' !== $asin && ! preg_match( '/^[A-Z0-9]{10}$/', $asin ) ) {
+			return;
+		}
+
 		update_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, $asin );
+		MMI_APS_Sync::invalidate_product_count_cache();
 	}
 
 	public static function enqueue_admin_assets( string $hook ): void {
@@ -230,6 +244,11 @@ class MMI_APS_Product_Meta {
 		update_post_meta( $product_id, MMI_APS_Plugin::META_CURRENCY, $data['currency'] ?? 'INR' );
 		update_post_meta( $product_id, MMI_APS_Plugin::META_DELIVERY, $data['delivery'] ?? '' );
 		update_post_meta( $product_id, MMI_APS_Plugin::META_LAST_UPDATED, time() );
+		self::clear_meta_cache( $product_id );
+	}
+
+	private static function clear_meta_cache( int $product_id ): void {
+		unset( self::$asin_cache[ $product_id ], self::$price_cache[ $product_id ], self::$original_price_cache[ $product_id ] );
 	}
 
 	/**
@@ -252,7 +271,12 @@ class MMI_APS_Product_Meta {
 	 * @param int $product_id Product ID.
 	 */
 	public static function get_asin( int $product_id ): string {
-		return strtoupper( trim( (string) get_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, true ) ) );
+		if ( isset( self::$asin_cache[ $product_id ] ) ) {
+			return self::$asin_cache[ $product_id ];
+		}
+
+		self::$asin_cache[ $product_id ] = strtoupper( trim( (string) get_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, true ) ) );
+		return self::$asin_cache[ $product_id ];
 	}
 
 	/**
@@ -261,11 +285,18 @@ class MMI_APS_Product_Meta {
 	 * @param int $product_id Product ID.
 	 */
 	public static function get_amazon_price( int $product_id ): ?float {
+		if ( array_key_exists( $product_id, self::$price_cache ) ) {
+			return self::$price_cache[ $product_id ];
+		}
+
 		$price = get_post_meta( $product_id, MMI_APS_Plugin::META_PRICE, true );
 		if ( '' === $price || null === $price ) {
+			self::$price_cache[ $product_id ] = null;
 			return null;
 		}
-		return (float) $price;
+
+		self::$price_cache[ $product_id ] = (float) $price;
+		return self::$price_cache[ $product_id ];
 	}
 
 	/**
@@ -274,10 +305,17 @@ class MMI_APS_Product_Meta {
 	 * @param int $product_id Product ID.
 	 */
 	public static function get_amazon_original_price( int $product_id ): ?float {
+		if ( array_key_exists( $product_id, self::$original_price_cache ) ) {
+			return self::$original_price_cache[ $product_id ];
+		}
+
 		$price = get_post_meta( $product_id, MMI_APS_Plugin::META_ORIGINAL_PRICE, true );
 		if ( '' === $price || null === $price ) {
+			self::$original_price_cache[ $product_id ] = null;
 			return null;
 		}
-		return (float) $price;
+
+		self::$original_price_cache[ $product_id ] = (float) $price;
+		return self::$original_price_cache[ $product_id ];
 	}
 }

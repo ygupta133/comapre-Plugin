@@ -1,20 +1,23 @@
 <?php
 /**
- * WP-Cron automatic Amazon price sync.
+ * WP-Cron automatic Amazon price sync — batched, locked, low server impact.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 class MMI_APS_Cron {
 
-	public const CRON_HOOK = 'mmi_aps_auto_sync';
+	public const CRON_HOOK            = 'mmi_aps_auto_sync';
+	public const CRON_CONTINUE_HOOK   = 'mmi_aps_continue_sync';
+	public const ENSURE_CHECK_TRANSIENT = 'mmi_aps_cron_ensure_checked';
 
 	public static function init(): void {
 		add_filter( 'cron_schedules', array( __CLASS__, 'add_schedules' ) );
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run_auto_sync' ) );
+		add_action( self::CRON_CONTINUE_HOOK, array( __CLASS__, 'run_continue_sync' ) );
 		add_action( 'update_option_' . MMI_APS_Settings::OPTION_AUTO_SYNC, array( __CLASS__, 'maybe_reschedule' ), 10, 0 );
 		add_action( 'update_option_' . MMI_APS_Settings::OPTION_SYNC_INTERVAL, array( __CLASS__, 'maybe_reschedule' ), 10, 0 );
-		add_action( 'init', array( __CLASS__, 'ensure_scheduled' ) );
+		add_action( 'admin_init', array( __CLASS__, 'ensure_scheduled' ) );
 	}
 
 	/**
@@ -40,6 +43,9 @@ class MMI_APS_Cron {
 
 	public static function deactivate(): void {
 		self::unschedule();
+		wp_clear_scheduled_hook( self::CRON_CONTINUE_HOOK );
+		delete_option( MMI_APS_Sync::OPTION_CRON_OFFSET );
+		MMI_APS_Sync::release_lock();
 	}
 
 	public static function schedule(): void {
@@ -67,22 +73,45 @@ class MMI_APS_Cron {
 		self::schedule();
 	}
 
+	/**
+	 * Check cron schedule once per hour in admin only — avoids frontend overhead.
+	 */
 	public static function ensure_scheduled(): void {
+		if ( get_transient( self::ENSURE_CHECK_TRANSIENT ) ) {
+			return;
+		}
+
+		set_transient( self::ENSURE_CHECK_TRANSIENT, 1, HOUR_IN_SECONDS );
+
 		if ( MMI_APS_Settings::is_auto_sync_enabled() && ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			self::schedule();
 		}
 	}
 
 	public static function run_auto_sync(): void {
-		if ( ! MMI_APS_Settings::is_auto_sync_enabled() ) {
+		if ( ! MMI_APS_Settings::is_auto_sync_enabled() || '' === MMI_APS_Settings::get_api_key() ) {
 			return;
 		}
 
-		if ( '' === MMI_APS_Settings::get_api_key() ) {
+		delete_option( MMI_APS_Sync::OPTION_CRON_OFFSET );
+		delete_option( 'mmi_aps_cron_progress' );
+		self::run_sync_cycle();
+	}
+
+	public static function run_continue_sync(): void {
+		if ( ! MMI_APS_Settings::is_auto_sync_enabled() || '' === MMI_APS_Settings::get_api_key() ) {
 			return;
 		}
 
-		MMI_APS_Sync::sync_all( 'cron' );
+		self::run_sync_cycle();
+	}
+
+	private static function run_sync_cycle(): void {
+		$completed = MMI_APS_Sync::sync_cron_step();
+
+		if ( ! $completed && ! wp_next_scheduled( self::CRON_CONTINUE_HOOK ) ) {
+			wp_schedule_single_event( time() + ( 3 * MINUTE_IN_SECONDS ), self::CRON_CONTINUE_HOOK );
+		}
 	}
 
 	/**

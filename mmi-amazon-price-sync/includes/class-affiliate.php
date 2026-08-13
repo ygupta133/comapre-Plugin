@@ -69,7 +69,7 @@ class MMI_APS_Affiliate {
 		}
 
 		$tag = MMI_APS_Settings::get_affiliate_tag();
-		if ( '' === $tag ) {
+		if ( '' === $tag || ! preg_match( '/^[a-z0-9-]{3,40}$/', $tag ) ) {
 			return '';
 		}
 

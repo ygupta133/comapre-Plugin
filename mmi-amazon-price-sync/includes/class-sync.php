@@ -7,8 +7,14 @@ defined( 'ABSPATH' ) || exit;
 
 class MMI_APS_Sync {
 
-	public const OPTION_LAST_RUN     = 'mmi_aps_last_sync_run';
-	public const OPTION_LAST_SUMMARY = 'mmi_aps_last_sync_summary';
+	public const OPTION_LAST_RUN      = 'mmi_aps_last_sync_run';
+	public const OPTION_LAST_SUMMARY  = 'mmi_aps_last_sync_summary';
+	public const OPTION_CRON_OFFSET   = 'mmi_aps_cron_offset';
+	public const LOCK_TRANSIENT       = 'mmi_aps_sync_lock';
+	public const COUNT_TRANSIENT      = 'mmi_aps_asin_count';
+
+	/** @var int[]|null */
+	private static $asin_product_ids = null;
 
 	/**
 	 * Sync one product by ID.
@@ -38,6 +44,7 @@ class MMI_APS_Sync {
 		}
 
 		MMI_APS_Product_Meta::save_amazon_data( $product_id, $asin, $result['data'] );
+		self::invalidate_product_count_cache();
 
 		return array(
 			'success'    => true,
@@ -49,9 +56,14 @@ class MMI_APS_Sync {
 	/**
 	 * Get all published product IDs that have an ASIN.
 	 *
+	 * @param bool $force_refresh Skip in-request cache.
 	 * @return int[]
 	 */
-	public static function get_product_ids_with_asin(): array {
+	public static function get_product_ids_with_asin( bool $force_refresh = false ): array {
+		if ( ! $force_refresh && null !== self::$asin_product_ids ) {
+			return self::$asin_product_ids;
+		}
+
 		$query = new WP_Query(
 			array(
 				'post_type'              => 'product',
@@ -75,7 +87,45 @@ class MMI_APS_Sync {
 			)
 		);
 
-		return array_map( 'intval', $query->posts );
+		self::$asin_product_ids = array_map( 'intval', $query->posts );
+
+		return self::$asin_product_ids;
+	}
+
+	/**
+	 * Count products with ASIN — cached to avoid heavy queries on admin pages.
+	 */
+	public static function count_products_with_asin(): int {
+		$cached = get_transient( self::COUNT_TRANSIENT );
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
+		$count = count( self::get_product_ids_with_asin( true ) );
+		set_transient( self::COUNT_TRANSIENT, $count, 5 * MINUTE_IN_SECONDS );
+
+		return $count;
+	}
+
+	public static function invalidate_product_count_cache(): void {
+		delete_transient( self::COUNT_TRANSIENT );
+		self::$asin_product_ids = null;
+	}
+
+	/**
+	 * Prevent overlapping sync jobs (cron + manual).
+	 */
+	public static function acquire_lock(): bool {
+		if ( get_transient( self::LOCK_TRANSIENT ) ) {
+			return false;
+		}
+
+		set_transient( self::LOCK_TRANSIENT, 1, 10 * MINUTE_IN_SECONDS );
+		return true;
+	}
+
+	public static function release_lock(): void {
+		delete_transient( self::LOCK_TRANSIENT );
 	}
 
 	/**
@@ -94,7 +144,7 @@ class MMI_APS_Sync {
 		);
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			set_time_limit( 0 );
+			@set_time_limit( 300 );
 		}
 
 		$index = 0;
@@ -128,24 +178,63 @@ class MMI_APS_Sync {
 	 * @return array{success:int,failed:int,total:int,errors:array<int,string>}
 	 */
 	public static function sync_all( string $source = 'manual' ): array {
-		$product_ids = self::get_product_ids_with_asin();
-		$delay       = MMI_APS_Settings::get_sync_delay();
-		$summary     = self::sync_products( $product_ids, $delay );
+		if ( ! self::acquire_lock() ) {
+			return array(
+				'success' => 0,
+				'failed'  => 0,
+				'total'   => 0,
+				'errors'  => array( 0 => __( 'Another sync is already running.', 'mmi-amazon-price-sync' ) ),
+			);
+		}
 
-		self::store_last_run( $summary, $source );
+		try {
+			$product_ids = self::get_product_ids_with_asin( true );
+			$delay       = MMI_APS_Settings::get_sync_delay();
+			$summary     = self::sync_products( $product_ids, $delay );
+			self::store_last_run( $summary, $source );
+			return $summary;
+		} finally {
+			self::release_lock();
+		}
+	}
 
-		return $summary;
+	/**
+	 * Lightweight cron sync — processes one batch per run to protect server CPU.
+	 *
+	 * @return bool True when full catalog sync cycle completed.
+	 */
+	public static function sync_cron_step(): bool {
+		if ( ! self::acquire_lock() ) {
+			return false;
+		}
+
+		try {
+			$offset = max( 0, (int) get_option( self::OPTION_CRON_OFFSET, 0 ) );
+			$limit  = MMI_APS_Settings::get_cron_batch_size();
+			$result = self::sync_batch( $offset, $limit, 'cron' );
+
+			if ( $result['done'] ) {
+				delete_option( self::OPTION_CRON_OFFSET );
+				return true;
+			}
+
+			update_option( self::OPTION_CRON_OFFSET, $result['next_offset'], false );
+			return false;
+		} finally {
+			self::release_lock();
+		}
 	}
 
 	/**
 	 * Sync a batch of products (for AJAX progress).
 	 *
-	 * @param int $offset Start offset.
-	 * @param int $limit  Batch size.
+	 * @param int    $offset Start offset.
+	 * @param int    $limit  Batch size.
+	 * @param string $source manual|cron
 	 * @return array{success:int,failed:int,total:int,processed:int,offset:int,next_offset:int,done:bool,errors:array<int,string>}
 	 */
-	public static function sync_batch( int $offset, int $limit ): array {
-		$all_ids    = self::get_product_ids_with_asin();
+	public static function sync_batch( int $offset, int $limit, string $source = 'manual' ): array {
+		$all_ids    = self::get_product_ids_with_asin( true );
 		$total      = count( $all_ids );
 		$batch_ids  = array_slice( $all_ids, $offset, $limit );
 		$delay      = MMI_APS_Settings::get_sync_delay();
@@ -154,11 +243,17 @@ class MMI_APS_Sync {
 		$next       = $offset + $processed;
 		$done       = $next >= $total;
 
-		$progress = get_option( 'mmi_aps_batch_progress', array( 'success' => 0, 'failed' => 0, 'errors' => array() ) );
+		if ( 'cron' === $source ) {
+			$progress = get_option( 'mmi_aps_cron_progress', array( 'success' => 0, 'failed' => 0, 'errors' => array() ) );
+		} else {
+			$progress = get_option( 'mmi_aps_batch_progress', array( 'success' => 0, 'failed' => 0, 'errors' => array() ) );
+		}
+
 		if ( ! is_array( $progress ) ) {
 			$progress = array( 'success' => 0, 'failed' => 0, 'errors' => array() );
 		}
-		if ( 0 === $offset ) {
+
+		if ( 0 === $offset && 'manual' === $source ) {
 			$progress = array( 'success' => 0, 'failed' => 0, 'errors' => array() );
 		}
 
@@ -174,10 +269,14 @@ class MMI_APS_Sync {
 					'total'   => $total,
 					'errors'  => $progress['errors'],
 				),
-				'manual'
+				'cron' === $source ? 'cron' : 'manual'
 			);
 			delete_option( 'mmi_aps_batch_progress' );
-		} else {
+			delete_option( 'mmi_aps_cron_progress' );
+			self::invalidate_product_count_cache();
+		} elseif ( 'cron' === $source ) {
+			update_option( 'mmi_aps_cron_progress', $progress, false );
+		} elseif ( 'manual' === $source ) {
 			update_option( 'mmi_aps_batch_progress', $progress, false );
 		}
 

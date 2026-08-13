@@ -21,6 +21,7 @@ class MMI_APS_Settings {
 	public const OPTION_AFFILIATE_BTN_TEXT  = 'mmi_aps_affiliate_button_text';
 	public const OPTION_AFFILIATE_SHOP      = 'mmi_aps_affiliate_show_shop';
 	public const OPTION_AFFILIATE_DISCLOSURE = 'mmi_aps_affiliate_disclosure';
+	public const OPTION_CRON_BATCH_SIZE      = 'mmi_aps_cron_batch_size';
 
 	public const DEFAULT_HOST     = 'real-time-amazon-data.p.rapidapi.com';
 	public const DEFAULT_ENDPOINT = '/product-details';
@@ -130,5 +131,24 @@ class MMI_APS_Settings {
 
 	public static function show_affiliate_disclosure(): bool {
 		return 'yes' === get_option( self::OPTION_AFFILIATE_DISCLOSURE, 'yes' );
+	}
+
+	public static function get_cron_batch_size(): int {
+		$size = (int) get_option( self::OPTION_CRON_BATCH_SIZE, 15 );
+		return max( 5, min( 50, $size ) );
+	}
+
+	/**
+	 * Sanitize affiliate tag — alphanumeric and hyphens only.
+	 *
+	 * @param mixed $value Raw value.
+	 */
+	public static function sanitize_affiliate_tag( $value ): string {
+		$tag = strtolower( trim( sanitize_text_field( (string) $value ) ) );
+		if ( '' === $tag ) {
+			return '';
+		}
+
+		return preg_match( '/^[a-z0-9-]{3,40}$/', $tag ) ? $tag : '';
 	}
 }

@@ -112,7 +112,7 @@ class MMI_APS_Admin {
 			MMI_APS_Settings::OPTION_AFFILIATE_TAG,
 			array(
 				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
+				'sanitize_callback' => array( 'MMI_APS_Settings', 'sanitize_affiliate_tag' ),
 			)
 		);
 		register_setting(
@@ -137,6 +137,14 @@ class MMI_APS_Admin {
 			array(
 				'type'              => 'string',
 				'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_CRON_BATCH_SIZE,
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_cron_batch_size' ),
 			)
 		);
 		add_action( 'wp_ajax_mmi_aps_test_api', array( __CLASS__, 'ajax_test_api' ) );
@@ -164,6 +172,10 @@ class MMI_APS_Admin {
 		return max( 1, min( 50, (int) $value ) );
 	}
 
+	public static function sanitize_cron_batch_size( $value ): int {
+		return max( 5, min( 50, (int) $value ) );
+	}
+
 	public static function render_settings_page(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			return;
@@ -181,7 +193,8 @@ class MMI_APS_Admin {
 		$sync_interval  = MMI_APS_Settings::get_sync_interval();
 		$sync_delay     = MMI_APS_Settings::get_sync_delay();
 		$batch_size     = MMI_APS_Settings::get_batch_size();
-		$asin_count     = count( MMI_APS_Sync::get_product_ids_with_asin() );
+		$cron_batch     = MMI_APS_Settings::get_cron_batch_size();
+		$asin_count     = MMI_APS_Sync::count_products_with_asin();
 		$last_run       = MMI_APS_Sync::get_last_run();
 		$last_summary   = MMI_APS_Sync::get_last_summary();
 		$next_cron      = MMI_APS_Cron::get_next_run_label();
@@ -283,6 +296,13 @@ class MMI_APS_Admin {
 							<input type="number" class="small-text" min="1" max="10" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_SYNC_DELAY ); ?>" value="<?php echo esc_attr( (string) $sync_delay ); ?>" />
 							<?php esc_html_e( 'seconds', 'mmi-amazon-price-sync' ); ?>
 							<p class="description"><?php esc_html_e( 'Helps avoid RapidAPI rate limits. 250 products ≈ 8 minutes at 2 seconds.', 'mmi-amazon-price-sync' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Cron Batch Size', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="number" class="small-text" min="5" max="50" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_CRON_BATCH_SIZE ); ?>" value="<?php echo esc_attr( (string) $cron_batch ); ?>" />
+							<p class="description"><?php esc_html_e( 'Products synced per cron run (server-safe). Remaining products continue automatically every 3 minutes until done.', 'mmi-amazon-price-sync' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -545,8 +565,17 @@ class MMI_APS_Admin {
 		}
 
 		$offset = isset( $_POST['offset'] ) ? max( 0, (int) $_POST['offset'] ) : 0;
+
+		if ( 0 === $offset && ! MMI_APS_Sync::acquire_lock() ) {
+			wp_send_json_error( array( 'message' => __( 'Another sync is already running. Please wait.', 'mmi-amazon-price-sync' ) ) );
+		}
+
 		$limit  = MMI_APS_Settings::get_batch_size();
 		$result = MMI_APS_Sync::sync_batch( $offset, $limit );
+
+		if ( $result['done'] ) {
+			MMI_APS_Sync::release_lock();
+		}
 
 		wp_send_json_success( $result );
 	}
