@@ -59,3 +59,60 @@ Update slugs to match your WooCommerce product attributes.
 ## Author
 
 Yogesh
+
+---
+
+# MMI Amazon Price Sync Plugin
+
+Sync **WooCommerce** product prices from **Amazon India** via **RapidAPI** — one ASIN per product, live price on the storefront.
+
+## Features (v1.1.0)
+
+- **Auto Sync** — WP-Cron updates all products with ASIN (every 6/12 hours or daily)
+- **Affiliate Button** — Go to Store / Buy on Amazon with on/off toggle (zero CPU when off)
+
+- **Amazon ASIN field** on WooCommerce product edit screen (Product Data → Amazon Price tab)
+- **Fetch Price** button — pulls live price from RapidAPI for a single product
+- **Product meta storage** — ASIN, Amazon price, original price, title, delivery, last updated (does not overwrite WooCommerce price fields)
+- **Frontend display** — storefront automatically shows Amazon price (with strikethrough original when on sale)
+- **Settings** — WooCommerce → Settings → Amazon Price Sync (RapidAPI key, host, endpoint, country)
+
+## Installation
+
+1. Copy the `mmi-amazon-price-sync` folder to `wp-content/plugins/` (or upload `mmi-amazon-price-sync-v1.1.0.zip`)
+2. Activate **MMI Amazon Price Sync** in WordPress admin
+3. Ensure **WooCommerce** is active
+4. Go to **WooCommerce → Amazon Price Sync** and enter your RapidAPI key
+5. Edit a product (e.g. Moto G77 Power 5G), open **Amazon Price** tab, enter ASIN `B0H8STM6G2`, click **Fetch Price from Amazon**
+
+## RapidAPI setup
+
+Default configuration targets the **Real-Time E-commerce Data** API:
+
+| Setting | Default |
+|---------|---------|
+| Host | `real-time-e-commerce-data.p.rapidapi.com` |
+| Endpoint | `/amazon/product-details` |
+| Country | `IN` |
+
+If you use a different RapidAPI provider, update host and endpoint in settings.
+
+Optional: define the API key in `wp-config.php` instead of storing it in the database:
+
+```php
+define( 'MMI_APS_RAPIDAPI_KEY', 'your-rapidapi-key-here' );
+```
+
+## Test flow (Moto G77 Power 5G)
+
+1. ASIN: `B0H8STM6G2`
+2. Click **Fetch Price from Amazon**
+3. Expected: Amazon Price **₹25,149**, Original **₹44,999**
+4. Storefront should show **₹25,149** instead of the manual WooCommerce price
+
+## Roadmap
+
+- [x] WP-Cron automatic sync for all products with ASIN
+- [x] Bulk sync for 250+ product catalog
+- [ ] Admin sync log and error reporting
+
