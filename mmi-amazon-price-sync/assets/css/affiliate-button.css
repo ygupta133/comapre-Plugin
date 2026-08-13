@@ -1,5 +1,12 @@
-.mmi-aps-affiliate-wrap {
-	margin: 16px 0 0;
+.mmi-aps-affiliate-wrap--price {
+	margin-top: 12px;
+}
+
+.mmi-aps-affiliate-wrap--price .mmi-aps-affiliate-btn {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	text-align: center;
 }
 
 .mmi-aps-affiliate-wrap--loop {

@@ -642,6 +642,22 @@
     return html;
   }
 
+  function renderBuyRow(products, emptySlots) {
+    const hasAny = products.some((p) => p.amazon_url || p.buy_url);
+    if (!hasAny) return '';
+
+    return `
+      <tr class="mc-spec-row mc-buy-row">
+        <th class="mc-spec-label">${escapeHtml(t('buyNow'))}</th>
+        ${products.map((p) => {
+          const url = p.amazon_url || p.buy_url || '';
+          const label = p.amazon_button_text || t('buyNow');
+          return `<td class="mc-spec-val mc-phone-col">${url ? `<a href="${escapeHtml(url)}" class="mc-hero-buy-btn" target="_blank" rel="nofollow sponsored noopener">${escapeHtml(label)}</a>` : '—'}</td>`;
+        }).join('')}
+        ${Array(emptySlots).fill('<td class="mc-spec-val mc-phone-col">-</td>').join('')}
+      </tr>`;
+  }
+
   function renderCompareView() {
     const skeleton = state.loading;
     const products = skeleton && !state.products.length
@@ -659,6 +675,7 @@
     const phoneHeaders = products.map((p) => renderHeroPhone(p, skeleton)).join('');
     const addCol = !skeleton && emptySlots > 0 ? renderHeroAddSlot() : '';
     const specRows = renderSpecRows(specs, emptySlots, skeleton);
+    const buyRow = skeleton ? '' : renderBuyRow(products, emptySlots);
     const colCount = products.length + (addCol ? 1 : 0);
     const title = compareTitle(products);
 
@@ -695,7 +712,7 @@
               <col class="mc-col-label" />
               ${Array(colCount).fill('<col class="mc-col-phone" />').join('')}
             </colgroup>
-            <tbody>${specRows}</tbody>
+            <tbody>${buyRow}${specRows}</tbody>
           </table>
         </div>
       </div>

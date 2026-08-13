@@ -7,6 +7,9 @@ defined( 'ABSPATH' ) || exit;
 
 class MMI_APS_Affiliate {
 
+	/** @var array<int,bool> */
+	private static $rendered_products = array();
+
 	public static function maybe_init(): void {
 		if ( ! MMI_APS_Settings::is_affiliate_enabled() ) {
 			return;
@@ -16,7 +19,7 @@ class MMI_APS_Affiliate {
 			return;
 		}
 
-		add_action( 'woocommerce_single_product_summary', array( __CLASS__, 'render_single_product_button' ), 31 );
+		add_filter( 'woocommerce_get_price_html', array( __CLASS__, 'append_button_to_price_html' ), 50, 2 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
 		add_shortcode( 'mmi_amazon_buy_button', array( __CLASS__, 'render_shortcode' ) );
 
@@ -25,8 +28,39 @@ class MMI_APS_Affiliate {
 		}
 	}
 
+	/**
+	 * Append Go to Store button after WooCommerce price HTML (works with ReHub + most themes).
+	 *
+	 * @param string     $html    Price HTML.
+	 * @param WC_Product $product Product object.
+	 */
+	public static function append_button_to_price_html( string $html, $product ): string {
+		if ( is_admin() || is_cart() || is_checkout() ) {
+			return $html;
+		}
+
+		if ( ! $product instanceof WC_Product ) {
+			return $html;
+		}
+
+		$product_id = $product->get_id();
+		if ( isset( self::$rendered_products[ $product_id ] ) ) {
+			return $html;
+		}
+
+		$button = self::get_button_html( $product_id, 'price' );
+		if ( '' === $button ) {
+			return $html;
+		}
+
+		self::$rendered_products[ $product_id ] = true;
+		self::enqueue_styles_force();
+
+		return $html . $button;
+	}
+
 	public static function enqueue_styles(): void {
-		if ( ! is_product() && ! ( MMI_APS_Settings::show_affiliate_on_shop() && ( is_shop() || is_product_category() || is_product_tag() ) ) ) {
+		if ( is_cart() || is_checkout() || is_admin() ) {
 			return;
 		}
 
@@ -36,16 +70,6 @@ class MMI_APS_Affiliate {
 			array(),
 			MMI_APS_VERSION
 		);
-	}
-
-	public static function render_single_product_button(): void {
-		global $product;
-
-		if ( ! $product instanceof WC_Product ) {
-			return;
-		}
-
-		echo self::get_button_html( $product->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	public static function render_loop_button(): void {
