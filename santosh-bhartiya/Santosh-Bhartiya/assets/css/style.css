@@ -44,9 +44,9 @@ main{
 .hero-wrapper{
     display:grid;
     align-items:center;
-    grid-template-columns:1fr 1fr;
-    gap:40px;
-    min-height:clamp(500px, 70vh, 650px);
+    grid-template-columns:44% 56%;
+    min-height:clamp(550px, 75vh, 700px);
+    width:100%;
 }
 
 /* Left Content */
@@ -56,8 +56,8 @@ main{
     align-items:center;
     height:100%;
     justify-content:flex-start;
-    margin-left:0;
-    padding-right:0;
+    padding-left:max(20px, calc((100vw - 1320px) / 2 + 20px));
+    padding-right:40px;
 }
 
 
