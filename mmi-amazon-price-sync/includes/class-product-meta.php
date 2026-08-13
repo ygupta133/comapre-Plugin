@@ -247,6 +247,15 @@ class MMI_APS_Product_Meta {
 	}
 
 	/**
+	 * Get stored Amazon ASIN for a product.
+	 *
+	 * @param int $product_id Product ID.
+	 */
+	public static function get_asin( int $product_id ): string {
+		return strtoupper( trim( (string) get_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, true ) ) );
+	}
+
+	/**
 	 * Get stored Amazon price for a product.
 	 *
 	 * @param int $product_id Product ID.

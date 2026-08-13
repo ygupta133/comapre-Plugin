@@ -99,6 +99,46 @@ class MMI_APS_Admin {
 				'sanitize_callback' => array( __CLASS__, 'sanitize_batch_size' ),
 			)
 		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_AFFILIATE_ENABLED,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_AFFILIATE_TAG,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_AFFILIATE_BTN_TEXT,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_AFFILIATE_SHOP,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
+			)
+		);
+		register_setting(
+			'mmi_aps_settings',
+			MMI_APS_Settings::OPTION_AFFILIATE_DISCLOSURE,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
+			)
+		);
 		add_action( 'wp_ajax_mmi_aps_test_api', array( __CLASS__, 'ajax_test_api' ) );
 		add_action( 'wp_ajax_mmi_aps_sync_batch', array( __CLASS__, 'ajax_sync_batch' ) );
 	}
@@ -145,6 +185,11 @@ class MMI_APS_Admin {
 		$last_run       = MMI_APS_Sync::get_last_run();
 		$last_summary   = MMI_APS_Sync::get_last_summary();
 		$next_cron      = MMI_APS_Cron::get_next_run_label();
+		$affiliate_on   = MMI_APS_Settings::is_affiliate_enabled();
+		$affiliate_tag  = MMI_APS_Settings::get_affiliate_tag();
+		$affiliate_text = (string) get_option( MMI_APS_Settings::OPTION_AFFILIATE_BTN_TEXT, '' );
+		$affiliate_shop = MMI_APS_Settings::show_affiliate_on_shop();
+		$affiliate_disc = MMI_APS_Settings::show_affiliate_disclosure();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Amazon Price Sync', 'mmi-amazon-price-sync' ); ?></h1>
@@ -248,6 +293,67 @@ class MMI_APS_Admin {
 						</td>
 					</tr>
 				</table>
+
+				<h2><?php esc_html_e( 'Affiliate Button (Go to Store)', 'mmi-amazon-price-sync' ); ?></h2>
+				<p><?php esc_html_e( 'Send customers to Amazon with your affiliate tag to earn commission. When disabled, no extra code runs on the frontend.', 'mmi-amazon-price-sync' ); ?></p>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Enable Affiliate Button', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="hidden" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_ENABLED ); ?>" value="no" />
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_ENABLED ); ?>" value="yes" <?php checked( $affiliate_on ); ?> />
+								<?php esc_html_e( 'Show Go to Store button on product pages', 'mmi-amazon-price-sync' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Amazon Affiliate Tag', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="text" class="regular-text" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_TAG ); ?>" value="<?php echo esc_attr( $affiliate_tag ); ?>" placeholder="mymobileind04-21" />
+							<p class="description"><?php esc_html_e( 'Your Amazon Associates tracking ID (Store ID).', 'mmi-amazon-price-sync' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Button Text', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="text" class="regular-text" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_BTN_TEXT ); ?>" value="<?php echo esc_attr( $affiliate_text ); ?>" placeholder="<?php esc_attr_e( 'Go to Store', 'mmi-amazon-price-sync' ); ?>" />
+							<p class="description"><?php esc_html_e( 'Examples: Go to Store, Buy on Amazon, Buy Now', 'mmi-amazon-price-sync' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Show on Shop/Category', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="hidden" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_SHOP ); ?>" value="no" />
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_SHOP ); ?>" value="yes" <?php checked( $affiliate_shop ); ?> />
+								<?php esc_html_e( 'Also show button on shop and category listing pages', 'mmi-amazon-price-sync' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Affiliate Disclosure', 'mmi-amazon-price-sync' ); ?></th>
+						<td>
+							<input type="hidden" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_DISCLOSURE ); ?>" value="no" />
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( MMI_APS_Settings::OPTION_AFFILIATE_DISCLOSURE ); ?>" value="yes" <?php checked( $affiliate_disc ); ?> />
+								<?php esc_html_e( 'Show "As an Amazon Associate we earn from qualifying purchases" below button', 'mmi-amazon-price-sync' ); ?>
+							</label>
+						</td>
+					</tr>
+				</table>
+				<?php if ( $affiliate_on && $affiliate_tag ) : ?>
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %s: sample affiliate URL */
+							esc_html__( 'Sample link: %s', 'mmi-amazon-price-sync' ),
+							esc_html( 'https://www.amazon.in/dp/B0H8STM6G2?tag=' . $affiliate_tag )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+
 				<?php submit_button(); ?>
 			</form>
 

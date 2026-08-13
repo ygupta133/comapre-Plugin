@@ -31,5 +31,6 @@ final class MMI_APS_Plugin {
 		MMI_APS_Admin::init();
 		MMI_APS_Product_Meta::init();
 		MMI_APS_Frontend::init();
+		MMI_APS_Affiliate::maybe_init();
 	}
 }

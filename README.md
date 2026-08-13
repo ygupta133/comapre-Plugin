@@ -69,7 +69,7 @@ Sync **WooCommerce** product prices from **Amazon India** via **RapidAPI** — o
 ## Features (v1.1.0)
 
 - **Auto Sync** — WP-Cron updates all products with ASIN (every 6/12 hours or daily)
-- **Sync All Now** — manual bulk sync with progress bar (250+ products)
+- **Affiliate Button** — Go to Store / Buy on Amazon with on/off toggle (zero CPU when off)
 
 - **Amazon ASIN field** on WooCommerce product edit screen (Product Data → Amazon Price tab)
 - **Fetch Price** button — pulls live price from RapidAPI for a single product

@@ -16,6 +16,11 @@ class MMI_APS_Settings {
 	public const OPTION_SYNC_INTERVAL = 'mmi_aps_sync_interval';
 	public const OPTION_SYNC_DELAY   = 'mmi_aps_sync_delay';
 	public const OPTION_BATCH_SIZE   = 'mmi_aps_sync_batch_size';
+	public const OPTION_AFFILIATE_ENABLED   = 'mmi_aps_affiliate_enabled';
+	public const OPTION_AFFILIATE_TAG       = 'mmi_aps_affiliate_tag';
+	public const OPTION_AFFILIATE_BTN_TEXT  = 'mmi_aps_affiliate_button_text';
+	public const OPTION_AFFILIATE_SHOP      = 'mmi_aps_affiliate_show_shop';
+	public const OPTION_AFFILIATE_DISCLOSURE = 'mmi_aps_affiliate_disclosure';
 
 	public const DEFAULT_HOST     = 'real-time-amazon-data.p.rapidapi.com';
 	public const DEFAULT_ENDPOINT = '/product-details';
@@ -104,5 +109,26 @@ class MMI_APS_Settings {
 	public static function get_batch_size(): int {
 		$size = (int) get_option( self::OPTION_BATCH_SIZE, 10 );
 		return max( 1, min( 50, $size ) );
+	}
+
+	public static function is_affiliate_enabled(): bool {
+		return 'yes' === get_option( self::OPTION_AFFILIATE_ENABLED, 'no' );
+	}
+
+	public static function get_affiliate_tag(): string {
+		return trim( (string) get_option( self::OPTION_AFFILIATE_TAG, '' ) );
+	}
+
+	public static function get_affiliate_button_text(): string {
+		$text = trim( (string) get_option( self::OPTION_AFFILIATE_BTN_TEXT, '' ) );
+		return $text ?: __( 'Go to Store', 'mmi-amazon-price-sync' );
+	}
+
+	public static function show_affiliate_on_shop(): bool {
+		return 'yes' === get_option( self::OPTION_AFFILIATE_SHOP, 'no' );
+	}
+
+	public static function show_affiliate_disclosure(): bool {
+		return 'yes' === get_option( self::OPTION_AFFILIATE_DISCLOSURE, 'yes' );
 	}
 }
