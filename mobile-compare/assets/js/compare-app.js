@@ -136,7 +136,9 @@
       image: p.image,
       price: p.price || '—',
       url: p.url || '#',
-      buy_url: p.url || '#',
+      buy_url: p.amazon_url || p.url || '#',
+      amazon_url: p.amazon_url || '',
+      amazon_button_text: p.amazon_button_text || '',
     }));
   }
 
@@ -404,7 +406,7 @@
     return `
       <ul class="mc-search-dropdown">
         ${items.map((p) => `
-          <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-slot="${state.activeSlot}">
+          <li data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-slug="${escapeHtml(p.slug)}" data-image="${escapeHtml(p.image)}" data-price="${escapeHtml(p.price)}" data-url="${escapeHtml(p.url)}" data-amazon-url="${escapeHtml(p.amazon_url || '')}" data-amazon-button-text="${escapeHtml(p.amazon_button_text || '')}" data-slot="${state.activeSlot}">
             <img src="${escapeHtml(p.image)}" alt="" /> ${escapeHtml(p.name)}
           </li>`).join('')}
       </ul>`;
@@ -547,6 +549,8 @@
         </div>`;
     }
     const price = formatPrice(p.price, p.price_plain);
+    const buyUrl = p.amazon_url || p.buy_url || '';
+    const buyLabel = p.amazon_button_text || t('buyNow');
     return `
       <div class="mc-hero-phone">
         <button type="button" class="mc-hero-close" data-remove-id="${p.id}" aria-label="Remove">×</button>
@@ -555,6 +559,7 @@
         </a>
         <h2 class="mc-hero-name">${escapeHtml(p.name)}</h2>
         <p class="mc-hero-price">${escapeHtml(price)}</p>
+        ${!skeleton && buyUrl ? `<a href="${escapeHtml(buyUrl)}" class="mc-hero-buy-btn" target="_blank" rel="nofollow sponsored noopener">${escapeHtml(buyLabel)}</a>` : ''}
         ${!skeleton && p.url ? `<a href="${escapeHtml(p.url)}" class="mc-hero-store-link">${escapeHtml(t('viewDetails'))} ›</a>` : ''}
       </div>`;
   }
@@ -786,6 +791,8 @@
           image: li.dataset.image,
           price: li.dataset.price,
           url: li.dataset.url,
+          amazon_url: li.dataset.amazonUrl || '',
+          amazon_button_text: li.dataset.amazonButtonText || '',
         }, slot);
         state.searchQuery = '';
         state.searchResults = [];

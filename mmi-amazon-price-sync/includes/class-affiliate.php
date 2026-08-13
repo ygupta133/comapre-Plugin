@@ -18,6 +18,7 @@ class MMI_APS_Affiliate {
 
 		add_action( 'woocommerce_single_product_summary', array( __CLASS__, 'render_single_product_button' ), 31 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles' ) );
+		add_shortcode( 'mmi_amazon_buy_button', array( __CLASS__, 'render_shortcode' ) );
 
 		if ( MMI_APS_Settings::show_affiliate_on_shop() ) {
 			add_action( 'woocommerce_after_shop_loop_item', array( __CLASS__, 'render_loop_button' ), 15 );
@@ -109,6 +110,45 @@ class MMI_APS_Affiliate {
 		$html .= '</div>';
 
 		return apply_filters( 'mmi_aps_affiliate_button_html', $html, $product_id, $url, $context );
+	}
+
+	/**
+	 * Shortcode: [mmi_amazon_buy_button] or [mmi_amazon_buy_button id="123"]
+	 *
+	 * @param array<string,string> $atts Shortcode attributes.
+	 */
+	public static function render_shortcode( array $atts = array() ): string {
+		$atts = shortcode_atts(
+			array(
+				'id' => 0,
+			),
+			$atts,
+			'mmi_amazon_buy_button'
+		);
+
+		$product_id = absint( $atts['id'] );
+		if ( ! $product_id && is_product() ) {
+			$product_id = get_the_ID();
+		}
+
+		if ( ! $product_id ) {
+			return '';
+		}
+
+		self::enqueue_styles_force();
+
+		return self::get_button_html( $product_id, 'shortcode' );
+	}
+
+	private static function enqueue_styles_force(): void {
+		if ( ! wp_style_is( 'mmi-aps-affiliate', 'enqueued' ) ) {
+			wp_enqueue_style(
+				'mmi-aps-affiliate',
+				MMI_APS_URL . 'assets/css/affiliate-button.css',
+				array(),
+				MMI_APS_VERSION
+			);
+		}
 	}
 }
 

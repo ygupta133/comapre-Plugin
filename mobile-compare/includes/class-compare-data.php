@@ -270,15 +270,51 @@ class Mobile_Compare_Data {
 	private static function format_product_summary( WC_Product $product ): array {
 		$image_id = $product->get_image_id();
 		$image    = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
+		$amazon   = self::get_amazon_affiliate_data( $product->get_id() );
 
 		return array(
-			'id'          => $product->get_id(),
-			'name'        => $product->get_name(),
-			'slug'        => $product->get_slug(),
-			'image'       => $image,
-			'price'       => $product->get_price_html(),
-			'price_plain' => wp_strip_all_tags( $product->get_price_html() ),
-			'url'         => $product->get_permalink(),
+			'id'                 => $product->get_id(),
+			'name'               => $product->get_name(),
+			'slug'               => $product->get_slug(),
+			'image'              => $image,
+			'price'              => $product->get_price_html(),
+			'price_plain'        => wp_strip_all_tags( $product->get_price_html() ),
+			'url'                => $product->get_permalink(),
+			'amazon_url'         => $amazon['url'],
+			'amazon_button_text' => $amazon['text'],
+		);
+	}
+
+	/**
+	 * Amazon affiliate link from MMI Amazon Price Sync (when active).
+	 *
+	 * @param int $product_id Product ID.
+	 * @return array{url:string,text:string}
+	 */
+	private static function get_amazon_affiliate_data( int $product_id ): array {
+		if ( ! function_exists( 'mmi_aps_get_affiliate_url' ) ) {
+			return array(
+				'url'  => '',
+				'text' => '',
+			);
+		}
+
+		$url = mmi_aps_get_affiliate_url( $product_id );
+		if ( '' === $url ) {
+			return array(
+				'url'  => '',
+				'text' => '',
+			);
+		}
+
+		$text = __( 'Go to Store', 'mobile-compare' );
+		if ( class_exists( 'MMI_APS_Settings' ) ) {
+			$text = MMI_APS_Settings::get_affiliate_button_text();
+		}
+
+		return array(
+			'url'  => $url,
+			'text' => $text,
 		);
 	}
 
@@ -299,7 +335,7 @@ class Mobile_Compare_Data {
 
 		$summary['specs']      = $specs;
 		$summary['brand']      = self::get_product_brand( $product );
-		$summary['buy_url']    = $product->get_permalink();
+		$summary['buy_url']    = $summary['amazon_url'] ? $summary['amazon_url'] : $product->get_permalink();
 		$summary['price_raw']  = $product->get_price();
 		$summary['in_stock']   = $product->is_in_stock();
 
