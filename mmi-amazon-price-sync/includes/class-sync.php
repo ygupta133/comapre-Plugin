@@ -66,7 +66,7 @@ class MMI_APS_Sync {
 
 		$query = new WP_Query(
 			array(
-				'post_type'              => 'product',
+				'post_type'              => array( 'product', 'devices' ),
 				'post_status'            => 'publish',
 				'posts_per_page'         => -1,
 				'fields'                 => 'ids',
