@@ -8,7 +8,7 @@
 
 .about-hero {
     background: linear-gradient(135deg, #fafafa 0%, #f3ede8 100%);
-    padding: 0;
+    padding: 40px 0 0;
     overflow: hidden;
     position: relative;
 }
@@ -25,14 +25,18 @@
 
 .about-hero-wrapper {
     display: grid;
-    grid-template-columns: 42% 58%;
+    grid-template-columns: 480px 1fr;
+    gap: 50px;
     align-items: center;
-    min-height: clamp(480px, 70vh, 620px);
+    min-height: clamp(420px, 60vh, 560px);
+    padding: 20px 0 50px;
 }
 
 .about-hero-image {
-    height: clamp(480px, 70vh, 620px);
+    height: clamp(380px, 55vh, 500px);
     overflow: hidden;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
 
 .about-hero-image img {
@@ -43,8 +47,8 @@
 }
 
 .about-hero-content {
-    padding: 60px 80px 60px 70px;
-    max-width: 680px;
+    padding: 0;
+    max-width: 640px;
 }
 
 .about-hero-label {
@@ -390,20 +394,29 @@
     }
 }
 
+@media (max-width: 1200px) {
+    .about-hero-wrapper {
+        grid-template-columns: 420px 1fr;
+        gap: 40px;
+    }
+}
+
 @media (max-width: 992px) {
     .about-hero-wrapper {
         grid-template-columns: 1fr;
         min-height: auto;
+        padding: 30px 0 50px;
     }
 
     .about-hero-image {
         order: 1;
         height: 400px;
+        width: 100%;
     }
 
     .about-hero-content {
         order: 2;
-        padding: 50px 40px;
+        padding: 0;
         max-width: 100%;
     }
 

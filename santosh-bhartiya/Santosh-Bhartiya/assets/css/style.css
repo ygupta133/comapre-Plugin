@@ -346,6 +346,16 @@ object-position:10% center;}
     margin:0;
 }
 
+.footer-bottom a{
+    color:#b5b5b5;
+    text-decoration:none;
+    transition:.3s;
+}
+
+.footer-bottom a:hover{
+    color:#8b1e3f;
+}
+
 /* Historic Moments */
 
 .historic-moments{
