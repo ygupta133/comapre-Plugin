@@ -44,9 +44,9 @@ main{
 .hero-wrapper{
     display:grid;
     align-items:center;
-    grid-template-columns:44% 56%;
-min-height:clamp(550px, 75vh, 700px);
-
+    grid-template-columns:1fr 1fr;
+    gap:40px;
+    min-height:clamp(500px, 70vh, 650px);
 }
 
 /* Left Content */
@@ -56,10 +56,8 @@ min-height:clamp(550px, 75vh, 700px);
     align-items:center;
     height:100%;
     justify-content:flex-start;
-    margin-left:117px;
-
-    padding-right:60px;
-
+    margin-left:0;
+    padding-right:0;
 }
 
 
@@ -413,19 +411,20 @@ object-position:10% center;}
 .historic-image{
     display:block;
     overflow:hidden;
+    background:#f3f3f3;
 }
 
 .historic-image img{
     width:100%;
     aspect-ratio:4/3;
     height:auto;
-    object-fit:cover;
+    object-fit:contain;
     display:block;
     transition:.5s;
 }
 
 .historic-card:hover img{
-    transform:scale(1.05);
+    transform:none;
 }
 
 .historic-content{
@@ -464,6 +463,8 @@ object-position:10% center;}
     cursor:pointer;
     text-decoration:none;
     font-weight:600;
+    font-family:var(--body);
+    font-size:16px;
     transition:var(--transition);
 }
 
