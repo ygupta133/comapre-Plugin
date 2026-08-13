@@ -20,6 +20,7 @@ class MMI_APS_Product_Meta {
 		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'add_product_tab' ) );
 		add_action( 'woocommerce_product_data_panels', array( __CLASS__, 'render_product_panel' ) );
 		add_action( 'woocommerce_process_product_meta', array( __CLASS__, 'save_product_meta' ) );
+		add_action( 'save_post_product', array( __CLASS__, 'save_product_meta' ), 20 );
 
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_assets' ) );
 		add_action( 'wp_ajax_mmi_aps_fetch_price', array( __CLASS__, 'ajax_fetch_price' ) );
@@ -81,7 +82,7 @@ class MMI_APS_Product_Meta {
 			?>
 			<p>
 				<label for="mmi_amazon_asin<?php echo esc_attr( $suffix ); ?>"><strong><?php esc_html_e( 'Amazon ASIN', 'mmi-amazon-price-sync' ); ?></strong></label>
-				<input type="text" class="widefat" id="mmi_amazon_asin<?php echo esc_attr( $suffix ); ?>" name="mmi_amazon_asin" value="<?php echo esc_attr( $asin ); ?>" placeholder="B0H8STM6G2" />
+				<input type="text" class="widefat mmi-aps-asin-input" id="mmi_amazon_asin<?php echo esc_attr( $suffix ); ?>" name="mmi_amazon_asin_sidebar" value="<?php echo esc_attr( $asin ); ?>" placeholder="B0H8STM6G2" maxlength="10" autocomplete="off" />
 			</p>
 			<?php
 		}
@@ -133,7 +134,11 @@ class MMI_APS_Product_Meta {
 	 * @param int $product_id Product ID.
 	 */
 	public static function save_product_meta( int $product_id ): void {
-		if ( ! isset( $_POST['mmi_amazon_asin'] ) ) {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( wp_is_post_revision( $product_id ) ) {
 			return;
 		}
 
@@ -141,13 +146,56 @@ class MMI_APS_Product_Meta {
 			return;
 		}
 
-		$asin = strtoupper( sanitize_text_field( wp_unslash( $_POST['mmi_amazon_asin'] ) ) );
+		$asin = self::get_submitted_asin();
+		if ( null === $asin ) {
+			return;
+		}
+
 		if ( '' !== $asin && ! preg_match( '/^[A-Z0-9]{10}$/', $asin ) ) {
 			return;
 		}
 
+		$existing = self::get_asin( $product_id );
+		if ( '' === $asin && '' !== $existing ) {
+			// Duplicate form fields can submit an empty value and wipe a valid ASIN.
+			return;
+		}
+
+		if ( $asin === $existing ) {
+			return;
+		}
+
 		update_post_meta( $product_id, MMI_APS_Plugin::META_ASIN, $asin );
+		self::clear_meta_cache( $product_id );
 		MMI_APS_Sync::invalidate_product_count_cache();
+	}
+
+	/**
+	 * Read ASIN from product edit form (panel + sidebar use different field names).
+	 */
+	private static function get_submitted_asin(): ?string {
+		$candidates = array();
+
+		if ( isset( $_POST['mmi_amazon_asin_sidebar'] ) ) {
+			$candidates[] = wp_unslash( $_POST['mmi_amazon_asin_sidebar'] );
+		}
+
+		if ( isset( $_POST['mmi_amazon_asin'] ) ) {
+			$candidates[] = wp_unslash( $_POST['mmi_amazon_asin'] );
+		}
+
+		if ( empty( $candidates ) ) {
+			return null;
+		}
+
+		foreach ( $candidates as $candidate ) {
+			$asin = strtoupper( sanitize_text_field( $candidate ) );
+			if ( '' !== $asin ) {
+				return $asin;
+			}
+		}
+
+		return '';
 	}
 
 	public static function enqueue_admin_assets( string $hook ): void {

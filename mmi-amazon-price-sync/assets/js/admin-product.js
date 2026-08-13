@@ -16,6 +16,14 @@
 		$scope.find('.mmi-aps-display-last-updated').text(data.last_updated || '—');
 	}
 
+	function syncAsinInputs(asin) {
+		if (!asin) {
+			return;
+		}
+
+		$('.mmi-aps-asin-input, #mmi_amazon_asin').val(asin);
+	}
+
 	$(document).on('click', '.mmi-aps-fetch-price', function () {
 		var $btn = $(this);
 		var $scope = $btn.closest('.mmi-aps-synced-data').length
@@ -27,7 +35,12 @@
 		}
 
 		var asinInputId = $btn.data('asin-input') || 'mmi_amazon_asin';
-		var asin = ($('#' + asinInputId).val() || $('#mmi_amazon_asin').val() || '').trim().toUpperCase();
+		var asin = (
+			$('#' + asinInputId).val() ||
+			$('#mmi_amazon_asin-box').val() ||
+			$('#mmi_amazon_asin').val() ||
+			''
+		).trim().toUpperCase();
 		var productId = $btn.data('product-id');
 		var $spinner = $btn.siblings('.mmi-aps-fetch-spinner');
 
@@ -48,6 +61,7 @@
 		})
 			.done(function (response) {
 				if (response.success) {
+					syncAsinInputs(response.data.asin || asin);
 					$('.mmi-aps-synced-data').each(function () {
 						updateDisplay($(this).closest('.options_group, #mmi-aps-product-box .inside, .postbox, #mmi_amazon_price_product_data'), response.data);
 					});
