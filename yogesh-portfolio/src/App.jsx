@@ -8,7 +8,7 @@ import Testimonials from './pages/Testimonials'
 import Blog from './pages/Blog'
 import Contact from './pages/Contact'
 
-const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined
 
 function App() {
   return (

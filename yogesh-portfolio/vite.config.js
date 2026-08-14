@@ -2,9 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react(), tailwindcss()],
-  base: '/comapre-Plugin/',
+  // Local dev: root path. Production build: GitHub Pages subfolder.
+  base: command === 'build' ? '/comapre-Plugin/' : '/',
   preview: {
     host: true,
     port: 4173,
@@ -16,4 +17,4 @@ export default defineConfig({
     port: 5173,
     allowedHosts: true,
   },
-})
+}))
