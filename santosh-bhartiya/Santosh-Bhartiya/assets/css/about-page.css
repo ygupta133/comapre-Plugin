@@ -1,0 +1,480 @@
+/* ==========================================
+   ABOUT PAGE
+========================================== */
+
+.page-main {
+    padding-top: 0;
+}
+
+.about-hero {
+    background: linear-gradient(135deg, #fafafa 0%, #f3ede8 100%);
+    padding: 40px 0 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.about-hero::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--gold), var(--primary));
+}
+
+.about-hero-wrapper {
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    gap: 50px;
+    align-items: center;
+    min-height: clamp(420px, 60vh, 560px);
+    padding: 20px 0 50px;
+}
+
+.about-hero-image {
+    height: clamp(380px, 55vh, 500px);
+    overflow: hidden;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.about-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.about-hero-content {
+    padding: 0;
+    max-width: 640px;
+}
+
+.about-hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--primary);
+    text-transform: uppercase;
+}
+
+.about-hero-label::after {
+    content: "";
+    width: 80px;
+    height: 2px;
+    background: var(--primary);
+}
+
+.about-hero-content h1 {
+    font-size: clamp(36px, 4vw, 52px);
+    line-height: 1.1;
+    color: #111;
+    margin-bottom: 28px;
+}
+
+.about-hero-content > p {
+    font-size: 18px;
+    line-height: 1.85;
+    color: #555;
+    margin-bottom: 32px;
+}
+
+/* Stats Grid */
+
+.about-stats {
+    padding: 70px 0;
+    background: #fff;
+}
+
+.about-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+}
+
+.about-stat-card {
+    text-align: center;
+    padding: 36px 24px;
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid #ececec;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.about-stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transition: transform 0.35s ease;
+}
+
+.about-stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.about-stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+}
+
+.about-stat-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: var(--transition);
+}
+
+.about-stat-card:hover .about-stat-icon {
+    background: var(--primary);
+}
+
+.about-stat-card h3 {
+    font-size: 32px;
+    color: var(--primary);
+    margin-bottom: 6px;
+    line-height: 1.1;
+}
+
+.about-stat-card p {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+}
+
+/* Journey Section */
+
+.about-journey {
+    padding: 90px 0;
+    background: #f8f8f8;
+}
+
+.about-journey-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 70px;
+    align-items: center;
+}
+
+.about-journey-content h2 {
+    font-size: clamp(32px, 3.5vw, 44px);
+    line-height: 1.15;
+    color: #111;
+    margin-bottom: 28px;
+}
+
+.about-journey-content > p {
+    font-size: 17px;
+    line-height: 1.85;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.about-quote-box {
+    margin-top: 36px;
+    padding: 32px 36px;
+    background: #f3ede4;
+    border-left: 4px solid var(--primary);
+    border-radius: 0 14px 14px 0;
+}
+
+.about-quote-box blockquote {
+    font-family: var(--heading);
+    font-size: 22px;
+    line-height: 1.6;
+    color: #333;
+    font-style: italic;
+    margin: 0 0 16px;
+}
+
+.about-quote-box cite {
+    display: block;
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    font-size: 28px;
+    color: var(--primary);
+    font-style: normal;
+}
+
+.about-journey-image img {
+    width: 100%;
+    height: 480px;
+    object-fit: cover;
+    border-radius: 18px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
+}
+
+/* Milestones */
+
+.about-milestones {
+    padding: 90px 0;
+    background: #fff;
+}
+
+.about-milestones .section-heading {
+    margin-bottom: 55px;
+}
+
+.milestones-timeline {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    padding-left: 40px;
+}
+
+.milestones-timeline::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.milestone-item {
+    position: relative;
+    padding: 0 0 40px 36px;
+}
+
+.milestone-item:last-child {
+    padding-bottom: 0;
+}
+
+.milestone-item::before {
+    content: "";
+    position: absolute;
+    left: -36px;
+    top: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.milestone-year {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.milestone-item h3 {
+    font-size: 22px;
+    color: #111;
+    margin-bottom: 10px;
+}
+
+.milestone-item p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #666;
+    margin: 0;
+}
+
+/* Biography Detail */
+
+.about-bio-detail {
+    padding: 80px 0;
+    background: #fafafa;
+}
+
+.about-bio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+}
+
+.about-bio-grid h2 {
+    font-size: 32px;
+    color: #111;
+    margin-bottom: 24px;
+}
+
+.about-bio-grid p {
+    font-size: 16px;
+    line-height: 1.9;
+    color: #555;
+    margin-bottom: 18px;
+}
+
+/* Featured Gallery Strip */
+.about-gallery-strip {
+    padding: 80px 0;
+    background: #111;
+    color: #fff;
+}
+
+.about-gallery-strip .section-heading h2 {
+    color: #fff;
+}
+
+.about-gallery-strip .section-heading p {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.about-gallery-preview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 40px 0 36px;
+}
+
+.about-gallery-preview a {
+    display: block;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    position: relative;
+}
+
+.about-gallery-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.about-gallery-preview a:hover img {
+    transform: scale(1.1);
+}
+
+.about-gallery-preview a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(139, 30, 63, 0);
+    transition: background 0.3s;
+}
+
+.about-gallery-preview a:hover::after {
+    background: rgba(139, 30, 63, 0.35);
+}
+
+.about-gallery-cta {
+    text-align: center;
+}
+
+.about-gallery-cta .btn-outline {
+    border-color: #fff;
+    color: #fff;
+}
+
+.about-gallery-cta .btn-outline:hover {
+    background: #fff;
+    color: var(--primary);
+}
+
+/* Responsive */
+
+@media (max-width: 1200px) {
+    .about-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+    .about-hero-wrapper {
+        grid-template-columns: 420px 1fr;
+        gap: 40px;
+    }
+}
+
+@media (max-width: 992px) {
+    .about-hero-wrapper {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        padding: 30px 0 50px;
+    }
+
+    .about-hero-image {
+        order: 1;
+        height: 400px;
+        width: 100%;
+    }
+
+    .about-hero-content {
+        order: 2;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    .about-journey-wrapper {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .about-journey-image img {
+        height: 360px;
+    }
+
+    .about-bio-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    .about-stats {
+        padding: 50px 0;
+    }
+
+    .about-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .about-stat-card {
+        padding: 28px 20px;
+    }
+
+    .about-hero-image {
+        height: 280px;
+    }
+
+    .about-hero-content {
+        padding: 40px 24px;
+    }
+
+    .about-journey,
+    .about-milestones,
+    .about-bio-detail {
+        padding: 60px 0;
+    }
+
+    .about-quote-box {
+        padding: 24px;
+    }
+
+    .about-quote-box blockquote {
+        font-size: 18px;
+    }
+
+    .milestones-timeline {
+        padding-left: 30px;
+    }
+
+    .about-gallery-preview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
