@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { globalRegions } from '../data/siteData'
 import { CheckIcon, ArrowRightIcon } from './Icons'
 
@@ -41,13 +42,13 @@ export default function GlobalHire() {
               ))}
             </ul>
 
-            <a
-              href="#contact"
+            <Link
+              to="/contact"
               className="btn-primary inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white font-semibold px-7 py-3.5 rounded-md text-base"
             >
               Hire Me Internationally
               <ArrowRightIcon className="btn-arrow w-4 h-4" />
-            </a>
+            </Link>
           </div>
 
           {/* Right — Region Cards */}
@@ -91,9 +92,9 @@ export default function GlobalHire() {
               <p className="text-gray-700 text-sm sm:text-base font-medium text-center sm:text-left">
                 🚀 Working with clients across <span className="text-brand font-bold">15+ countries</span> worldwide
               </p>
-              <a href="#contact" className="text-brand font-semibold text-sm hover:underline whitespace-nowrap">
+              <Link to="/contact" className="text-brand font-semibold text-sm hover:underline whitespace-nowrap">
                 Start Your Project →
-              </a>
+              </Link>
             </div>
           </div>
         </div>

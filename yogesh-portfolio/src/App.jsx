@@ -1,26 +1,30 @@
-import Header from './components/Header'
-import Hero from './components/Hero'
-import Services from './components/Services'
-import Stats from './components/Stats'
-import Cities from './components/Cities'
-import GlobalHire from './components/GlobalHire'
-import Engagement from './components/Engagement'
-import Footer from './components/Footer'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Layout from './components/Layout'
+import Home from './pages/Home'
+import About from './pages/About'
+import ServicesPage from './pages/ServicesPage'
+import Work from './pages/Work'
+import Testimonials from './pages/Testimonials'
+import Blog from './pages/Blog'
+import Contact from './pages/Contact'
+
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 function App() {
   return (
-    <>
-      <Header />
-      <main>
-        <Hero />
-        <Services />
-        <Stats />
-        <Cities />
-        <GlobalHire />
-        <Engagement />
-      </main>
-      <Footer />
-    </>
+    <BrowserRouter basename={basename}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
+          <Route path="services" element={<ServicesPage />} />
+          <Route path="work" element={<Work />} />
+          <Route path="testimonials" element={<Testimonials />} />
+          <Route path="blog" element={<Blog />} />
+          <Route path="contact" element={<Contact />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

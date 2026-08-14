@@ -1,11 +1,11 @@
 export const navLinks = [
-  { label: 'Home', href: '#home' },
-  { label: 'About Me', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Work', href: '#work' },
-  { label: 'Testimonials', href: '#testimonials' },
-  { label: 'Blog', href: '#blog' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Home', href: '/' },
+  { label: 'About Me', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Work', href: '/work' },
+  { label: 'Testimonials', href: '/testimonials' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export const heroTrustItems = [

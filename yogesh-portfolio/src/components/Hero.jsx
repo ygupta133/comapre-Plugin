@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { heroTrustItems, whyChooseMe } from '../data/siteData'
 import { CheckIcon, ArrowRightIcon, EyeIcon } from './Icons'
 
@@ -26,20 +27,20 @@ export default function Hero() {
             </p>
 
             <div className="animate-fade-up animate-delay-300 flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8">
-              <a
-                href="#contact"
+              <Link
+                to="/contact"
                 className="btn-primary inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white font-semibold px-6 py-3.5 rounded-md"
               >
                 Get Free Consultation
                 <ArrowRightIcon className="btn-arrow w-4 h-4" />
-              </a>
-              <a
-                href="#work"
+              </Link>
+              <Link
+                to="/work"
                 className="inline-flex items-center justify-center gap-2 border-2 border-gray-800 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold px-6 py-3.5 rounded-md transition-all duration-300 hover:-translate-y-0.5"
               >
                 <EyeIcon className="w-4 h-4" />
                 View My Work
-              </a>
+              </Link>
             </div>
 
             <div className="animate-fade-up animate-delay-400 flex flex-wrap gap-x-5 gap-y-3">
