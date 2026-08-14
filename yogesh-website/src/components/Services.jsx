@@ -1,8 +1,11 @@
-import { services } from '../data/siteData'
-import { ServiceIcon } from './Icons'
-import { ArrowRightIcon } from './Icons'
+import { services as fallbackServices } from '../data/siteData'
+import { getServices } from '../lib/wordpress'
+import { useWordPressList } from '../hooks/useWordPressData'
+import { ServiceIcon, ArrowRightIcon } from './Icons'
 
 export default function Services() {
+  const { data: services } = useWordPressList(getServices, fallbackServices)
+
   return (
     <section id="services" className="bg-gray-50 py-12 sm:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,7 +21,7 @@ export default function Services() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {services.map((service, i) => (
             <article
-              key={service.title}
+              key={service.id || service.title}
               className="service-card bg-white rounded-xl p-6 border border-gray-100 group cursor-default"
               style={{ animationDelay: `${i * 0.05}s` }}
             >

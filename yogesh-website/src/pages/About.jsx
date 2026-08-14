@@ -1,10 +1,27 @@
 import { Link } from 'react-router-dom'
 import PageBanner from '../components/PageBanner'
-import { skills, experience } from '../data/pagesData'
-import { stats, whyChooseMe } from '../data/siteData'
+import WpDataBadge from '../components/WpDataBadge'
+import LoadingSpinner from '../components/LoadingSpinner'
+import { skills as fallbackSkills, experience as fallbackExperience } from '../data/pagesData'
+import { stats as fallbackStats, whyChooseMe as fallbackWhyChoose } from '../data/siteData'
+import { getSkills, getExperience, getAbout, getStats } from '../lib/wordpress'
+import { useWordPressList, useWordPressObject } from '../hooks/useWordPressData'
 import { CheckIcon, ArrowRightIcon } from '../components/Icons'
 
+const defaultAbout = {
+  title: 'About Me',
+  subtitle: 'Freelance Web Developer from Delhi, India',
+  bio: "Hi, I'm Yogesh Gupta — a passionate freelance web developer with over 14 years of experience crafting digital solutions for businesses worldwide.",
+  yearsExperience: '14+',
+  image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&crop=face',
+}
+
 export default function About() {
+  const { data: about, source: aboutSource } = useWordPressObject(getAbout, defaultAbout)
+  const { data: skills } = useWordPressList(getSkills, fallbackSkills)
+  const { data: experience } = useWordPressList(getExperience, fallbackExperience)
+  const { data: stats } = useWordPressList(getStats, fallbackStats)
+
   return (
     <>
       <PageBanner
@@ -15,38 +32,28 @@ export default function About() {
 
       <section className="py-14 sm:py-18 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <WpDataBadge source={aboutSource} />
+
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <div className="relative">
               <div className="rounded-2xl overflow-hidden shadow-2xl">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&crop=face"
-                  alt="Yogesh Gupta"
-                  className="w-full h-auto object-cover"
-                />
+                <img src={about.image} alt="Yogesh Gupta" className="w-full h-auto object-cover" />
               </div>
               <div className="absolute -bottom-4 -right-4 bg-brand text-white rounded-xl p-4 shadow-lg hidden sm:block">
-                <div className="text-3xl font-bold">14+</div>
+                <div className="text-3xl font-bold">{about.yearsExperience}</div>
                 <div className="text-sm text-white/80">Years Experience</div>
               </div>
             </div>
 
             <div>
               <span className="text-brand font-semibold text-sm uppercase tracking-wider">Who I Am</span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-5">
-                Freelance Web Developer from Delhi, India
-              </h2>
-              <p className="text-gray-600 leading-relaxed mb-4">
-                Hi, I'm <strong>Yogesh Gupta</strong> — a passionate freelance web developer with over
-                14 years of experience crafting digital solutions for businesses worldwide. I specialize
-                in WordPress, React, Laravel and modern web technologies.
-              </p>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                From startups in Delhi NCR to enterprises in USA, UK and Australia, I've helped 150+
-                clients build fast, secure and SEO-friendly websites that drive real business results.
-              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-5">{about.subtitle}</h2>
+              {about.bio && (
+                <p className="text-gray-600 leading-relaxed mb-6">{about.bio}</p>
+              )}
 
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                {whyChooseMe.slice(0, 4).map((item) => (
+                {fallbackWhyChoose.slice(0, 4).map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-gray-700">
                     <span className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0">
                       <CheckIcon className="w-3 h-3" />
@@ -97,7 +104,7 @@ export default function About() {
                 </div>
                 <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-brand to-brand-light rounded-full transition-all duration-1000"
+                    className="h-full bg-gradient-to-r from-brand to-brand-light rounded-full"
                     style={{ width: `${skill.level}%` }}
                   />
                 </div>
@@ -115,8 +122,8 @@ export default function About() {
           </div>
 
           <div className="max-w-3xl mx-auto space-y-0">
-            {experience.map((item, i) => (
-              <div key={item.year} className="relative pl-8 pb-10 last:pb-0 border-l-2 border-brand/20">
+            {experience.map((item) => (
+              <div key={item.title + item.year} className="relative pl-8 pb-10 last:pb-0 border-l-2 border-brand/20">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-4 border-white shadow" />
                 <span className="text-brand font-bold text-sm">{item.year}</span>
                 <h3 className="font-bold text-gray-900 text-lg mt-1">{item.title}</h3>

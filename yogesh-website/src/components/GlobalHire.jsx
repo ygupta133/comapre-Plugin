@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
-import { globalRegions } from '../data/siteData'
+import { globalRegions as fallbackRegions } from '../data/siteData'
+import { getRegions } from '../lib/wordpress'
+import { useWordPressList } from '../hooks/useWordPressData'
 import { CheckIcon, ArrowRightIcon } from './Icons'
 
 export default function GlobalHire() {
+  const { data: regions } = useWordPressList(getRegions, fallbackRegions)
   return (
     <section className="relative overflow-hidden world-map-bg py-14 sm:py-18 lg:py-24">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -54,7 +57,7 @@ export default function GlobalHire() {
           {/* Right — Region Cards */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-              {globalRegions.map((region, i) => (
+              {regions.map((region, i) => (
                 <div
                   key={region.name}
                   className="global-card bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm hover:border-brand/30 group"

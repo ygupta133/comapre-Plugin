@@ -1,6 +1,10 @@
-import { stats } from '../data/siteData'
+import { stats as fallbackStats } from '../data/siteData'
+import { getStats } from '../lib/wordpress'
+import { useWordPressList } from '../hooks/useWordPressData'
 
 export default function Stats() {
+  const { data: stats } = useWordPressList(getStats, fallbackStats)
+
   return (
     <section className="bg-brand py-10 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

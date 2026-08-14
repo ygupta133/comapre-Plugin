@@ -1,9 +1,18 @@
-import { useState } from 'react'
-import { cities } from '../data/siteData'
+import { useState, useMemo } from 'react'
+import { cities as fallbackCities } from '../data/siteData'
+import { getCities } from '../lib/wordpress'
+import { useWordPressList } from '../hooks/useWordPressData'
 import { LocationIcon, ArrowRightIcon } from './Icons'
 
 export default function Cities() {
+  const { data: wpCities } = useWordPressList(getCities, [])
   const [showAll, setShowAll] = useState(false)
+
+  const cities = useMemo(() => {
+    if (wpCities.length > 0) return wpCities.map((c) => c.name)
+    return fallbackCities
+  }, [wpCities])
+
   const visibleCities = showAll ? cities : cities.slice(0, 20)
 
   return (

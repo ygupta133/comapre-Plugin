@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
-export function useWordPressData(fetchFn, fallbackData) {
-  const [data, setData] = useState(fallbackData)
+export function useWordPressData(fetchFn, fallback) {
+  const [data, setData] = useState(fallback)
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('static')
 
@@ -10,7 +10,7 @@ export function useWordPressData(fetchFn, fallbackData) {
 
     fetchFn().then((result) => {
       if (cancelled) return
-      if (result && result.length > 0) {
+      if (result && (Array.isArray(result) ? result.length > 0 : Object.keys(result).length > 0)) {
         setData(result)
         setSource('wordpress')
       }
@@ -21,4 +21,12 @@ export function useWordPressData(fetchFn, fallbackData) {
   }, [fetchFn])
 
   return { data, loading, source }
+}
+
+export function useWordPressList(fetchFn, fallback = []) {
+  return useWordPressData(fetchFn, fallback)
+}
+
+export function useWordPressObject(fetchFn, fallback = {}) {
+  return useWordPressData(fetchFn, fallback)
 }

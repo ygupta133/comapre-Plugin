@@ -1,7 +1,11 @@
-import { engagementModels } from '../data/siteData'
+import { engagementModels as fallbackEngagement } from '../data/siteData'
+import { getEngagement } from '../lib/wordpress'
+import { useWordPressList } from '../hooks/useWordPressData'
 import { ServiceIcon } from './Icons'
 
 export default function Engagement() {
+  const { data: models } = useWordPressList(getEngagement, fallbackEngagement)
+
   return (
     <section className="bg-white py-12 sm:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,7 +19,7 @@ export default function Engagement() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto">
-          {engagementModels.map((model) => (
+          {models.map((model) => (
             <article
               key={model.title}
               className={`relative rounded-xl p-6 sm:p-8 text-center border transition-all ${
