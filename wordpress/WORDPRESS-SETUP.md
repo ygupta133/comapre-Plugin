@@ -22,6 +22,17 @@ This plugin adds:
 
 ## Step 3: Add Content
 
+### Hero Section (Homepage)
+WP Admin → **Hero Section** → Add New (only ONE entry)
+- Fill all Hero Content fields (badge, headline, subtitle, CTAs, counts)
+- Set **Featured Image** for your photo
+- Publish
+
+Also add **Why Choose Me** and **Hero Trust Items** entries for the right-side boxes.
+
+### Page SEO (Yoast — see YOAST-SEO-GUIDE.md)
+WP Admin → **Page SEO** → one entry per React route (`/`, `/about`, etc.)
+
 ### Blog Posts
 WP Admin → Posts → Add New (normal WordPress posts)
 
@@ -56,13 +67,17 @@ cp .env.example .env
 Edit `.env`:
 ```
 VITE_WP_API_URL=https://admin.yogeshwebdeveloper.com
+VITE_SITE_URL=https://yogeshwebdeveloper.com
 ```
 
 ```bash
 npm run dev
 ```
 
-Open Blog, Work, Testimonials pages — if WordPress has content, you'll see **"Live from WordPress"** badge.
+Open `http://localhost:5173`:
+- **Homepage Hero** — if WordPress hero is published, you'll see **"Live from WordPress"** badge
+- **Blog, Work, Testimonials** — same badge when WP content loads
+- **SEO** — Yoast data from Page SEO entries appears in `<head>` (see YOAST-SEO-GUIDE.md)
 
 Without `.env` or if WP is down → static fallback data shows automatically.
 

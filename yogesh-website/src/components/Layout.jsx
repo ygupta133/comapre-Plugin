@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import PageSeo from './PageSeo'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -15,6 +16,7 @@ function ScrollToTop() {
 export default function Layout() {
   return (
     <>
+      <PageSeo />
       <ScrollToTop />
       <Header />
       <main className="min-h-screen">

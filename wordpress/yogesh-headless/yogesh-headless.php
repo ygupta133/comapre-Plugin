@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Yogesh Headless CMS
  * Description: Headless WordPress backend for yogeshwebdeveloper.com — all website content CPTs + REST API.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Yogesh Gupta
  * Text Domain: yogesh-headless
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('YG_HEADLESS_VERSION', '1.1.0');
+define('YG_HEADLESS_VERSION', '1.2.0');
 
 class Yogesh_Headless {
 
@@ -29,6 +29,7 @@ class Yogesh_Headless {
         'yg_trust_item'   => ['label' => 'Hero Trust Items',   'icon' => 'dashicons-shield',          'rest' => 'trust-items'],
         'yg_hero'         => ['label' => 'Hero Section',       'icon' => 'dashicons-slides',          'rest' => 'hero'],
         'yg_about'        => ['label' => 'About Page',         'icon' => 'dashicons-admin-users',     'rest' => 'about'],
+        'yg_site_seo'     => ['label' => 'Page SEO',           'icon' => 'dashicons-search',          'rest' => 'site-seo'],
     ];
 
     public function __construct() {
@@ -41,6 +42,19 @@ class Yogesh_Headless {
         add_action('save_post', [$this, 'save_meta_boxes']);
         add_filter('manage_yg_service_posts_columns', [$this, 'service_columns']);
         add_action('manage_yg_service_posts_custom_column', [$this, 'service_column_data'], 10, 2);
+        add_filter('wpseo_rest_api_post_types', [$this, 'enable_yoast_rest_api']);
+        add_action('admin_notices', [$this, 'yoast_admin_notice']);
+    }
+
+    public function enable_yoast_rest_api($post_types) {
+        $types = array_merge(array_keys($this->cpts), ['post', 'page']);
+        return array_values(array_unique(array_merge((array) $post_types, $types)));
+    }
+
+    public function yoast_admin_notice() {
+        if (!current_user_can('manage_options')) return;
+        if (defined('WPSEO_VERSION')) return;
+        echo '<div class="notice notice-warning"><p><strong>Yogesh Headless CMS:</strong> Install and activate <a href="https://wordpress.org/plugins/wordpress-seo/" target="_blank">Yoast SEO</a> to manage meta titles, descriptions, Open Graph and schema for your React frontend.</p></div>';
     }
 
     public function register_post_types() {
@@ -110,6 +124,9 @@ class Yogesh_Headless {
         ]);
         $this->register_meta_rest('yg_about', [
             'subtitle' => 'string', 'years_experience' => 'string',
+        ]);
+        $this->register_meta_rest('yg_site_seo', [
+            'route_path' => 'string',
         ]);
 
         register_rest_field('yg_project', 'category_name', [
@@ -252,6 +269,9 @@ class Yogesh_Headless {
                 ['subtitle', 'Subtitle', 'text', 'Freelance Web Developer from Delhi, India'],
                 ['years_experience', 'Years Badge', 'text', '14+'],
             ], 'Title = section title. Content = bio text. Featured Image = your photo.'],
+            'yg_site_seo' => ['React Route SEO', [
+                ['route_path', 'React Route Path', 'text', '/'],
+            ], 'One entry per page. Set Route Path (e.g. /, /about, /services). Use Yoast SEO box below for title, meta description, OG image and schema. Set canonical URL to https://yogeshwebdeveloper.com/your-page'],
         ];
 
         foreach ($boxes as $post_type => $config) {
@@ -292,7 +312,7 @@ class Yogesh_Headless {
             'year_range', 'company', 'is_popular', 'stat_value', 'stat_label',
             'flag_emoji', 'points', 'badge_text', 'headline', 'headline_highlight',
             'subtitle', 'cta_primary', 'cta_secondary', 'years_badge', 'projects_count',
-            'clients_count', 'years_experience',
+            'clients_count', 'years_experience', 'route_path',
         ];
         foreach ($all_fields as $field) {
             if (isset($_POST[$field])) {

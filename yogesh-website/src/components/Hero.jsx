@@ -6,6 +6,7 @@ import {
 import { getHero, getWhyChoose, getTrustItems } from '../lib/wordpress'
 import { useWordPressObject, useWordPressList } from '../hooks/useWordPressData'
 import { CheckIcon, ArrowRightIcon, EyeIcon } from './Icons'
+import WpDataBadge from './WpDataBadge'
 
 const defaultHero = {
   badgeText: '14+ Years of Experience',
@@ -21,7 +22,7 @@ const defaultHero = {
 }
 
 export default function Hero() {
-  const { data: hero } = useWordPressObject(getHero, defaultHero)
+  const { data: hero, source: heroSource } = useWordPressObject(getHero, defaultHero)
   const { data: whyItems } = useWordPressList(getWhyChoose, fallbackWhyChoose.map((t) => ({ text: t })))
   const { data: trustItems } = useWordPressList(getTrustItems, fallbackTrust.map((t) => ({ text: t })))
 
@@ -34,6 +35,7 @@ export default function Hero() {
       <div className="absolute bottom-0 left-0 w-72 h-72 bg-brand-light/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <WpDataBadge source={heroSource} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-8 items-center">
           <div className="lg:col-span-5 xl:col-span-5 order-1">
             <span className="animate-fade-up inline-flex items-center gap-2 bg-gray-100 text-gray-600 text-xs sm:text-sm font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-5 border border-gray-200">

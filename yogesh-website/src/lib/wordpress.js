@@ -202,6 +202,15 @@ export const getTrustItems = () => fetchCPT('trust-items', mapWPTextItem)
 export const getHero = () => fetchFirst('hero', mapWPHero)
 export const getAbout = () => fetchFirst('about', mapWPAbout)
 
+export async function getSiteSeo() {
+  const data = await wpFetch('site-seo?per_page=50&status=publish')
+  if (!data || !Array.isArray(data)) return null
+  return data.map((item) => ({
+    route_path: item.route_path || '/',
+    yoast_head_json: item.yoast_head_json || null,
+  }))
+}
+
 export async function getWooProducts() {
   if (!WP_API_URL) return null
   const key = import.meta.env.VITE_WC_CONSUMER_KEY
