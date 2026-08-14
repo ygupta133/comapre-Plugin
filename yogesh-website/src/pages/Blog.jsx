@@ -1,8 +1,15 @@
+import { useState, useMemo } from 'react'
 import PageBanner from '../components/PageBanner'
+import LoadingSpinner from '../components/LoadingSpinner'
+import WpDataBadge from '../components/WpDataBadge'
 import { blogPosts } from '../data/pagesData'
+import { getPosts } from '../lib/wordpress'
+import { useWordPressData } from '../hooks/useWordPressData'
 import { ArrowRightIcon } from '../components/Icons'
 
 export default function Blog() {
+  const { data: posts, loading, source } = useWordPressData(getPosts, blogPosts)
+
   return (
     <>
       <PageBanner
@@ -13,44 +20,55 @@ export default function Blog() {
 
       <section className="py-14 sm:py-18 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {blogPosts.map((post) => (
-              <article
-                key={post.id}
-                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
-              >
-                <div className="relative overflow-hidden aspect-[16/10]">
-                  <img
-                    src={post.image}
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <span className="absolute top-3 left-3 bg-brand text-white text-xs font-bold px-3 py-1 rounded-full">
-                    {post.category}
-                  </span>
-                </div>
+          <WpDataBadge source={source} />
 
-                <div className="p-5 sm:p-6">
-                  <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                    <span>{post.date}</span>
-                    <span>•</span>
-                    <span>{post.readTime}</span>
+          {loading ? (
+            <LoadingSpinner text="Loading blog posts..." />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
+                >
+                  <div className="relative overflow-hidden aspect-[16/10]">
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3 left-3 bg-brand text-white text-xs font-bold px-3 py-1 rounded-full">
+                      {post.category}
+                    </span>
                   </div>
 
-                  <h3 className="font-bold text-gray-900 text-lg mb-2 leading-snug group-hover:text-brand transition-colors">
-                    {post.title}
-                  </h3>
+                  <div className="p-5 sm:p-6">
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                      <span>{post.date}</span>
+                      <span>•</span>
+                      <span>{post.readTime}</span>
+                    </div>
 
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{post.excerpt}</p>
+                    <h3 className="font-bold text-gray-900 text-lg mb-2 leading-snug group-hover:text-brand transition-colors">
+                      {post.title}
+                    </h3>
 
-                  <span className="inline-flex items-center gap-1 text-brand text-sm font-semibold group-hover:gap-2 transition-all">
-                    Read More
-                    <ArrowRightIcon className="w-3.5 h-3.5" />
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4">{post.excerpt}</p>
+
+                    <a
+                      href={post.link || `#`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-brand text-sm font-semibold group-hover:gap-2 transition-all"
+                    >
+                      Read More
+                      <ArrowRightIcon className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom'
 import PageBanner from '../components/PageBanner'
+import LoadingSpinner from '../components/LoadingSpinner'
+import WpDataBadge from '../components/WpDataBadge'
 import { testimonials } from '../data/pagesData'
+import { getTestimonials } from '../lib/wordpress'
+import { useWordPressData } from '../hooks/useWordPressData'
 import { ArrowRightIcon } from '../components/Icons'
 
 function StarRating({ rating }) {
@@ -21,6 +25,8 @@ function StarRating({ rating }) {
 }
 
 export default function Testimonials() {
+  const { data: reviews, loading, source } = useWordPressData(getTestimonials, testimonials)
+
   return (
     <>
       <PageBanner
@@ -31,33 +37,39 @@ export default function Testimonials() {
 
       <section className="py-14 sm:py-18 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.map((item) => (
-              <article
-                key={item.id}
-                className="bg-white rounded-2xl p-6 sm:p-7 border border-gray-100 shadow-sm hover:shadow-lg hover:border-brand/20 transition-all duration-300 flex flex-col"
-              >
-                <StarRating rating={item.rating} />
+          <WpDataBadge source={source} />
 
-                <p className="text-gray-600 text-sm leading-relaxed my-5 flex-grow">
-                  "{item.text}"
-                </p>
+          {loading ? (
+            <LoadingSpinner text="Loading testimonials..." />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {reviews.map((item) => (
+                <article
+                  key={item.id}
+                  className="bg-white rounded-2xl p-6 sm:p-7 border border-gray-100 shadow-sm hover:shadow-lg hover:border-brand/20 transition-all duration-300 flex flex-col"
+                >
+                  <StarRating rating={item.rating} />
 
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-brand/20"
-                  />
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-sm">{item.name}</h4>
-                    <p className="text-gray-500 text-xs">{item.role}</p>
-                    <p className="text-brand text-xs font-medium">{item.country}</p>
+                  <p className="text-gray-600 text-sm leading-relaxed my-5 flex-grow">
+                    "{item.text}"
+                  </p>
+
+                  <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-brand/20"
+                    />
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">{item.name}</h4>
+                      <p className="text-gray-500 text-xs">{item.role}</p>
+                      <p className="text-brand text-xs font-medium">{item.country}</p>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
 
           <div className="mt-14 text-center">
             <p className="text-gray-600 mb-5">Ready to join 150+ happy clients?</p>
