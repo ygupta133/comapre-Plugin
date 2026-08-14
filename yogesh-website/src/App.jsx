@@ -8,11 +8,9 @@ import Testimonials from './pages/Testimonials'
 import Blog from './pages/Blog'
 import Contact from './pages/Contact'
 
-const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined
-
 function App() {
   return (
-    <BrowserRouter basename={basename}>
+    <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
