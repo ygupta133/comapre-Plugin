@@ -1,22 +1,30 @@
 import { useState } from 'react'
 import PageBanner from '../components/PageBanner'
 import { CheckIcon, SendIcon } from '../components/Icons'
+import { UPWORK_URL, inquiryTypes } from '../data/siteData'
 
 const contactInfo = [
   { icon: '📞', label: 'Phone', value: '+91 98765 43210', href: 'tel:+919876543210' },
   { icon: '✉️', label: 'Email', value: 'hello@yogeshwebdeveloper.com', href: 'mailto:hello@yogeshwebdeveloper.com' },
   { icon: '📍', label: 'Location', value: 'Delhi, India', href: '#' },
   { icon: '💬', label: 'WhatsApp', value: 'Chat on WhatsApp', href: 'https://wa.me/919876543210' },
+  { icon: '💼', label: 'Upwork', value: 'Hire Me on Upwork', href: UPWORK_URL, external: true },
 ]
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    inquiryType: '',
+    message: '',
+  })
   const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = (e) => {
     e.preventDefault()
     setSubmitted(true)
-    setForm({ name: '', email: '', phone: '', subject: '', message: '' })
+    setForm({ name: '', email: '', phone: '', inquiryType: '', message: '' })
     setTimeout(() => setSubmitted(false), 5000)
   }
 
@@ -48,6 +56,8 @@ export default function Contact() {
                 <a
                   key={item.label}
                   href={item.href}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noopener noreferrer' : undefined}
                   className="flex items-center gap-4 bg-gray-50 hover:bg-brand/5 border border-gray-100 hover:border-brand/20 rounded-xl p-4 transition-all group"
                 >
                   <span className="text-2xl">{item.icon}</span>
@@ -59,6 +69,16 @@ export default function Contact() {
                   </div>
                 </a>
               ))}
+
+              <a
+                href={UPWORK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-[#14a800] hover:bg-[#108a00] text-white font-semibold py-3.5 px-6 rounded-xl transition-colors shadow-md"
+              >
+                <span className="text-lg">💼</span>
+                Hire Me on Upwork
+              </a>
 
               <div className="bg-brand/5 border border-brand/15 rounded-xl p-5">
                 <p className="font-bold text-brand text-sm mb-3">Available for new projects</p>
@@ -123,16 +143,21 @@ export default function Contact() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject *</label>
-                    <input
-                      type="text"
-                      name="subject"
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      What are you looking for? *
+                    </label>
+                    <select
+                      name="inquiryType"
                       required
-                      value={form.subject}
+                      value={form.inquiryType}
                       onChange={handleChange}
-                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors"
-                      placeholder="Website Development"
-                    />
+                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors bg-white text-gray-900"
+                    >
+                      <option value="" disabled>Select a service</option>
+                      {inquiryTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -145,7 +170,7 @@ export default function Contact() {
                     value={form.message}
                     onChange={handleChange}
                     className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors resize-none"
-                    placeholder="Tell me about your project..."
+                    placeholder="Tell me about your project requirements..."
                   />
                 </div>
 

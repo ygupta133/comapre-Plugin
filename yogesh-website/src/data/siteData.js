@@ -1,3 +1,20 @@
+export const UPWORK_URL = 'https://www.upwork.com/freelancers/~01bba1b5cc95c508c4?mp_source=share'
+
+export const inquiryTypes = [
+  'Website Design & Development',
+  'WordPress Development',
+  'Laravel Development',
+  'React.js Development',
+  'SEO Optimization',
+  'AI Chatbot Development',
+  'RAG AI Chatbot',
+  'E-commerce Development',
+  'Plugin & API Development',
+  'PHP Development',
+  'Website Maintenance',
+  'Other',
+]
+
 export const navLinks = [
   { label: 'Home', href: '/' },
   { label: 'About Me', href: '/about' },

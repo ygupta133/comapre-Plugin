@@ -3,11 +3,12 @@ import {
   footerServices,
   footerHireLocations,
   seoLocationLinks,
+  UPWORK_URL,
 } from '../data/siteData'
 import { CheckIcon, SocialIcon } from './Icons'
 
 const socialLinks = [
-  { name: 'facebook', href: '#' },
+  { name: 'upwork', href: UPWORK_URL },
   { name: 'linkedin', href: '#' },
   { name: 'twitter', href: '#' },
   { name: 'instagram', href: '#' },
@@ -100,6 +101,16 @@ export default function Footer() {
               <li>
                 <a href="mailto:hello@yogeshwebdeveloper.com" className="hover:text-brand-light transition-colors">
                   hello@yogeshwebdeveloper.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href={UPWORK_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-brand-light transition-colors"
+                >
+                  Hire on Upwork
                 </a>
               </li>
               <li>Delhi, India</li>
