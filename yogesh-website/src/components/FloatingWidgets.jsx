@@ -12,7 +12,7 @@ export default function FloatingWidgets() {
   const waText = encodeURIComponent(
     settings.whatsappMessage || 'Hi Yogesh, I would like to discuss a web development project.',
   )
-  const waBase = contact.whatsapp || 'https://wa.me/919876543210'
+  const waBase = contact.whatsapp || 'https://wa.me/918377956442'
   const waLink = `${waBase}${waBase.includes('?') ? '&' : '?'}text=${waText}`
 
   return (
