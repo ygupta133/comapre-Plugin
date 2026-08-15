@@ -1,5 +1,6 @@
 import Hero from '../components/Hero'
 import Services from '../components/Services'
+import SeoGoogleSection from '../components/SeoGoogleSection'
 import Stats from '../components/Stats'
 import Cities from '../components/Cities'
 import GlobalHire from '../components/GlobalHire'
@@ -10,6 +11,7 @@ export default function Home() {
     <>
       <Hero />
       <Services />
+      <SeoGoogleSection />
       <Stats />
       <Cities />
       <GlobalHire />

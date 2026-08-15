@@ -150,7 +150,7 @@ class Yogesh_Headless_Seed {
             'badge_text' => '14+ Years of Experience',
             'headline' => 'Best Freelance Web Developer',
             'headline_highlight' => 'Near Delhi',
-            'subtitle' => 'I build fast, secure and SEO-friendly websites that help businesses grow online.',
+            'subtitle' => 'React, WordPress, Laravel, AI chatbots, payment gateways & SEO — 14+ years building fast websites near Delhi.',
             'cta_primary' => 'Get Free Consultation',
             'cta_secondary' => 'View My Work',
             'years_badge' => '14+ Years Experience',
@@ -169,14 +169,24 @@ class Yogesh_Headless_Seed {
     private static function seed_services() {
         if (!self::is_empty('yg_service')) return;
         $services = [
-            ['Custom Website Development', 'Fast, responsive and SEO-friendly websites tailored to your business goals and brand identity.', 'code'],
-            ['WordPress Development', 'Custom WordPress themes, plugin customization and full website solutions with easy content management.', 'wordpress'],
-            ['RAG AI Chatbot Development', 'Intelligent AI chatbots powered by RAG technology to automate customer support and boost engagement.', 'ai'],
-            ['Laravel Development', 'Secure, scalable and high-performance web applications built with the Laravel PHP framework.', 'laravel'],
-            ['React.js Development', 'Modern, interactive front-end applications with React.js and Next.js for blazing-fast user experiences.', 'react'],
-            ['PHP Development', 'Robust backend solutions, custom scripts and server-side logic built with clean, maintainable PHP code.', 'php'],
-            ['E-commerce Development', 'Full-featured online stores with WooCommerce, payment gateways, inventory management and secure checkout.', 'ecommerce'],
-            ['Plugin & API Development', 'Custom WordPress plugins, REST APIs and third-party integrations to extend your website functionality.', 'plugin'],
+            ['RAG AI Chatbot', 'Smart AI bots with RAG for leads, support & automation.', 'ai'],
+            ['AI Chatbot Development', 'Custom chatbots with FastAPI, OpenAI & knowledge base.', 'ai'],
+            ['HTML to React', 'Convert static HTML sites into fast React applications.', 'react'],
+            ['React to WordPress', 'Headless or hybrid React + WordPress solutions.', 'react'],
+            ['WordPress Development', 'Custom themes, CMS sites & WooCommerce stores.', 'wordpress'],
+            ['Laravel Development', 'Secure, scalable web apps & REST APIs.', 'laravel'],
+            ['OpenCart & E-commerce', 'Online stores with cart, checkout & inventory.', 'ecommerce'],
+            ['Shopify & Webflow', 'Store setup, theme edits & Webflow to live site.', 'ecommerce'],
+            ['Elementor & WPBakery', 'Page builder sites, fixes & speed optimization.', 'wordpress'],
+            ['Custom WordPress Plugins', 'Tailored plugins for unique business needs.', 'plugin'],
+            ['Payment Gateway Integration', 'Razorpay, HDFC, bank transfer & card payments.', 'plugin'],
+            ['Figma to HTML / WordPress', 'Pixel-perfect design to responsive code.', 'code'],
+            ['Figma to E-commerce', 'Design to live WooCommerce or Shopify store.', 'ecommerce'],
+            ['Core Web Vitals Pass', 'Speed, LCP, CLS & INP optimization for Google.', 'code'],
+            ['Schema & Knowledge Panel', 'Structured data for rich results & brand panel.', 'code'],
+            ['Google Image SEO', 'Rank photos in Google Images & visual search.', 'code'],
+            ['React.js Development', 'Modern SPAs, dashboards & interactive UIs.', 'react'],
+            ['PHP & API Development', 'Backend logic, REST APIs & integrations.', 'php'],
         ];
         foreach ($services as $i => $s) {
             self::create_post('yg_service', $s[0], $s[1], ['icon' => $s[2], 'sort_order' => $i]);
@@ -232,7 +242,7 @@ class Yogesh_Headless_Seed {
     private static function seed_about() {
         if (!self::is_empty('yg_about')) return;
         self::create_post('yg_about', 'About Me',
-            "Hi, I'm Yogesh Gupta — a passionate freelance web developer with over 14 years of experience crafting digital solutions for businesses worldwide.",
+            "I'm Yogesh Gupta — 14+ years building React, WordPress, Laravel & AI solutions for clients worldwide. Clean code, fast delivery, SEO that ranks.",
             ['subtitle' => 'Freelance Web Developer from Delhi, India', 'years_experience' => '14+']
         );
     }

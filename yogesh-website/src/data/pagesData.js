@@ -213,53 +213,9 @@ export const blogPosts = [
   },
 ]
 
-export const serviceDetails = [
-  {
-    title: 'Custom Website Development',
-    icon: 'code',
-    description: 'I build tailor-made websites from scratch that are fast, secure and designed to convert visitors into customers.',
-    features: ['Responsive Design', 'SEO Optimized', 'Fast Loading', 'Cross-Browser Compatible', 'Custom Design', 'Mobile First'],
-  },
-  {
-    title: 'WordPress Development',
-    icon: 'wordpress',
-    description: 'Full WordPress solutions including custom themes, plugin development and WooCommerce stores.',
-    features: ['Custom Themes', 'Plugin Development', 'WooCommerce', 'Speed Optimization', 'Security Hardening', 'Content Management'],
-  },
-  {
-    title: 'RAG AI Chatbot Development',
-    icon: 'ai',
-    description: 'Intelligent AI chatbots that understand your business and provide accurate customer support 24/7.',
-    features: ['RAG Technology', 'Knowledge Base', 'Multi-Language', 'CRM Integration', 'Analytics Dashboard', 'Custom Training'],
-  },
-  {
-    title: 'Laravel Development',
-    icon: 'laravel',
-    description: 'Robust web applications built with Laravel for businesses that need scalable backend solutions.',
-    features: ['REST APIs', 'Admin Panels', 'Database Design', 'Authentication', 'Payment Integration', 'Cloud Deployment'],
-  },
-  {
-    title: 'React.js Development',
-    icon: 'react',
-    description: 'Modern, interactive front-end applications that deliver exceptional user experiences.',
-    features: ['SPA Development', 'Next.js SSR', 'State Management', 'API Integration', 'PWA Support', 'Performance Tuning'],
-  },
-  {
-    title: 'PHP Development',
-    icon: 'php',
-    description: 'Clean, maintainable PHP code for custom web applications, scripts and backend logic.',
-    features: ['Custom Scripts', 'API Development', 'Database Queries', 'Legacy Migration', 'Code Refactoring', 'Bug Fixing'],
-  },
-  {
-    title: 'E-commerce Development',
-    icon: 'ecommerce',
-    description: 'Complete online store solutions with secure payments, inventory management and marketing tools.',
-    features: ['WooCommerce', 'Payment Gateways', 'Inventory System', 'Order Management', 'Shipping Integration', 'Sales Reports'],
-  },
-  {
-    title: 'Plugin & API Development',
-    icon: 'plugin',
-    description: 'Extend your website functionality with custom plugins and third-party API integrations.',
-    features: ['WordPress Plugins', 'REST APIs', 'Webhook Integration', 'Third-Party APIs', 'Data Sync', 'Documentation'],
-  },
-]
+import { services } from './siteData'
+
+export const serviceDetails = services.map((s) => ({
+  ...s,
+  features: ['Fast Delivery', 'SEO Ready', 'Clean Code', 'Ongoing Support'],
+}))

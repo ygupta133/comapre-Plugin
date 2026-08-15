@@ -7,12 +7,13 @@ import { getHero, getWhyChoose, getTrustItems } from '../lib/wordpress'
 import { useWordPressObject, useWordPressList } from '../hooks/useWordPressData'
 import { CheckIcon, ArrowRightIcon, EyeIcon } from './Icons'
 import WpDataBadge from './WpDataBadge'
+import TypingHeadline from './TypingHeadline'
 
 const defaultHero = {
   badgeText: '14+ Years of Experience',
   headline: 'Best Freelance Web Developer',
   headlineHighlight: 'Near Delhi',
-  subtitle: 'I build fast, secure and SEO-friendly websites that help businesses grow online.',
+  subtitle: 'React, WordPress, Laravel, AI chatbots, payment gateways & SEO — 14+ years building fast websites near Delhi.',
   ctaPrimary: 'Get Free Consultation',
   ctaSecondary: 'View My Work',
   yearsBadge: '14+ Years Experience',
@@ -43,10 +44,11 @@ export default function Hero() {
               {hero.badgeText}
             </span>
 
-            <h1 className="animate-fade-up animate-delay-100 text-3xl sm:text-4xl lg:text-[2.6rem] xl:text-5xl font-bold text-gray-900 leading-[1.15] mb-4">
-              {hero.headline}{' '}
-              <span className="text-brand">{hero.headlineHighlight}</span>
-            </h1>
+            <TypingHeadline
+              headline={hero.headline}
+              highlight={hero.headlineHighlight}
+              className="animate-fade-up animate-delay-100"
+            />
 
             <p className="animate-fade-up animate-delay-200 text-gray-600 text-base sm:text-lg leading-relaxed mb-7 max-w-lg">
               {hero.subtitle}

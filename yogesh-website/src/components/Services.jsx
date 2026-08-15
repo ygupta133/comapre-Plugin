@@ -18,22 +18,22 @@ export default function Services() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {services.map((service, i) => (
             <article
               key={service.id || service.title}
-              className="service-card bg-white rounded-xl p-6 border border-gray-100 group cursor-default"
+              className="service-card bg-white rounded-xl p-5 border border-gray-100 group cursor-default"
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               <div className="mb-4 w-14 h-14 rounded-xl bg-brand/5 flex items-center justify-center group-hover:bg-brand/10 group-hover:scale-110 transition-all duration-300">
                 <ServiceIcon name={service.icon} />
               </div>
 
-              <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-2 leading-snug group-hover:text-brand transition-colors duration-300">
+              <h3 className="font-bold text-gray-900 text-sm sm:text-base mb-1.5 leading-snug group-hover:text-brand transition-colors duration-300">
                 {service.title}
               </h3>
 
-              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-3 line-clamp-2">
                 {service.description}
               </p>
 

@@ -11,7 +11,7 @@ import { CheckIcon, ArrowRightIcon } from '../components/Icons'
 const defaultAbout = {
   title: 'About Me',
   subtitle: 'Freelance Web Developer from Delhi, India',
-  bio: "Hi, I'm Yogesh Gupta — a passionate freelance web developer with over 14 years of experience crafting digital solutions for businesses worldwide.",
+  bio: "I'm Yogesh Gupta — 14+ years building React, WordPress, Laravel & AI solutions for clients worldwide. Clean code, fast delivery, SEO that ranks.",
   yearsExperience: '14+',
   image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&crop=face',
 }

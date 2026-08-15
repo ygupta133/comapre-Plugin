@@ -41,55 +41,57 @@ export const whyChooseMe = [
   'Long Term Partnership',
 ]
 
+export const seoExpertiseTags = [
+  'Google Image SEO',
+  'Knowledge Panel',
+  'Schema Markup',
+  'Core Web Vitals',
+  'Rich Snippets',
+  'Image Sitemap',
+  'JSON-LD Coding',
+  'FAQ Schema',
+]
+
+export const techExpertiseTags = [
+  'RAG AI Developer',
+  'AI Chatbot',
+  'FastAPI',
+  'HTML to React',
+  'React to WordPress',
+  'Figma to HTML',
+  'Figma to WordPress',
+  'Figma to E-commerce',
+  'Razorpay',
+  'HDFC Gateway',
+  'Bank Payment',
+  'Credit Card API',
+  'Shopify',
+  'Webflow',
+  'OpenCart',
+  'Elementor',
+  'WPBakery',
+  'Custom Plugins',
+]
+
 export const services = [
-  {
-    title: 'Custom Website Development',
-    description:
-      'Fast, responsive and SEO-friendly websites tailored to your business goals and brand identity.',
-    icon: 'code',
-  },
-  {
-    title: 'WordPress Development',
-    description:
-      'Custom WordPress themes, plugin customization and full website solutions with easy content management.',
-    icon: 'wordpress',
-  },
-  {
-    title: 'RAG AI Chatbot Development',
-    description:
-      'Intelligent AI chatbots powered by RAG technology to automate customer support and boost engagement.',
-    icon: 'ai',
-  },
-  {
-    title: 'Laravel Development',
-    description:
-      'Secure, scalable and high-performance web applications built with the Laravel PHP framework.',
-    icon: 'laravel',
-  },
-  {
-    title: 'React.js Development',
-    description:
-      'Modern, interactive front-end applications with React.js and Next.js for blazing-fast user experiences.',
-    icon: 'react',
-  },
-  {
-    title: 'PHP Development',
-    description:
-      'Robust backend solutions, custom scripts and server-side logic built with clean, maintainable PHP code.',
-    icon: 'php',
-  },
-  {
-    title: 'E-commerce Development',
-    description:
-      'Full-featured online stores with WooCommerce, payment gateways, inventory management and secure checkout.',
-    icon: 'ecommerce',
-  },
-  {
-    title: 'Plugin & API Development',
-    description:
-      'Custom WordPress plugins, REST APIs and third-party integrations to extend your website functionality.',
-    icon: 'plugin',
-  },
+  { title: 'RAG AI Chatbot', description: 'Smart AI bots with RAG for leads, support & automation.', icon: 'ai' },
+  { title: 'AI Chatbot Development', description: 'Custom chatbots with FastAPI, OpenAI & knowledge base.', icon: 'ai' },
+  { title: 'HTML to React', description: 'Convert static HTML sites into fast React applications.', icon: 'react' },
+  { title: 'React to WordPress', description: 'Headless or hybrid React + WordPress solutions.', icon: 'react' },
+  { title: 'WordPress Development', description: 'Custom themes, CMS sites & WooCommerce stores.', icon: 'wordpress' },
+  { title: 'Laravel Development', description: 'Secure, scalable web apps & REST APIs.', icon: 'laravel' },
+  { title: 'OpenCart & E-commerce', description: 'Online stores with cart, checkout & inventory.', icon: 'ecommerce' },
+  { title: 'Shopify & Webflow', description: 'Store setup, theme edits & Webflow to live site.', icon: 'ecommerce' },
+  { title: 'Elementor & WPBakery', description: 'Page builder sites, fixes & speed optimization.', icon: 'wordpress' },
+  { title: 'Custom WordPress Plugins', description: 'Tailored plugins for unique business needs.', icon: 'plugin' },
+  { title: 'Payment Gateway Integration', description: 'Razorpay, HDFC, bank transfer & card payments.', icon: 'plugin' },
+  { title: 'Figma to HTML / WordPress', description: 'Pixel-perfect design to responsive code.', icon: 'code' },
+  { title: 'Figma to E-commerce', description: 'Design to live WooCommerce or Shopify store.', icon: 'ecommerce' },
+  { title: 'Core Web Vitals Pass', description: 'Speed, LCP, CLS & INP optimization for Google.', icon: 'code' },
+  { title: 'Schema & Knowledge Panel', description: 'Structured data for rich results & brand panel.', icon: 'code' },
+  { title: 'Google Image SEO', description: 'Rank photos in Google Images & visual search.', icon: 'code' },
+  { title: 'React.js Development', description: 'Modern SPAs, dashboards & interactive UIs.', icon: 'react' },
+  { title: 'PHP & API Development', description: 'Backend logic, REST APIs & integrations.', icon: 'php' },
 ]
 
 export const stats = [
