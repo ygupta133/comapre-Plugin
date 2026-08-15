@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { getDefaultSeoForPath } from '../config/seoDefaults'
+import { getDefaultSeoForPath, getNotFoundSeo, validAppRoutes } from '../config/seoDefaults'
 import { defaultPageBanners } from '../config/siteDefaults'
 import { buildSeoMapFromWpEntries, normalizePath } from '../lib/seo'
 import { getSiteSeo } from '../lib/wordpress'
@@ -58,6 +58,9 @@ export function usePageSeo() {
 
   const seo = useMemo(() => {
     const path = pathname.replace(/\/$/, '') || '/'
+    if (!validAppRoutes.includes(path)) {
+      return getNotFoundSeo()
+    }
     const wpSeo = wpSeoMap[path]
     const fallback = getDefaultSeoForPath(pathname)
     if (!wpSeo) return fallback

@@ -57,8 +57,31 @@ export const routeSeoDefaults = {
   },
 }
 
+export const validAppRoutes = Object.keys(routeSeoDefaults)
+
+export function getNotFoundSeo() {
+  return {
+    title: 'Page Not Found (404) | Yogesh Gupta — Freelance Web Developer',
+    description:
+      'The page you requested was not found. Browse services, portfolio or contact Yogesh Gupta — freelance web developer in Delhi.',
+    canonical: `${siteConfig.url}/404`,
+    ogType: 'website',
+    ogTitle: 'Page Not Found | Yogesh Gupta',
+    ogDescription: 'This page does not exist. Return to the homepage or contact for web development services.',
+    ogUrl: `${siteConfig.url}/404`,
+    ogImage: siteConfig.defaultImage,
+    twitterCard: 'summary_large_image',
+    robots: 'noindex, follow',
+    schema: null,
+    source: 'static',
+  }
+}
+
 export function getDefaultSeoForPath(pathname) {
   const path = pathname === '' ? '/' : pathname.replace(/\/$/, '') || '/'
+  if (!validAppRoutes.includes(path)) {
+    return getNotFoundSeo()
+  }
   const defaults = routeSeoDefaults[path] || routeSeoDefaults['/']
   const canonical = `${siteConfig.url}${path === '/' ? '' : path}`
 
