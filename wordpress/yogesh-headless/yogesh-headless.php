@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Yogesh Headless CMS
  * Description: Headless WordPress backend for yogeshwebdeveloper.com — all website content CPTs + REST API.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Yogesh Gupta
  * Text Domain: yogesh-headless
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('YG_HEADLESS_VERSION', '1.3.1');
+define('YG_HEADLESS_VERSION', '1.3.2');
 
 require_once __DIR__ . '/includes/seed-content.php';
 
@@ -315,8 +315,9 @@ class Yogesh_Headless {
         $this->register_meta_rest('yg_site_settings', [
             'site_name' => 'string', 'site_tagline' => 'string', 'cta_text' => 'string',
             'footer_bio' => 'string', 'footer_copyright' => 'string',
-            'phone' => 'string', 'email' => 'string', 'location' => 'string',
-            'whatsapp_url' => 'string', 'upwork_url' => 'string', 'linkedin_url' => 'string',
+            'phone' => 'string', 'phone_us' => 'string', 'phone_uk' => 'string', 'phone_au' => 'string',
+            'email' => 'string', 'location' => 'string',
+            'whatsapp_url' => 'string', 'whatsapp_message' => 'string', 'chat_welcome' => 'string', 'upwork_url' => 'string', 'linkedin_url' => 'string',
             'twitter_url' => 'string', 'instagram_url' => 'string',
             'availability_bullets' => 'string', 'contact_intro' => 'string',
             'contact_success_message' => 'string', 'contact_form_title' => 'string',
@@ -485,10 +486,15 @@ class Yogesh_Headless {
                 ['cta_text', 'Header CTA Button', 'text', 'Hire Me'],
                 ['footer_bio', 'Footer About Text', 'textarea'],
                 ['footer_copyright', 'Copyright Name', 'text', 'Yogesh Gupta. All Rights Reserved.'],
-                ['phone', 'Phone', 'text', '+91 98765 43210'],
+                ['phone', 'Phone (India)', 'text', '+91 98765 43210'],
+                ['phone_us', 'Phone (USA/Canada — virtual number)', 'text', '+1 555 000 0000'],
+                ['phone_uk', 'Phone (UK/Europe — virtual number)', 'text', '+44 20 0000 0000'],
+                ['phone_au', 'Phone (Australia — virtual number)', 'text', '+61 2 0000 0000'],
                 ['email', 'Email', 'text', 'hello@yogeshwebdeveloper.com'],
                 ['location', 'Location', 'text', 'Delhi, India'],
                 ['whatsapp_url', 'WhatsApp URL', 'text', 'https://wa.me/919876543210'],
+                ['whatsapp_message', 'WhatsApp Pre-filled Message', 'text', 'Hi Yogesh, I would like to discuss a project.'],
+                ['chat_welcome', 'Chatbot Welcome Message', 'textarea'],
                 ['upwork_url', 'Upwork URL', 'text'],
                 ['linkedin_url', 'LinkedIn URL', 'text'],
                 ['twitter_url', 'Twitter/X URL', 'text'],
@@ -558,12 +564,13 @@ class Yogesh_Headless {
             'subtitle', 'cta_primary', 'cta_secondary', 'years_badge', 'projects_count',
             'clients_count', 'years_experience', 'route_path', 'banner_title', 'banner_subtitle',
             'breadcrumb_label', 'site_name', 'site_tagline', 'cta_text', 'footer_bio', 'footer_copyright',
-            'phone', 'email', 'location', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url',
+            'phone', 'email', 'location', 'phone_us', 'phone_uk', 'phone_au',
+            'whatsapp_url', 'whatsapp_message', 'chat_welcome', 'upwork_url', 'linkedin_url', 'twitter_url',
             'instagram_url', 'availability_bullets', 'contact_intro', 'contact_success_message',
             'contact_form_title', 'contact_heading', 'contact_availability_bullets', 'seo_locations_heading',
             'privacy_url', 'terms_url', 'contact_email_to', 'url', 'link_type', 'frontend_url', 'redirect_to_frontend',
         ];
-        $textarea_fields = ['footer_bio', 'contact_intro', 'contact_success_message', 'banner_subtitle', 'subtitle'];
+        $textarea_fields = ['footer_bio', 'contact_intro', 'contact_success_message', 'banner_subtitle', 'subtitle', 'chat_welcome'];
         $url_fields = ['project_url', 'client_image_url', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url', 'instagram_url', 'privacy_url', 'terms_url', 'frontend_url'];
         foreach ($all_fields as $field) {
             if (!isset($_POST[$field])) continue;
