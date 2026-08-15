@@ -26,9 +26,9 @@ export const routeSeoDefaults = {
     ogType: 'profile',
   },
   '/services': {
-    title: 'Web Development Services | React, WordPress, Laravel | Yogesh Gupta',
+    title: 'Web & App Development Services | React, WordPress, iOS, Android | Yogesh Gupta',
     description:
-      'Professional web development services: custom websites, WordPress, React apps, WooCommerce stores, plugin development and SEO optimization.',
+      'Web development, iOS & Android app development, WordPress, React, Laravel, AI chatbots & SEO. Freelance developer in Delhi serving India, USA, UK, Canada & Europe.',
     ogType: 'website',
   },
   '/work': {

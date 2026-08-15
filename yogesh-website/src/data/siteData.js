@@ -10,6 +10,9 @@ export const inquiryTypes = [
   'RAG AI Chatbot',
   'E-commerce Development',
   'Plugin & API Development',
+  'iOS App Development',
+  'Android App Development',
+  'React Native / Flutter App',
   'PHP Development',
   'Website Maintenance',
   'Other',
@@ -71,6 +74,10 @@ export const techExpertiseTags = [
   'Elementor',
   'WPBakery',
   'Custom Plugins',
+  'iOS App Development',
+  'Android Apps',
+  'React Native',
+  'Flutter',
 ]
 
 export const services = [
@@ -92,6 +99,9 @@ export const services = [
   { title: 'Google Image SEO', description: 'Rank photos in Google Images & visual search.', icon: 'code' },
   { title: 'React.js Development', description: 'Modern SPAs, dashboards & interactive UIs.', icon: 'react' },
   { title: 'PHP & API Development', description: 'Backend logic, REST APIs & integrations.', icon: 'php' },
+  { title: 'iOS App Development', description: 'Native & cross-platform iOS apps — App Store ready.', icon: 'mobile' },
+  { title: 'Android App Development', description: 'Play Store apps with Kotlin, React Native or Flutter.', icon: 'mobile' },
+  { title: 'React Native & Flutter', description: 'One codebase for iOS + Android — fast MVP launch.', icon: 'mobile' },
 ]
 
 export const stats = [

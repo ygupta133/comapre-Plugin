@@ -36,7 +36,12 @@ export const chatbotFaqs = [
     action: { label: 'SEO Help', href: '/contact' },
   },
   {
-    keywords: ['payment', 'razorpay', 'hdfc', 'gateway', 'bank'],
+    keywords: ['app', 'mobile', 'ios', 'android', 'flutter', 'react native'],
+    answer:
+      'I develop iOS & Android apps using React Native, Flutter and native stacks. App Store & Play Store publishing included. Cross-platform MVPs from Delhi — clients worldwide.',
+    action: { label: 'App Development Quote', href: '/services' },
+  },
+  {
     answer:
       'I integrate Razorpay, HDFC, direct bank & credit card payment gateways for Indian & international stores.',
     action: { label: 'Discuss Project', href: '/contact' },

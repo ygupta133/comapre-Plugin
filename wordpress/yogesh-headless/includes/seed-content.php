@@ -194,6 +194,9 @@ class Yogesh_Headless_Seed {
             ['Google Image SEO', 'Rank photos in Google Images & visual search.', 'code'],
             ['React.js Development', 'Modern SPAs, dashboards & interactive UIs.', 'react'],
             ['PHP & API Development', 'Backend logic, REST APIs & integrations.', 'php'],
+            ['iOS App Development', 'Native & cross-platform iOS apps — App Store ready.', 'mobile'],
+            ['Android App Development', 'Play Store apps with Kotlin, React Native or Flutter.', 'mobile'],
+            ['React Native & Flutter Apps', 'One codebase for iOS + Android — fast MVP launch.', 'mobile'],
         ];
         foreach ($services as $i => $s) {
             self::create_post('yg_service', $s[0], $s[1], ['icon' => $s[2], 'sort_order' => $i]);

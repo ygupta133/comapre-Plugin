@@ -7,6 +7,7 @@ import { getServices } from '../lib/wordpress'
 import { useWordPressList } from '../hooks/useWordPressData'
 import { ServiceIcon, CheckIcon, ArrowRightIcon } from '../components/Icons'
 import Engagement from '../components/Engagement'
+import AppDevelopmentSection from '../components/AppDevelopmentSection'
 
 export default function ServicesPage() {
   const { data: services, loading, source } = useWordPressList(getServices, fallbackServices)
@@ -76,6 +77,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      <AppDevelopmentSection />
       <Engagement />
     </>
   )
