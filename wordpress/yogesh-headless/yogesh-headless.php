@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Yogesh Headless CMS
  * Description: Headless WordPress backend for yogeshwebdeveloper.com — all website content CPTs + REST API.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Yogesh Gupta
  * Text Domain: yogesh-headless
  */
@@ -11,7 +11,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('YG_HEADLESS_VERSION', '1.2.0');
+define('YG_HEADLESS_VERSION', '1.3.0');
+
+require_once __DIR__ . '/includes/seed-content.php';
 
 class Yogesh_Headless {
 
@@ -29,7 +31,11 @@ class Yogesh_Headless {
         'yg_trust_item'   => ['label' => 'Hero Trust Items',   'icon' => 'dashicons-shield',          'rest' => 'trust-items'],
         'yg_hero'         => ['label' => 'Hero Section',       'icon' => 'dashicons-slides',          'rest' => 'hero'],
         'yg_about'        => ['label' => 'About Page',         'icon' => 'dashicons-admin-users',     'rest' => 'about'],
-        'yg_site_seo'     => ['label' => 'Page SEO',           'icon' => 'dashicons-search',          'rest' => 'site-seo'],
+        'yg_site_seo'     => ['label' => 'Page SEO & Banners', 'icon' => 'dashicons-search',          'rest' => 'site-seo'],
+        'yg_site_settings'=> ['label' => 'Site Settings',      'icon' => 'dashicons-admin-settings',  'rest' => 'site-settings'],
+        'yg_nav_item'     => ['label' => 'Navigation Menu',    'icon' => 'dashicons-menu',            'rest' => 'nav-items'],
+        'yg_footer_item'  => ['label' => 'Footer Links',       'icon' => 'dashicons-admin-links',     'rest' => 'footer-items'],
+        'yg_inquiry_type' => ['label' => 'Inquiry Types',      'icon' => 'dashicons-list-view',       'rest' => 'inquiry-types'],
     ];
 
     public function __construct() {
@@ -44,6 +50,82 @@ class Yogesh_Headless {
         add_action('manage_yg_service_posts_custom_column', [$this, 'service_column_data'], 10, 2);
         add_filter('wpseo_rest_api_post_types', [$this, 'enable_yoast_rest_api']);
         add_action('admin_notices', [$this, 'yoast_admin_notice']);
+        add_action('rest_api_init', [$this, 'register_contact_route']);
+        add_action('admin_menu', [$this, 'admin_menu']);
+        add_action('admin_post_yg_seed_content', [$this, 'handle_seed_content']);
+    }
+
+    public function admin_menu() {
+        add_management_page(
+            'Import Default Content',
+            'YG Import Defaults',
+            'manage_options',
+            'yg-seed-content',
+            [$this, 'seed_admin_page']
+        );
+    }
+
+    public function seed_admin_page() {
+        if (!current_user_can('manage_options')) return;
+        $seeded = get_option('yg_headless_seeded');
+        echo '<div class="wrap"><h1>Yogesh Headless — Default Content</h1>';
+        echo '<p>Import default website content into WordPress. <strong>Only empty sections</strong> are filled — your existing content is not overwritten.</p>';
+        if ($seeded) {
+            echo '<p>Last seeded version: <code>' . esc_html($seeded) . '</code></p>';
+        }
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+        wp_nonce_field('yg_seed_content');
+        echo '<input type="hidden" name="action" value="yg_seed_content" />';
+        submit_button('Import Default Content Now');
+        echo '</form></div>';
+    }
+
+    public function handle_seed_content() {
+        if (!current_user_can('manage_options') || !check_admin_referer('yg_seed_content')) {
+            wp_die('Unauthorized');
+        }
+        Yogesh_Headless_Seed::run();
+        wp_safe_redirect(admin_url('tools.php?page=yg-seed-content&seeded=1'));
+        exit;
+    }
+
+    public function register_contact_route() {
+        register_rest_route('yg/v1', '/contact', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'handle_contact_submission'],
+            'permission_callback' => '__return_true',
+        ]);
+    }
+
+    public function handle_contact_submission($request) {
+        $name = sanitize_text_field($request->get_param('name') ?? '');
+        $email = sanitize_email($request->get_param('email') ?? '');
+        $phone = sanitize_text_field($request->get_param('phone') ?? '');
+        $inquiry = sanitize_text_field($request->get_param('inquiryType') ?? '');
+        $message = sanitize_textarea_field($request->get_param('message') ?? '');
+
+        if (!$name || !$email || !$message || !$inquiry) {
+            return new WP_Error('missing_fields', 'Please fill all required fields.', ['status' => 400]);
+        }
+        if (!is_email($email)) {
+            return new WP_Error('invalid_email', 'Invalid email address.', ['status' => 400]);
+        }
+
+        $settings = get_posts(['post_type' => 'yg_site_settings', 'posts_per_page' => 1, 'post_status' => 'publish']);
+        $to = !empty($settings)
+            ? get_post_meta($settings[0]->ID, 'contact_email_to', true)
+            : get_option('admin_email');
+        if (!$to) $to = get_option('admin_email');
+
+        $subject = sprintf('[Website Contact] %s — %s', $name, $inquiry);
+        $body = "Name: $name\nEmail: $email\nPhone: $phone\nInquiry: $inquiry\n\nMessage:\n$message";
+        $headers = ['Content-Type: text/plain; charset=UTF-8', 'Reply-To: ' . $name . ' <' . $email . '>'];
+
+        $sent = wp_mail($to, $subject, $body, $headers);
+        if (!$sent) {
+            return new WP_Error('mail_failed', 'Could not send message. Please email directly.', ['status' => 500]);
+        }
+        return rest_ensure_response(['success' => true, 'message' => 'Message sent successfully.']);
     }
 
     public function enable_yoast_rest_api($post_types) {
@@ -126,8 +208,26 @@ class Yogesh_Headless {
             'subtitle' => 'string', 'years_experience' => 'string',
         ]);
         $this->register_meta_rest('yg_site_seo', [
-            'route_path' => 'string',
+            'route_path' => 'string', 'banner_title' => 'string', 'banner_subtitle' => 'string',
+            'breadcrumb_label' => 'string', 'sort_order' => 'integer',
         ]);
+        $this->register_meta_rest('yg_site_settings', [
+            'site_name' => 'string', 'site_tagline' => 'string', 'cta_text' => 'string',
+            'footer_bio' => 'string', 'footer_copyright' => 'string',
+            'phone' => 'string', 'email' => 'string', 'location' => 'string',
+            'whatsapp_url' => 'string', 'upwork_url' => 'string', 'linkedin_url' => 'string',
+            'twitter_url' => 'string', 'instagram_url' => 'string',
+            'availability_bullets' => 'string', 'contact_intro' => 'string',
+            'contact_success_message' => 'string', 'contact_form_title' => 'string',
+            'contact_heading' => 'string', 'contact_availability_bullets' => 'string',
+            'seo_locations_heading' => 'string', 'privacy_url' => 'string', 'terms_url' => 'string',
+            'contact_email_to' => 'string',
+        ]);
+        $this->register_meta_rest('yg_nav_item', ['url' => 'string', 'sort_order' => 'integer']);
+        $this->register_meta_rest('yg_footer_item', [
+            'link_type' => 'string', 'url' => 'string', 'sort_order' => 'integer',
+        ]);
+        $this->register_meta_rest('yg_inquiry_type', ['sort_order' => 'integer']);
 
         register_rest_field('yg_project', 'category_name', [
             'get_callback' => function ($post) {
@@ -138,7 +238,7 @@ class Yogesh_Headless {
         ]);
 
         foreach (array_keys($this->cpts) as $type) {
-            if (in_array($type, ['yg_stat', 'yg_city', 'yg_trust_item', 'yg_why_choose'], true)) continue;
+            if (in_array($type, ['yg_stat', 'yg_city', 'yg_trust_item', 'yg_why_choose', 'yg_nav_item', 'yg_footer_item', 'yg_inquiry_type', 'yg_site_settings', 'yg_site_seo'], true)) continue;
             register_rest_field($type, 'featured_image_url', [
                 'get_callback' => function ($post) {
                     return get_the_post_thumbnail_url($post['id'], 'large') ?: '';
@@ -186,6 +286,7 @@ class Yogesh_Headless {
         add_filter('rest_pre_serve_request', function ($value) {
             $allowed = apply_filters('yg_headless_allowed_origins', [
                 'http://localhost:5173', 'http://127.0.0.1:5173',
+                'http://localhost:5174', 'http://localhost:5175',
                 'http://192.168.1.7:5173',
                 'https://yogeshwebdeveloper.com', 'https://www.yogeshwebdeveloper.com',
                 'https://ygupta133.github.io',
@@ -269,9 +370,49 @@ class Yogesh_Headless {
                 ['subtitle', 'Subtitle', 'text', 'Freelance Web Developer from Delhi, India'],
                 ['years_experience', 'Years Badge', 'text', '14+'],
             ], 'Title = section title. Content = bio text. Featured Image = your photo.'],
-            'yg_site_seo' => ['React Route SEO', [
+            'yg_site_seo' => ['Page SEO & Banner', [
                 ['route_path', 'React Route Path', 'text', '/'],
-            ], 'One entry per page. Set Route Path (e.g. /, /about, /services). Use Yoast SEO box below for title, meta description, OG image and schema. Set canonical URL to https://yogeshwebdeveloper.com/your-page'],
+                ['banner_title', 'Page Banner Title', 'text', 'About Me'],
+                ['banner_subtitle', 'Page Banner Subtitle', 'textarea'],
+                ['breadcrumb_label', 'Breadcrumb Label', 'text', 'About Me'],
+            ], 'One entry per React route. Use Yoast SEO for meta title, description, OG image. Canonical = your live frontend URL.'],
+            'yg_site_settings' => ['Global Site Settings', [
+                ['site_name', 'Site Name (Header)', 'text', 'Yogesh Gupta'],
+                ['site_tagline', 'Tagline (Header)', 'text', 'Freelance Web Developer'],
+                ['cta_text', 'Header CTA Button', 'text', 'Hire Me'],
+                ['footer_bio', 'Footer About Text', 'textarea'],
+                ['footer_copyright', 'Copyright Name', 'text', 'Yogesh Gupta. All Rights Reserved.'],
+                ['phone', 'Phone', 'text', '+91 98765 43210'],
+                ['email', 'Email', 'text', 'hello@yogeshwebdeveloper.com'],
+                ['location', 'Location', 'text', 'Delhi, India'],
+                ['whatsapp_url', 'WhatsApp URL', 'text', 'https://wa.me/919876543210'],
+                ['upwork_url', 'Upwork URL', 'text'],
+                ['linkedin_url', 'LinkedIn URL', 'text'],
+                ['twitter_url', 'Twitter/X URL', 'text'],
+                ['instagram_url', 'Instagram URL', 'text'],
+                ['availability_bullets', 'Footer Availability (comma separated)', 'text'],
+                ['contact_heading', 'Contact Page Heading', 'text', 'Get In Touch'],
+                ['contact_intro', 'Contact Intro Text', 'textarea'],
+                ['contact_form_title', 'Contact Form Title', 'text', 'Send Me a Message'],
+                ['contact_success_message', 'Form Success Message', 'textarea'],
+                ['contact_availability_bullets', 'Contact Availability (comma separated)', 'text'],
+                ['contact_email_to', 'Contact Form Emails Go To', 'text'],
+                ['seo_locations_heading', 'Footer SEO Locations Heading', 'text'],
+                ['privacy_url', 'Privacy Policy URL', 'text', '#'],
+                ['terms_url', 'Terms URL', 'text', '#'],
+            ], 'Add only ONE Site Settings entry.'],
+            'yg_nav_item' => ['Menu Link', [
+                ['url', 'URL Path (e.g. /about)', 'text', '/'],
+                ['sort_order', 'Sort Order', 'number'],
+            ], 'Title = menu label'],
+            'yg_footer_item' => ['Footer Link', [
+                ['link_type', 'Type (service|hire|useful|seo)', 'text', 'service'],
+                ['url', 'URL Path', 'text', '/services'],
+                ['sort_order', 'Sort Order', 'number'],
+            ], 'Title = link label'],
+            'yg_inquiry_type' => ['Inquiry Option', [
+                ['sort_order', 'Sort Order', 'number'],
+            ], 'Title = dropdown option text'],
         ];
 
         foreach ($boxes as $post_type => $config) {
@@ -312,18 +453,26 @@ class Yogesh_Headless {
             'year_range', 'company', 'is_popular', 'stat_value', 'stat_label',
             'flag_emoji', 'points', 'badge_text', 'headline', 'headline_highlight',
             'subtitle', 'cta_primary', 'cta_secondary', 'years_badge', 'projects_count',
-            'clients_count', 'years_experience', 'route_path',
+            'clients_count', 'years_experience', 'route_path', 'banner_title', 'banner_subtitle',
+            'breadcrumb_label', 'site_name', 'site_tagline', 'cta_text', 'footer_bio', 'footer_copyright',
+            'phone', 'email', 'location', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url',
+            'instagram_url', 'availability_bullets', 'contact_intro', 'contact_success_message',
+            'contact_form_title', 'contact_heading', 'contact_availability_bullets', 'seo_locations_heading',
+            'privacy_url', 'terms_url', 'contact_email_to', 'url', 'link_type',
         ];
+        $textarea_fields = ['footer_bio', 'contact_intro', 'contact_success_message', 'banner_subtitle', 'subtitle'];
+        $url_fields = ['project_url', 'client_image_url', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url', 'instagram_url', 'privacy_url', 'terms_url'];
         foreach ($all_fields as $field) {
-            if (isset($_POST[$field])) {
-                $val = $_POST[$field];
-                if (in_array($field, ['rating', 'percentage', 'sort_order', 'is_popular'], true)) {
-                    update_post_meta($post_id, $field, (int) $val);
-                } elseif (in_array($field, ['project_url', 'client_image_url'], true)) {
-                    update_post_meta($post_id, $field, esc_url_raw($val));
-                } else {
-                    update_post_meta($post_id, $field, sanitize_text_field($val));
-                }
+            if (!isset($_POST[$field])) continue;
+            $val = $_POST[$field];
+            if (in_array($field, ['rating', 'percentage', 'sort_order', 'is_popular'], true)) {
+                update_post_meta($post_id, $field, (int) $val);
+            } elseif (in_array($field, $url_fields, true)) {
+                update_post_meta($post_id, $field, esc_url_raw($val));
+            } elseif (in_array($field, $textarea_fields, true)) {
+                update_post_meta($post_id, $field, sanitize_textarea_field($val));
+            } else {
+                update_post_meta($post_id, $field, sanitize_text_field($val));
             }
         }
     }
@@ -342,6 +491,7 @@ new Yogesh_Headless();
 
 register_activation_hook(__FILE__, function () {
     flush_rewrite_rules();
+    Yogesh_Headless_Seed::run();
 });
 
 register_deactivation_hook(__FILE__, function () {

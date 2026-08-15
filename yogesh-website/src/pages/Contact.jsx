@@ -1,17 +1,11 @@
 import { useState } from 'react'
-import PageBanner from '../components/PageBanner'
+import DynamicPageBanner from '../components/DynamicPageBanner'
 import { CheckIcon, SendIcon } from '../components/Icons'
-import { UPWORK_URL, inquiryTypes } from '../data/siteData'
-
-const contactInfo = [
-  { icon: '📞', label: 'Phone', value: '+91 98765 43210', href: 'tel:+919876543210' },
-  { icon: '✉️', label: 'Email', value: 'hello@yogeshwebdeveloper.com', href: 'mailto:hello@yogeshwebdeveloper.com' },
-  { icon: '📍', label: 'Location', value: 'Delhi, India', href: '#' },
-  { icon: '💬', label: 'WhatsApp', value: 'Chat on WhatsApp', href: 'https://wa.me/919876543210' },
-  { icon: '💼', label: 'Upwork', value: 'Hire Me on Upwork', href: UPWORK_URL, external: true },
-]
+import { useSiteBundle } from '../hooks/useSiteSettings'
+import { submitContactForm } from '../lib/wordpress'
 
 export default function Contact() {
+  const { settings, inquiries } = useSiteBundle()
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -20,12 +14,30 @@ export default function Contact() {
     message: '',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  const [sending, setSending] = useState(false)
 
-  const handleSubmit = (e) => {
+  const contactInfo = [
+    { icon: '📞', label: 'Phone', value: settings.phone, href: `tel:${settings.phone.replace(/\s/g, '')}` },
+    { icon: '✉️', label: 'Email', value: settings.email, href: `mailto:${settings.email}` },
+    { icon: '📍', label: 'Location', value: settings.location, href: '#' },
+    { icon: '💬', label: 'WhatsApp', value: 'Chat on WhatsApp', href: settings.whatsappUrl },
+    { icon: '💼', label: 'Upwork', value: 'Hire Me on Upwork', href: settings.upworkUrl, external: true },
+  ]
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSubmitted(true)
-    setForm({ name: '', email: '', phone: '', inquiryType: '', message: '' })
-    setTimeout(() => setSubmitted(false), 5000)
+    setSending(true)
+    setError('')
+    const result = await submitContactForm(form)
+    setSending(false)
+    if (result.success) {
+      setSubmitted(true)
+      setForm({ name: '', email: '', phone: '', inquiryType: '', message: '' })
+      setTimeout(() => setSubmitted(false), 5000)
+    } else {
+      setError(result.message)
+    }
   }
 
   const handleChange = (e) => {
@@ -34,22 +46,15 @@ export default function Contact() {
 
   return (
     <>
-      <PageBanner
-        title="Contact Me"
-        subtitle="Have a project in mind? Let's discuss how I can help your business grow."
-        breadcrumbs={[{ label: 'Contact' }]}
-      />
+      <DynamicPageBanner />
 
       <section className="py-14 sm:py-18 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-5 gap-10 lg:gap-12">
             <div className="lg:col-span-2 space-y-5">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">Get In Touch</h2>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  I'm available for freelance projects worldwide. Fill out the form or reach out directly —
-                  I typically respond within 24 hours.
-                </p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{settings.contactHeading}</h2>
+                <p className="text-gray-600 text-sm leading-relaxed">{settings.contactIntro}</p>
               </div>
 
               {contactInfo.map((item) => (
@@ -71,7 +76,7 @@ export default function Contact() {
               ))}
 
               <a
-                href={UPWORK_URL}
+                href={settings.upworkUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full bg-[#14a800] hover:bg-[#108a00] text-white font-semibold py-3.5 px-6 rounded-xl transition-colors shadow-md"
@@ -83,7 +88,7 @@ export default function Contact() {
               <div className="bg-brand/5 border border-brand/15 rounded-xl p-5">
                 <p className="font-bold text-brand text-sm mb-3">Available for new projects</p>
                 <ul className="space-y-2">
-                  {['Free Consultation', 'Quick Response', 'Flexible Hiring Models'].map((item) => (
+                  {settings.contactAvailabilityBullets.map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm text-gray-700">
                       <CheckIcon className="w-4 h-4 text-brand" />
                       {item}
@@ -95,11 +100,17 @@ export default function Contact() {
 
             <div className="lg:col-span-3">
               <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-                <h3 className="font-bold text-gray-900 text-lg mb-6">Send Me a Message</h3>
+                <h3 className="font-bold text-gray-900 text-lg mb-6">{settings.contactFormTitle}</h3>
 
                 {submitted && (
                   <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6 text-sm">
-                    Thank you! Your message has been sent. I'll get back to you within 24 hours.
+                    {settings.contactSuccessMessage}
+                  </div>
+                )}
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6 text-sm">
+                    {error}
                   </div>
                 )}
 
@@ -139,7 +150,7 @@ export default function Contact() {
                       value={form.phone}
                       onChange={handleChange}
                       className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors"
-                      placeholder="+91 98765 43210"
+                      placeholder={settings.phone}
                     />
                   </div>
                   <div>
@@ -154,7 +165,7 @@ export default function Contact() {
                       className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors bg-white text-gray-900"
                     >
                       <option value="" disabled>Select a service</option>
-                      {inquiryTypes.map((type) => (
+                      {inquiries.map((type) => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
@@ -176,9 +187,10 @@ export default function Contact() {
 
                 <button
                   type="submit"
-                  className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white font-semibold px-8 py-3.5 rounded-md"
+                  disabled={sending}
+                  className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white font-semibold px-8 py-3.5 rounded-md disabled:opacity-60"
                 >
-                  Send Message
+                  {sending ? 'Sending...' : 'Send Message'}
                   <SendIcon className="w-4 h-4" />
                 </button>
               </form>

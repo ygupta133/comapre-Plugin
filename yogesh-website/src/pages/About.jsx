@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import PageBanner from '../components/PageBanner'
+import DynamicPageBanner from '../components/DynamicPageBanner'
 import WpDataBadge from '../components/WpDataBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { skills as fallbackSkills, experience as fallbackExperience } from '../data/pagesData'
 import { stats as fallbackStats, whyChooseMe as fallbackWhyChoose } from '../data/siteData'
-import { getSkills, getExperience, getAbout, getStats } from '../lib/wordpress'
+import { getSkills, getExperience, getAbout, getStats, getWhyChoose } from '../lib/wordpress'
 import { useWordPressList, useWordPressObject } from '../hooks/useWordPressData'
 import { CheckIcon, ArrowRightIcon } from '../components/Icons'
 
@@ -21,14 +21,12 @@ export default function About() {
   const { data: skills } = useWordPressList(getSkills, fallbackSkills)
   const { data: experience } = useWordPressList(getExperience, fallbackExperience)
   const { data: stats } = useWordPressList(getStats, fallbackStats)
+  const { data: whyItems } = useWordPressList(getWhyChoose, fallbackWhyChoose.map((t) => ({ text: t })))
+  const whyChooseList = whyItems[0]?.text ? whyItems.map((i) => i.text) : fallbackWhyChoose
 
   return (
     <>
-      <PageBanner
-        title="About Me"
-        subtitle="14+ years of experience building websites that help businesses grow online."
-        breadcrumbs={[{ label: 'About Me' }]}
-      />
+      <DynamicPageBanner />
 
       <section className="py-14 sm:py-18 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,7 +51,7 @@ export default function About() {
               )}
 
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                {fallbackWhyChoose.slice(0, 4).map((item) => (
+                {whyChooseList.slice(0, 4).map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-gray-700">
                     <span className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0">
                       <CheckIcon className="w-3 h-3" />

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { navLinks } from '../data/siteData'
+import { useSiteBundle } from '../hooks/useSiteSettings'
 import { MenuIcon, CloseIcon, SendIcon } from './Icons'
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
+  const { settings, nav } = useSiteBundle()
 
   const isActive = (href) => {
     if (href === '/') return pathname === '/'
@@ -18,13 +19,13 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 lg:h-20">
           <Link to="/" className="flex-shrink-0">
             <div className="text-brand font-bold text-lg sm:text-xl leading-tight">
-              Yogesh Gupta
+              {settings.siteName}
             </div>
-            <div className="text-gray-500 text-xs sm:text-sm">Freelance Web Developer</div>
+            <div className="text-gray-500 text-xs sm:text-sm">{settings.siteTagline}</div>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-            {navLinks.map((link) => (
+            {nav.map((link) => (
               <Link
                 key={link.label}
                 to={link.href}
@@ -43,7 +44,7 @@ export default function Header() {
             to="/contact"
             className="hidden lg:inline-flex items-center gap-2 bg-brand hover:bg-brand-dark text-white text-sm font-semibold px-5 py-2.5 rounded transition-colors"
           >
-            Hire Me
+            {settings.ctaText}
             <SendIcon className="w-3.5 h-3.5" />
           </Link>
 
@@ -61,7 +62,7 @@ export default function Header() {
       {menuOpen && (
         <div className="lg:hidden border-t border-gray-100 bg-white">
           <nav className="flex flex-col px-4 py-4 gap-1">
-            {navLinks.map((link) => (
+            {nav.map((link) => (
               <Link
                 key={link.label}
                 to={link.href}
@@ -80,7 +81,7 @@ export default function Header() {
               className="mt-2 inline-flex items-center justify-center gap-2 bg-brand text-white font-semibold py-3 px-4 rounded-lg"
               onClick={() => setMenuOpen(false)}
             >
-              Hire Me
+              {settings.ctaText}
               <SendIcon className="w-3.5 h-3.5" />
             </Link>
           </nav>

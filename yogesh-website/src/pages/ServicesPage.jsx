@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import PageBanner from '../components/PageBanner'
+import DynamicPageBanner from '../components/DynamicPageBanner'
 import WpDataBadge from '../components/WpDataBadge'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { serviceDetails as fallbackServices } from '../data/pagesData'
@@ -13,11 +13,7 @@ export default function ServicesPage() {
 
   return (
     <>
-      <PageBanner
-        title="Services I Offer"
-        subtitle="Comprehensive web development solutions tailored to your business needs."
-        breadcrumbs={[{ label: 'Services' }]}
-      />
+      <DynamicPageBanner />
 
       <section className="py-14 sm:py-18 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

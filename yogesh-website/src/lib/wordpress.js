@@ -207,8 +207,92 @@ export async function getSiteSeo() {
   if (!data || !Array.isArray(data)) return null
   return data.map((item) => ({
     route_path: item.route_path || '/',
+    banner_title: item.banner_title || '',
+    banner_subtitle: item.banner_subtitle || '',
+    breadcrumb_label: item.breadcrumb_label || '',
     yoast_head_json: item.yoast_head_json || null,
   }))
+}
+
+function splitBullets(str) {
+  if (!str) return []
+  return str.split(',').map((s) => s.trim()).filter(Boolean)
+}
+
+export function mapWPSiteSettings(item) {
+  return {
+    siteName: item.site_name || 'Yogesh Gupta',
+    siteTagline: item.site_tagline || 'Freelance Web Developer',
+    ctaText: item.cta_text || 'Hire Me',
+    footerBio: item.footer_bio || '',
+    footerCopyright: item.footer_copyright || 'Yogesh Gupta. All Rights Reserved.',
+    phone: item.phone || '+91 98765 43210',
+    email: item.email || 'hello@yogeshwebdeveloper.com',
+    location: item.location || 'Delhi, India',
+    whatsappUrl: item.whatsapp_url || 'https://wa.me/919876543210',
+    upworkUrl: item.upwork_url || 'https://www.upwork.com/freelancers/~01bba1b5cc95c508c4',
+    linkedinUrl: item.linkedin_url || '#',
+    twitterUrl: item.twitter_url || '#',
+    instagramUrl: item.instagram_url || '#',
+    availabilityBullets: splitBullets(item.availability_bullets),
+    contactHeading: item.contact_heading || 'Get In Touch',
+    contactIntro: item.contact_intro || '',
+    contactFormTitle: item.contact_form_title || 'Send Me a Message',
+    contactSuccessMessage: item.contact_success_message || "Thank you! Your message has been sent. I'll get back to you within 24 hours.",
+    contactAvailabilityBullets: splitBullets(item.contact_availability_bullets),
+    seoLocationsHeading: item.seo_locations_heading || 'Best Freelance Developer Near You',
+    privacyUrl: item.privacy_url || '#',
+    termsUrl: item.terms_url || '#',
+  }
+}
+
+export function mapWPNavItem(item) {
+  return {
+    label: stripHtml(item.title?.rendered || ''),
+    href: item.url || '/',
+    sort_order: item.sort_order || 0,
+  }
+}
+
+export function mapWPFooterItem(item) {
+  return {
+    label: stripHtml(item.title?.rendered || ''),
+    href: item.url || '/',
+    linkType: item.link_type || 'useful',
+    sort_order: item.sort_order || 0,
+  }
+}
+
+export function mapWPInquiryType(item) {
+  return {
+    label: stripHtml(item.title?.rendered || ''),
+    sort_order: item.sort_order || 0,
+  }
+}
+
+export const getSiteSettings = () => fetchFirst('site-settings', mapWPSiteSettings)
+export const getNavItems = () => fetchCPT('nav-items', mapWPNavItem, 20)
+export const getFooterItems = () => fetchCPT('footer-items', mapWPFooterItem, 100)
+export const getInquiryTypes = () => fetchCPT('inquiry-types', mapWPInquiryType, 30)
+
+export async function submitContactForm(formData) {
+  if (!WP_API_URL) return { success: false, message: 'WordPress not configured' }
+  try {
+    const url = `${WP_API_URL.replace(/\/$/, '')}/wp-json/yg/v1/contact`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      return { success: false, message: data.message || 'Failed to send message' }
+    }
+    return { success: true, message: data.message || 'Message sent successfully.' }
+  } catch (err) {
+    console.warn('Contact form failed:', err.message)
+    return { success: false, message: 'Network error. Please try again.' }
+  }
 }
 
 export async function getWooProducts() {

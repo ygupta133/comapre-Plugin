@@ -1,39 +1,56 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { getDefaultSeoForPath } from '../config/seoDefaults'
-import { buildSeoMapFromWpEntries } from '../lib/seo'
+import { defaultPageBanners } from '../config/siteDefaults'
+import { buildSeoMapFromWpEntries, normalizePath } from '../lib/seo'
 import { getSiteSeo } from '../lib/wordpress'
 
-let seoMapCache = null
-let seoMapPromise = null
+let pageContentCache = null
+let pageContentPromise = null
 
-function loadSeoMap() {
-  if (seoMapCache) return Promise.resolve(seoMapCache)
-  if (seoMapPromise) return seoMapPromise
+function loadPageContent() {
+  if (pageContentCache) return Promise.resolve(pageContentCache)
+  if (pageContentPromise) return pageContentPromise
 
-  seoMapPromise = getSiteSeo()
+  pageContentPromise = getSiteSeo()
     .then((entries) => {
-      seoMapCache = buildSeoMapFromWpEntries(entries)
-      return seoMapCache
+      const bannerMap = {}
+      if (Array.isArray(entries)) {
+        entries.forEach((entry) => {
+          const path = normalizePath(entry.route_path)
+          if (entry.banner_title) {
+            bannerMap[path] = {
+              title: entry.banner_title,
+              subtitle: entry.banner_subtitle || '',
+              breadcrumb: entry.breadcrumb_label || entry.banner_title,
+            }
+          }
+        })
+      }
+      pageContentCache = {
+        seoMap: buildSeoMapFromWpEntries(entries),
+        bannerMap,
+      }
+      return pageContentCache
     })
     .catch(() => {
-      seoMapCache = {}
-      return seoMapCache
+      pageContentCache = { seoMap: {}, bannerMap: {} }
+      return pageContentCache
     })
 
-  return seoMapPromise
+  return pageContentPromise
 }
 
 export function usePageSeo() {
   const { pathname } = useLocation()
-  const [wpSeoMap, setWpSeoMap] = useState(seoMapCache || {})
-  const [loaded, setLoaded] = useState(Boolean(seoMapCache))
+  const [wpSeoMap, setWpSeoMap] = useState(pageContentCache?.seoMap || {})
+  const [loaded, setLoaded] = useState(Boolean(pageContentCache))
 
   useEffect(() => {
     let cancelled = false
-    loadSeoMap().then((map) => {
+    loadPageContent().then((content) => {
       if (cancelled) return
-      setWpSeoMap(map)
+      setWpSeoMap(content.seoMap)
       setLoaded(true)
     })
     return () => { cancelled = true }
@@ -48,4 +65,29 @@ export function usePageSeo() {
   }, [pathname, wpSeoMap])
 
   return { seo, loaded }
+}
+
+export function usePageBanner() {
+  const { pathname } = useLocation()
+  const [bannerMap, setBannerMap] = useState(pageContentCache?.bannerMap || {})
+
+  useEffect(() => {
+    let cancelled = false
+    loadPageContent().then((content) => {
+      if (cancelled) return
+      setBannerMap(content.bannerMap)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  return useMemo(() => {
+    const path = pathname.replace(/\/$/, '') || '/'
+    const wp = bannerMap[path]
+    const fallback = defaultPageBanners[path] || defaultPageBanners['/about']
+    return {
+      title: wp?.title || fallback.title,
+      subtitle: wp?.subtitle ?? fallback.subtitle,
+      breadcrumb: wp?.breadcrumb || fallback.breadcrumb,
+    }
+  }, [pathname, bannerMap])
 }
