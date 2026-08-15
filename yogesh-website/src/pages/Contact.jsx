@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import DynamicPageBanner from '../components/DynamicPageBanner'
 import ContactGlobalReach from '../components/ContactGlobalReach'
+import RegionalPhone from '../components/RegionalPhone'
 import { CheckIcon, SendIcon } from '../components/Icons'
 import { useSiteBundle } from '../hooks/useSiteSettings'
+import { useRegionalContact } from '../hooks/useRegionalContact'
 import { submitContactForm } from '../lib/wordpress'
 
 export default function Contact() {
   const { settings, inquiries } = useSiteBundle()
+  const { contact } = useRegionalContact()
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -19,7 +22,12 @@ export default function Contact() {
   const [sending, setSending] = useState(false)
 
   const contactInfo = [
-    { icon: '📞', label: 'Phone', value: settings.phone, href: `tel:${settings.phone.replace(/\s/g, '')}` },
+    {
+      icon: contact.flag,
+      label: `Phone (${contact.label})`,
+      value: contact.phone,
+      href: `tel:${contact.phone.replace(/\s/g, '')}`,
+    },
     { icon: '✉️', label: 'Email', value: settings.email, href: `mailto:${settings.email}` },
     { icon: '📍', label: 'Location', value: settings.location, href: '#' },
     { icon: '💬', label: 'WhatsApp', value: 'Chat on WhatsApp', href: settings.whatsappUrl },
@@ -151,7 +159,7 @@ export default function Contact() {
                       value={form.phone}
                       onChange={handleChange}
                       className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-colors"
-                      placeholder={settings.phone}
+                      placeholder={contact.phone}
                     />
                   </div>
                   <div>

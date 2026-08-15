@@ -21,8 +21,20 @@
 - [ ] Permalinks → Post name
 - [ ] SSL both domains
 
-### Site Settings (WP)
-- [ ] Real phone, email, WhatsApp
+### Virtual phone numbers (USA, UK, Canada, Australia)
+
+Add numbers in **WordPress → Site Settings** after buying from a provider:
+
+| Region | Dial code | Where to buy (cheap) |
+|--------|-----------|----------------------|
+| India | +91 | Your real number (already set) |
+| USA / Canada | +1 | [Zadarma](https://zadarma.com), Twilio, OpenPhone |
+| UK / Europe | +44 | Zadarma, Twilio |
+| Australia | +61 | Zadarma, Twilio |
+
+**Recommended start:** Buy one **US (+1)** number on Zadarma (~$2–5/month), forward calls to your India mobile. Paste it in Site Settings → **Phone (US)**.
+
+Site auto-detects visitor country and shows the matching flag + number on load.
 - [ ] Frontend URL = `https://yogeshwebdeveloper.com`
 - [ ] US/UK/AU virtual numbers (optional)
 

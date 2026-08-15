@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useSiteBundle } from '../hooks/useSiteSettings'
+import { useRegionalContact } from '../hooks/useRegionalContact'
+import RegionalPhone from './RegionalPhone'
 import { CheckIcon, SocialIcon } from './Icons'
 
 function FooterLink({ item }) {
@@ -21,6 +23,7 @@ function FooterLink({ item }) {
 
 export default function Footer() {
   const { settings, footer } = useSiteBundle()
+  const { contact } = useRegionalContact()
 
   const socialLinks = [
     { name: 'upwork', href: settings.upworkUrl },
@@ -90,9 +93,11 @@ export default function Footer() {
             <h3 className="font-bold text-base mb-4">Contact Info</h3>
             <ul className="space-y-3 text-sm text-white/75">
               <li>
-                <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="hover:text-brand-light transition-colors">
-                  {settings.phone}
-                </a>
+                <RegionalPhone
+                  contact={contact}
+                  showDialCode
+                  className="text-white/75 hover:text-brand-light"
+                />
               </li>
               <li>
                 <a href={`mailto:${settings.email}`} className="hover:text-brand-light transition-colors">

@@ -5,6 +5,7 @@ import Header from './Header'
 import Footer from './Footer'
 import PageSeo from './PageSeo'
 import FloatingWidgets from './FloatingWidgets'
+import RegionalPhoneBar from './RegionalPhoneBar'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -19,6 +20,7 @@ export default function Layout() {
     <>
       <PageSeo />
       <ScrollToTop />
+      <RegionalPhoneBar />
       <Header />
       <main className="min-h-screen">
         <Outlet />

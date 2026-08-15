@@ -2,12 +2,12 @@ import { useSiteBundle } from '../hooks/useSiteSettings'
 import { CheckIcon } from './Icons'
 
 const regions = [
-  { flag: '🇺🇸', name: 'USA', phoneKey: 'phoneUs', note: 'Remote collaboration, EST/PST friendly' },
-  { flag: '🇨🇦', name: 'Canada', phoneKey: 'phoneUs', note: 'Same timezone support as US clients' },
-  { flag: '🇬🇧', name: 'UK', phoneKey: 'phoneUk', note: 'GMT/BST — smooth communication' },
-  { flag: '🇪🇺', name: 'Europe', phoneKey: 'phoneUk', note: 'EU clients — flexible hours' },
-  { flag: '🇦🇺', name: 'Australia', phoneKey: 'phoneAu', note: 'AEST friendly remote work' },
-  { flag: '🇮🇳', name: 'India', phoneKey: 'phone', note: 'Delhi NCR — local & global projects' },
+  { flag: '🇺🇸', name: 'USA', phoneKey: 'phoneUs', dialCode: '+1', note: 'Remote collaboration, EST/PST friendly' },
+  { flag: '🇨🇦', name: 'Canada', phoneKey: 'phoneUs', dialCode: '+1', note: 'Same timezone support as US clients' },
+  { flag: '🇬🇧', name: 'UK', phoneKey: 'phoneUk', dialCode: '+44', note: 'GMT/BST — smooth communication' },
+  { flag: '🇪🇺', name: 'Europe', phoneKey: 'phoneUk', dialCode: '+44', note: 'EU clients — flexible hours' },
+  { flag: '🇦🇺', name: 'Australia', phoneKey: 'phoneAu', dialCode: '+61', note: 'AEST friendly remote work' },
+  { flag: '🇮🇳', name: 'India', phoneKey: 'phone', dialCode: '+91', note: 'Delhi NCR — local & global projects' },
 ]
 
 export default function ContactGlobalReach() {
@@ -47,9 +47,11 @@ export default function ContactGlobalReach() {
                 <p className="text-gray-600 text-xs sm:text-sm mb-3">{region.note}</p>
                 <a
                   href={`tel:${phone.replace(/\s/g, '')}`}
-                  className="text-sm font-semibold text-gray-900 hover:text-brand transition-colors"
+                  className="text-sm font-semibold text-gray-900 hover:text-brand transition-colors inline-flex items-center gap-2"
                 >
-                  📞 {phone}
+                  <span role="img" aria-label={region.name}>{region.flag}</span>
+                  <span className="text-brand text-xs font-bold">{region.dialCode}</span>
+                  {phone}
                 </a>
               </div>
             )

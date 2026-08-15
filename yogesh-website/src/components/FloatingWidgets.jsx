@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useSiteBundle } from '../hooks/useSiteSettings'
-import { useUserRegion, getRegionalContact } from '../hooks/useUserRegion'
+import { useRegionalContact } from '../hooks/useRegionalContact'
 import ChatBot from './ChatBot'
 
 export default function FloatingWidgets() {
   const [chatOpen, setChatOpen] = useState(false)
   const { settings } = useSiteBundle()
-  const region = useUserRegion()
-  const contact = getRegionalContact(settings, region)
+  const { contact } = useRegionalContact()
 
   const waText = encodeURIComponent(
     settings.whatsappMessage || 'Hi Yogesh, I would like to discuss a web development project.',

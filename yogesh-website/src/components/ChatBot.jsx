@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSiteBundle } from '../hooks/useSiteSettings'
-import { useUserRegion, getRegionalContact } from '../hooks/useUserRegion'
+import { useRegionalContact } from '../hooks/useRegionalContact'
 import {
   defaultWelcome,
   quickReplies,
@@ -18,8 +18,7 @@ function BotAvatar() {
 
 export default function ChatBot({ open, onClose }) {
   const { settings } = useSiteBundle()
-  const region = useUserRegion()
-  const contact = getRegionalContact(settings, region)
+  const { contact } = useRegionalContact()
   const welcome = settings.chatWelcome || defaultWelcome
 
   const [messages, setMessages] = useState([])
@@ -81,9 +80,9 @@ export default function ChatBot({ open, onClose }) {
       </div>
 
       <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs text-gray-600 flex items-center gap-2">
-        <span>{contact.flag}</span>
+        <span role="img" aria-label={contact.label}>{contact.flag}</span>
         <span>
-          {contact.label}:{' '}
+          {contact.label} ({contact.dialCode}):{' '}
           <a href={`tel:${contact.phone.replace(/\s/g, '')}`} className="text-brand font-medium hover:underline">
             {contact.phone}
           </a>
