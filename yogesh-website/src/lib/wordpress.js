@@ -286,7 +286,7 @@ export async function submitContactForm(formData) {
     })
     const data = await res.json()
     if (!res.ok) {
-      return { success: false, message: data.message || 'Failed to send message' }
+      return { success: false, message: data.message || data.data?.message || 'Failed to send message' }
     }
     return { success: true, message: data.message || 'Message sent successfully.' }
   } catch (err) {
