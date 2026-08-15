@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Yogesh Headless CMS
  * Description: Headless WordPress backend for yogeshwebdeveloper.com — all website content CPTs + REST API.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Yogesh Gupta
  * Text Domain: yogesh-headless
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('YG_HEADLESS_VERSION', '1.3.0');
+define('YG_HEADLESS_VERSION', '1.3.1');
 
 require_once __DIR__ . '/includes/seed-content.php';
 
@@ -53,6 +53,107 @@ class Yogesh_Headless {
         add_action('rest_api_init', [$this, 'register_contact_route']);
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_post_yg_seed_content', [$this, 'handle_seed_content']);
+        add_action('template_redirect', [$this, 'maybe_redirect_to_frontend']);
+        add_action('admin_bar_menu', [$this, 'fix_view_site_link'], 999);
+        add_filter('preview_post_link', [$this, 'filter_preview_link'], 10, 2);
+    }
+
+    public function get_frontend_url() {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        $posts = get_posts([
+            'post_type'      => 'yg_site_settings',
+            'posts_per_page' => 1,
+            'post_status'    => 'publish',
+        ]);
+        $url = '';
+        if (!empty($posts)) {
+            $url = trim(get_post_meta($posts[0]->ID, 'frontend_url', true));
+        }
+        if (!$url) {
+            $url = apply_filters('yg_headless_frontend_url', 'http://localhost:5173');
+        }
+        $cached = rtrim(esc_url_raw($url), '/');
+        return $cached;
+    }
+
+    public function is_redirect_enabled() {
+        $posts = get_posts([
+            'post_type'      => 'yg_site_settings',
+            'posts_per_page' => 1,
+            'post_status'    => 'publish',
+        ]);
+        if (empty($posts)) {
+            return true;
+        }
+        $val = get_post_meta($posts[0]->ID, 'redirect_to_frontend', true);
+        return $val === '' || (int) $val === 1;
+    }
+
+    public function maybe_redirect_to_frontend() {
+        if (!$this->is_redirect_enabled()) {
+            return;
+        }
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+            return;
+        }
+        $uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+        if (strpos($uri, '/wp-json') !== false || strpos($uri, 'wp-login.php') !== false) {
+            return;
+        }
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return;
+        }
+
+        $frontend = $this->get_frontend_url();
+        if (!$frontend) {
+            return;
+        }
+
+        $home_path = wp_parse_url(home_url('/'), PHP_URL_PATH);
+        $home_path = $home_path ? rtrim($home_path, '/') : '';
+        $request_path = wp_parse_url($uri, PHP_URL_PATH);
+        $request_path = $request_path ? rtrim($request_path, '/') : '';
+
+        $react_path = '/';
+        if ($home_path && strpos($request_path, $home_path) === 0) {
+            $react_path = substr($request_path, strlen($home_path)) ?: '/';
+        }
+        if ($react_path !== '/' && substr($react_path, -1) !== '/') {
+            $react_path .= '/';
+        }
+
+        $target = $frontend . ($react_path === '/' ? '' : $react_path);
+        wp_safe_redirect($target, 302);
+        exit;
+    }
+
+    public function fix_view_site_link($wp_admin_bar) {
+        $frontend = $this->get_frontend_url();
+        if (!$frontend) {
+            return;
+        }
+        $wp_admin_bar->add_node([
+            'id'   => 'site-name',
+            'href' => $frontend . '/',
+        ]);
+        $wp_admin_bar->add_node([
+            'id'   => 'view-site',
+            'href' => $frontend . '/',
+        ]);
+    }
+
+    public function filter_preview_link($link, $post) {
+        $frontend = $this->get_frontend_url();
+        if (!$frontend || !$post) {
+            return $link;
+        }
+        if ($post->post_type === 'post' && $post->post_name) {
+            return $frontend . '/blog';
+        }
+        return $frontend . '/';
     }
 
     public function admin_menu() {
@@ -221,7 +322,7 @@ class Yogesh_Headless {
             'contact_success_message' => 'string', 'contact_form_title' => 'string',
             'contact_heading' => 'string', 'contact_availability_bullets' => 'string',
             'seo_locations_heading' => 'string', 'privacy_url' => 'string', 'terms_url' => 'string',
-            'contact_email_to' => 'string',
+            'contact_email_to' => 'string', 'frontend_url' => 'string', 'redirect_to_frontend' => 'integer',
         ]);
         $this->register_meta_rest('yg_nav_item', ['url' => 'string', 'sort_order' => 'integer']);
         $this->register_meta_rest('yg_footer_item', [
@@ -377,6 +478,8 @@ class Yogesh_Headless {
                 ['breadcrumb_label', 'Breadcrumb Label', 'text', 'About Me'],
             ], 'One entry per React route. Use Yoast SEO for meta title, description, OG image. Canonical = your live frontend URL.'],
             'yg_site_settings' => ['Global Site Settings', [
+                ['frontend_url', 'React Frontend URL (View Site opens this)', 'text', 'http://localhost:5173'],
+                ['redirect_to_frontend', 'Redirect WP homepage to React? (1=yes, 0=no)', 'number', '1'],
                 ['site_name', 'Site Name (Header)', 'text', 'Yogesh Gupta'],
                 ['site_tagline', 'Tagline (Header)', 'text', 'Freelance Web Developer'],
                 ['cta_text', 'Header CTA Button', 'text', 'Hire Me'],
@@ -458,14 +561,14 @@ class Yogesh_Headless {
             'phone', 'email', 'location', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url',
             'instagram_url', 'availability_bullets', 'contact_intro', 'contact_success_message',
             'contact_form_title', 'contact_heading', 'contact_availability_bullets', 'seo_locations_heading',
-            'privacy_url', 'terms_url', 'contact_email_to', 'url', 'link_type',
+            'privacy_url', 'terms_url', 'contact_email_to', 'url', 'link_type', 'frontend_url', 'redirect_to_frontend',
         ];
         $textarea_fields = ['footer_bio', 'contact_intro', 'contact_success_message', 'banner_subtitle', 'subtitle'];
-        $url_fields = ['project_url', 'client_image_url', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url', 'instagram_url', 'privacy_url', 'terms_url'];
+        $url_fields = ['project_url', 'client_image_url', 'whatsapp_url', 'upwork_url', 'linkedin_url', 'twitter_url', 'instagram_url', 'privacy_url', 'terms_url', 'frontend_url'];
         foreach ($all_fields as $field) {
             if (!isset($_POST[$field])) continue;
             $val = $_POST[$field];
-            if (in_array($field, ['rating', 'percentage', 'sort_order', 'is_popular'], true)) {
+            if (in_array($field, ['rating', 'percentage', 'sort_order', 'is_popular', 'redirect_to_frontend'], true)) {
                 update_post_meta($post_id, $field, (int) $val);
             } elseif (in_array($field, $url_fields, true)) {
                 update_post_meta($post_id, $field, esc_url_raw($val));

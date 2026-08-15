@@ -79,6 +79,8 @@ class Yogesh_Headless_Seed {
             'privacy_url' => '#',
             'terms_url' => '#',
             'contact_email_to' => 'hello@yogeshwebdeveloper.com',
+            'frontend_url' => 'http://localhost:5173',
+            'redirect_to_frontend' => 1,
         ]);
     }
 
