@@ -75,7 +75,7 @@ class Yogesh_Headless_Seed {
             'twitter_url' => '#',
             'instagram_url' => '#',
             'availability_bullets' => 'Quick Response,Free Consultation,Flexible Hiring',
-            'contact_intro' => "I'm available for freelance projects worldwide. Fill out the form or reach out directly — I typically respond within 24 hours.",
+            'contact_intro' => "I'm available for freelance projects worldwide — USA, Canada, UK, Europe, Australia & India. Remote-friendly with flexible time zones. Fill the form or WhatsApp me — I reply within 24 hours.",
             'contact_success_message' => "Thank you! Your message has been sent. I'll get back to you within 24 hours.",
             'contact_form_title' => 'Send Me a Message',
             'contact_heading' => 'Get In Touch',

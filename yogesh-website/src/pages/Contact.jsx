@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import DynamicPageBanner from '../components/DynamicPageBanner'
+import ContactGlobalReach from '../components/ContactGlobalReach'
 import { CheckIcon, SendIcon } from '../components/Icons'
 import { useSiteBundle } from '../hooks/useSiteSettings'
 import { submitContactForm } from '../lib/wordpress'
@@ -198,6 +199,8 @@ export default function Contact() {
           </div>
         </div>
       </section>
+
+      <ContactGlobalReach />
     </>
   )
 }

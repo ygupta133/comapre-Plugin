@@ -30,7 +30,7 @@ export const defaultSiteSettings = {
   availabilityBullets: ['Quick Response', 'Free Consultation', 'Flexible Hiring'],
   contactHeading: 'Get In Touch',
   contactIntro:
-    "I'm available for freelance projects worldwide. Fill out the form or reach out directly — I typically respond within 24 hours.",
+    "I'm available for freelance projects worldwide — USA, Canada, UK, Europe, Australia & India. Remote-friendly with flexible time zones. Fill the form or WhatsApp me — I reply within 24 hours.",
   contactFormTitle: 'Send Me a Message',
   contactSuccessMessage:
     "Thank you! Your message has been sent. I'll get back to you within 24 hours.",
