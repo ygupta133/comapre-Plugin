@@ -29,7 +29,7 @@
 ### Step 4: Plugin install
 1. Download: `wordpress/yogesh-headless.zip`
 2. WP Admin → **Plugins → Add New → Upload**
-3. Activate **Yogesh Headless CMS v1.3.1**
+3. Activate **Yogesh Headless CMS v1.3.2**
 
 ### Step 5: Permalinks
 WP Admin → **Settings → Permalinks** → **Post name** → Save
@@ -99,7 +99,7 @@ hPanel → SSL → `yogeshwebdeveloper.com` + `www` par SSL on
 
 ## PART 3 — View Site fix
 
-WP Admin → **View Site** click → `yogeshwebdeveloper.com` khulega (plugin v1.3.1)
+WP Admin → **View Site** click → `yogeshwebdeveloper.com` khulega (plugin v1.3.2)
 
 Agar nahi khulta → Site Settings mein Frontend URL check karo.
 
